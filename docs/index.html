@@ -275,9 +275,14 @@
     @media (max-width: 768px) {
       .line-flow {
         grid-template-columns: 1fr;
-        gap: 16px;
+        gap: 0;
       }
-      .line-flow .flow-connector { display: none; }
+      .line-flow .flow-connector {
+        padding-top: 0; padding: 8px 0;
+        font-size: 1.2rem;
+        transform: rotate(90deg);
+        animation: arrow-flow-down 2s infinite;
+      }
     }
     .line-flow-col {
       display: flex; flex-direction: column; gap: 12px;
@@ -439,15 +444,79 @@
 
     /* ─── RESPONSIVE ─── */
     @media (max-width: 768px) {
-      .hero { padding: 60px 0 48px; }
-      section { padding: 48px 0; }
-      .flow-diagram { padding: 24px 16px; }
-      .flow-node { min-width: 110px; padding: 14px 16px; }
-      .arch-layer { flex-direction: column; gap: 12px; }
-      .screen-panel-inner { grid-template-columns: 1fr; }
-      .screen-tabs { gap: 4px; }
+      .container { padding: 0 16px; }
+
+      /* Nav */
+      nav .container { height: 56px; }
       .nav-links { display: none; }
-      .biz-flow-timeline::before { left: 26px; }
+      .logo { font-size: 1.05rem; }
+
+      /* Hero */
+      .hero { padding: 48px 0 36px; }
+      .hero h1 { font-size: 1.8rem; line-height: 1.3; }
+      .hero p { font-size: 0.95rem; padding: 0 8px; }
+
+      /* Sections */
+      section { padding: 48px 0; }
+      section h2 { font-size: 1.5rem; }
+      section .subtitle { font-size: 0.9rem; margin-bottom: 32px; }
+
+      /* Overview cards */
+      .flow-diagram { padding: 20px 14px; border-radius: 12px; }
+      .flow-row { gap: 10px; margin-bottom: 20px; }
+      .flow-node { min-width: 100px; padding: 12px 10px; border-radius: 10px; }
+      .flow-node .icon { width: 32px; height: 32px; border-radius: 8px; }
+      .flow-node .label { font-size: 0.75rem; }
+      .flow-node .desc { font-size: 0.65rem; }
+      .flow-arrow { font-size: 1rem; }
+      .flow-arrow-down { font-size: 1rem; }
+
+      /* Biz flow timeline */
+      .biz-flow-timeline::before { left: 22px; }
+      .biz-step { gap: 16px; padding: 14px 0; }
+      .biz-step-dot { width: 44px; height: 44px; font-size: 1rem; }
+      .biz-step-body h4 { font-size: 0.9rem; }
+      .biz-step-body p { font-size: 0.8rem; }
+      .biz-step-body .tag { font-size: 0.65rem; padding: 2px 8px; }
+
+      /* LINE flow */
+      .line-flow-step { padding: 12px; }
+      .line-flow-step .step-title { font-size: 0.8rem; }
+      .line-flow-step .step-desc { font-size: 0.68rem; }
+
+      /* Status flow */
+      .status-flow { gap: 6px; padding: 20px 0; }
+      .status-node { padding: 8px 14px; font-size: 0.78rem; border-radius: 8px; }
+      .status-arrow { font-size: 0.9rem; }
+
+      /* Architecture layers */
+      .arch-layer { flex-direction: column; gap: 10px; padding: 16px; border-radius: 10px; }
+      .arch-layer-content h4 { font-size: 0.9rem; }
+      .arch-layer-content p { font-size: 0.8rem; }
+      .tech-tag { font-size: 0.7rem; padding: 3px 10px; }
+
+      /* Screen map tabs */
+      .screen-tabs { gap: 4px; margin-bottom: 16px; }
+      .screen-tab { padding: 8px 12px; font-size: 0.75rem; border-radius: 8px; gap: 5px; }
+      .screen-tab svg { width: 12px; height: 12px; }
+      .screen-panel-inner { grid-template-columns: 1fr; gap: 16px; }
+      .screen-screenshot { border-radius: 10px; }
+      .screen-info h4 { font-size: 1rem; }
+      .screen-info p { font-size: 0.82rem; }
+      .feature-list li { font-size: 0.78rem; }
+
+      /* Footer */
+      footer { padding: 28px 0; }
+      footer p { font-size: 0.75rem; }
+    }
+
+    /* Extra small screens (iPhone SE etc.) */
+    @media (max-width: 400px) {
+      .hero h1 { font-size: 1.5rem; }
+      .flow-node { min-width: 80px; padding: 10px 8px; }
+      .flow-node .label { font-size: 0.7rem; }
+      .status-node { padding: 6px 10px; font-size: 0.72rem; }
+      .screen-tab { padding: 7px 9px; font-size: 0.7rem; }
     }
   </style>
 </head>
