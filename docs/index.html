@@ -1,0 +1,1117 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ServiceFlow — ワークフローアーキテクチャ</title>
+  <style>
+    :root {
+      --primary: #6366f1;
+      --primary-light: #4f46e5;
+      --primary-dark: #4338ca;
+      --accent: #0891b2;
+      --accent-light: #06b6d4;
+      --emerald: #059669;
+      --amber: #d97706;
+      --rose: #e11d48;
+      --violet: #7c3aed;
+      --bg: #f8fafc;
+      --bg-card: #ffffff;
+      --bg-card-hover: #f1f5f9;
+      --text: #0f172a;
+      --text-muted: #475569;
+      --text-dim: #94a3b8;
+      --border: #e2e8f0;
+      --glow: rgba(99, 102, 241, 0.12);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Hiragino Sans', 'Noto Sans JP', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.7;
+      overflow-x: hidden;
+    }
+
+    .noise {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      opacity: 0.015;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    }
+
+    .container { max-width: 1200px; margin: 0 auto; padding: 0 24px; position: relative; z-index: 1; }
+
+    /* ─── NAV ─── */
+    nav {
+      position: sticky; top: 0; z-index: 50;
+      background: rgba(248, 250, 252, 0.85);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+    }
+    nav .container {
+      display: flex; align-items: center; justify-content: space-between;
+      height: 64px;
+    }
+    .logo { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 1.2rem; }
+    .logo-icon {
+      width: 32px; height: 32px; border-radius: 8px;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      display: grid; place-items: center;
+    }
+    .nav-links { display: flex; gap: 8px; list-style: none; }
+    .nav-links a {
+      color: var(--text-muted); text-decoration: none; font-size: 0.85rem;
+      padding: 6px 14px; border-radius: 6px; transition: all 0.2s;
+    }
+    .nav-links a:hover, .nav-links a.active {
+      color: var(--text); background: var(--bg-card);
+    }
+
+    /* ─── HERO ─── */
+    .hero {
+      text-align: center; padding: 100px 0 80px;
+      position: relative;
+    }
+    .hero::before {
+      content: ''; position: absolute;
+      top: -120px; left: 50%; transform: translateX(-50%);
+      width: 600px; height: 600px;
+      background: radial-gradient(circle, rgba(99,102,241,0.08) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(99, 102, 241, 0.1); border: 1px solid rgba(99, 102, 241, 0.3);
+      padding: 6px 16px; border-radius: 100px; font-size: 0.8rem;
+      color: var(--primary-light); margin-bottom: 24px;
+    }
+    .hero-badge .dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--emerald);
+      animation: pulse-dot 2s infinite;
+    }
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+    .hero h1 { font-size: clamp(2.2rem, 5vw, 3.5rem); font-weight: 800; letter-spacing: -0.02em; margin-bottom: 16px; }
+    .hero h1 .gradient {
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .hero p { color: var(--text-muted); font-size: 1.1rem; max-width: 640px; margin: 0 auto; }
+
+    /* ─── SECTIONS ─── */
+    section { padding: 80px 0; }
+    .section-label {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-size: 0.75rem; font-weight: 600; text-transform: uppercase;
+      letter-spacing: 0.1em; color: var(--primary-light); margin-bottom: 12px;
+    }
+    .section-label .line { width: 24px; height: 1px; background: var(--primary-light); }
+    section h2 { font-size: 2rem; font-weight: 700; margin-bottom: 8px; }
+    section .subtitle { color: var(--text-muted); font-size: 1rem; margin-bottom: 48px; max-width: 600px; }
+
+    /* ─── FLOW DIAGRAM ─── */
+    .flow-diagram {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 48px 32px;
+      position: relative;
+      overflow: hidden;
+    }
+    .flow-diagram::before {
+      content: ''; position: absolute; inset: 0;
+      background: linear-gradient(135deg, rgba(99,102,241,0.03), rgba(6,182,212,0.03));
+      pointer-events: none;
+    }
+
+    .flow-row {
+      display: flex; align-items: center; justify-content: center;
+      gap: 16px; flex-wrap: wrap; margin-bottom: 32px;
+      position: relative;
+    }
+    .flow-row:last-child { margin-bottom: 0; }
+
+    .flow-node {
+      display: flex; flex-direction: column; align-items: center; gap: 8px;
+      padding: 20px 24px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      min-width: 140px;
+      transition: all 0.3s;
+      cursor: default;
+      position: relative;
+    }
+    .flow-node:hover {
+      border-color: var(--primary);
+      box-shadow: 0 0 20px var(--glow);
+      transform: translateY(-2px);
+    }
+    .flow-node .icon {
+      width: 40px; height: 40px; border-radius: 10px;
+      display: grid; place-items: center;
+    }
+    .flow-node .label { font-size: 0.85rem; font-weight: 600; text-align: center; }
+    .flow-node .desc { font-size: 0.7rem; color: var(--text-muted); text-align: center; }
+
+    .flow-arrow {
+      color: var(--text-dim); font-size: 1.4rem;
+      display: flex; align-items: center;
+      animation: arrow-flow 1.5s infinite;
+    }
+    .flow-arrow-down {
+      display: flex; justify-content: center; margin: -8px 0;
+      color: var(--text-dim); font-size: 1.4rem;
+      animation: arrow-flow-down 1.5s infinite;
+    }
+    @keyframes arrow-flow {
+      0%, 100% { opacity: 0.4; transform: translateX(0); }
+      50% { opacity: 1; transform: translateX(4px); }
+    }
+    @keyframes arrow-flow-down {
+      0%, 100% { opacity: 0.4; transform: translateY(0); }
+      50% { opacity: 1; transform: translateY(4px); }
+    }
+
+    /* ─── STATUS FLOW ─── */
+    .status-flow {
+      display: flex; align-items: center; justify-content: center;
+      gap: 8px; flex-wrap: wrap; padding: 32px 0;
+    }
+    .status-node {
+      padding: 12px 24px; border-radius: 10px;
+      font-weight: 600; font-size: 0.9rem;
+      border: 2px solid; transition: all 0.3s;
+      cursor: default; position: relative;
+    }
+    .status-node:hover { transform: scale(1.05); }
+    .status-node.new { background: rgba(99,102,241,0.1); border-color: #6366f1; color: #4f46e5; }
+    .status-node.estimate { background: rgba(139,92,246,0.1); border-color: #8b5cf6; color: #7c3aed; }
+    .status-node.confirmed { background: rgba(59,130,246,0.1); border-color: #3b82f6; color: #2563eb; }
+    .status-node.in-progress { background: rgba(245,158,11,0.1); border-color: #f59e0b; color: #d97706; }
+    .status-node.completed { background: rgba(16,185,129,0.1); border-color: #10b981; color: #059669; }
+    .status-node.cancelled { background: rgba(244,63,94,0.1); border-color: #f43f5e; color: #e11d48; }
+
+    .status-arrow { color: var(--text-dim); font-size: 1.2rem; }
+
+    .cancel-zone {
+      display: flex; flex-direction: column; align-items: center;
+      gap: 8px; margin-top: 16px;
+    }
+    .cancel-arrows {
+      display: flex; gap: 40px; color: var(--text-dim); font-size: 0.8rem;
+    }
+
+    /* ─── ARCHITECTURE LAYERS ─── */
+    .arch-layers { display: flex; flex-direction: column; gap: 16px; }
+    .arch-layer {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px 32px;
+      display: flex; align-items: flex-start; gap: 24px;
+      transition: all 0.3s;
+    }
+    .arch-layer:hover {
+      border-color: var(--primary);
+      box-shadow: 0 0 24px var(--glow);
+    }
+    .arch-layer-badge {
+      flex-shrink: 0; padding: 6px 14px;
+      border-radius: 8px; font-size: 0.75rem;
+      font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .arch-layer-content { flex: 1; }
+    .arch-layer-content h4 { font-size: 1rem; margin-bottom: 4px; }
+    .arch-layer-content p { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 12px; }
+    .tech-tags { display: flex; gap: 8px; flex-wrap: wrap; }
+    .tech-tag {
+      padding: 4px 12px; border-radius: 6px; font-size: 0.75rem;
+      background: #f1f5f9; color: var(--text-muted);
+      border: 1px solid var(--border);
+    }
+
+    /* ─── GRID CARDS ─── */
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 16px;
+    }
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      transition: all 0.3s;
+    }
+    .card:hover {
+      border-color: var(--primary);
+      box-shadow: 0 4px 20px var(--glow);
+      transform: translateY(-2px);
+    }
+    .card .card-icon {
+      width: 44px; height: 44px; border-radius: 10px;
+      display: grid; place-items: center; margin-bottom: 16px;
+    }
+    .card h4 { font-size: 0.95rem; margin-bottom: 6px; }
+    .card p { font-size: 0.8rem; color: var(--text-muted); }
+
+    /* ─── LINE FLOW ─── */
+    .line-flow {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr auto 1fr;
+      gap: 0;
+      align-items: start;
+    }
+    @media (max-width: 768px) {
+      .line-flow {
+        grid-template-columns: 1fr;
+        gap: 16px;
+      }
+      .line-flow .flow-connector { display: none; }
+    }
+    .line-flow-col {
+      display: flex; flex-direction: column; gap: 12px;
+    }
+    .line-flow-col h4 {
+      font-size: 0.85rem; color: var(--text-muted);
+      text-align: center; margin-bottom: 4px;
+      text-transform: uppercase; letter-spacing: 0.08em;
+    }
+    .line-flow-step {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+      text-align: center;
+      transition: all 0.3s;
+    }
+    .line-flow-step:hover {
+      border-color: var(--primary);
+      box-shadow: 0 0 16px var(--glow);
+    }
+    .line-flow-step .step-num {
+      font-size: 0.65rem; font-weight: 700;
+      color: var(--primary-light); margin-bottom: 4px;
+    }
+    .line-flow-step .step-title { font-size: 0.85rem; font-weight: 600; margin-bottom: 4px; }
+    .line-flow-step .step-desc { font-size: 0.72rem; color: var(--text-muted); }
+    .flow-connector {
+      display: flex; align-items: center; justify-content: center;
+      padding-top: 60px; color: var(--text-dim); font-size: 1.6rem;
+      animation: arrow-flow 2s infinite;
+    }
+
+    /* ─── SCREEN MAP ─── */
+    .screen-tabs {
+      display: flex; gap: 6px; flex-wrap: wrap;
+      margin-bottom: 24px;
+    }
+    .screen-tab {
+      display: flex; align-items: center; gap: 8px;
+      padding: 10px 18px; border-radius: 10px;
+      font-size: 0.85rem; color: var(--text-muted);
+      cursor: pointer; transition: all 0.25s;
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+    }
+    .screen-tab:hover {
+      border-color: rgba(99,102,241,0.3);
+      color: var(--primary-light);
+    }
+    .screen-tab.active {
+      background: rgba(99,102,241,0.1);
+      color: var(--primary-light);
+      border-color: rgba(99,102,241,0.35);
+      font-weight: 600;
+    }
+    .screen-tab .badge {
+      background: var(--rose);
+      color: #fff; font-size: 0.6rem; font-weight: 700;
+      padding: 2px 7px; border-radius: 100px;
+    }
+    .screen-panel {
+      display: none;
+    }
+    .screen-panel.active {
+      display: block;
+    }
+    .screen-panel-inner {
+      display: grid;
+      grid-template-columns: 1fr 300px;
+      gap: 28px;
+      align-items: start;
+    }
+    @media (max-width: 900px) {
+      .screen-panel-inner { grid-template-columns: 1fr; }
+    }
+    .screen-screenshot {
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      overflow: hidden;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+    .screen-screenshot:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+    }
+    .screen-screenshot img {
+      display: block; width: 100%; height: auto;
+    }
+    .screen-info {
+      padding: 4px 0;
+    }
+    .screen-info h4 { font-size: 1.1rem; margin-bottom: 6px; }
+    .screen-info p { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 16px; line-height: 1.6; }
+    .feature-list { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+    .feature-list li {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 0.82rem; color: var(--text-muted);
+    }
+    .feature-list li .check {
+      color: var(--emerald); font-weight: 700; font-size: 0.9rem;
+    }
+
+    /* ─── BUSINESS FLOW ─── */
+    .biz-flow-wrap {
+      position: relative;
+      padding: 24px 0;
+    }
+    .biz-flow-timeline {
+      display: flex; flex-direction: column; gap: 0;
+      position: relative;
+    }
+    .biz-flow-timeline::before {
+      content: ''; position: absolute;
+      left: 28px; top: 0; bottom: 0; width: 2px;
+      background: linear-gradient(to bottom, var(--primary), var(--accent), var(--emerald));
+    }
+    .biz-step {
+      display: flex; gap: 24px; padding: 20px 0;
+      position: relative;
+    }
+    .biz-step-dot {
+      flex-shrink: 0; width: 56px; height: 56px;
+      border-radius: 50%; display: grid; place-items: center;
+      font-size: 1.2rem; font-weight: 800; z-index: 1;
+      border: 3px solid;
+      transition: all 0.3s;
+    }
+    .biz-step:hover .biz-step-dot { transform: scale(1.1); }
+    .biz-step-body { flex: 1; padding-top: 4px; }
+    .biz-step-body h4 { font-size: 1rem; margin-bottom: 4px; }
+    .biz-step-body p { font-size: 0.85rem; color: var(--text-muted); }
+    .biz-step-body .tags { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+    .biz-step-body .tag {
+      font-size: 0.7rem; padding: 3px 10px; border-radius: 100px;
+      background: #f1f5f9; color: var(--text-dim);
+      border: 1px solid var(--border);
+    }
+
+    /* ─── DATA FLOW SVG ─── */
+    .data-flow-svg { width: 100%; max-width: 1000px; margin: 0 auto; display: block; }
+    .data-flow-svg text { font-family: inherit; }
+
+    /* ─── FOOTER ─── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 40px 0; text-align: center;
+    }
+    footer p { color: var(--text-dim); font-size: 0.8rem; }
+    footer a { color: var(--primary-light); text-decoration: none; }
+
+    /* ─── SCROLL ANIM ─── */
+    .reveal {
+      opacity: 0; transform: translateY(30px);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+
+    /* ─── RESPONSIVE ─── */
+    @media (max-width: 768px) {
+      .hero { padding: 60px 0 48px; }
+      section { padding: 48px 0; }
+      .flow-diagram { padding: 24px 16px; }
+      .flow-node { min-width: 110px; padding: 14px 16px; }
+      .arch-layer { flex-direction: column; gap: 12px; }
+      .screen-panel-inner { grid-template-columns: 1fr; }
+      .screen-tabs { gap: 4px; }
+      .nav-links { display: none; }
+      .biz-flow-timeline::before { left: 26px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="noise"></div>
+
+  <nav>
+    <div class="container">
+      <div class="logo">
+        <div class="logo-icon">
+          <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="#fff" stroke-width="2.5">
+            <path d="M13 10V3L4 14h7v7l9-11h-7z"/>
+          </svg>
+        </div>
+        ServiceFlow
+      </div>
+      <ul class="nav-links">
+        <li><a href="#overview" class="active">概要</a></li>
+        <li><a href="#business-flow">業務フロー</a></li>
+        <li><a href="#architecture">アーキテクチャ</a></li>
+        <li><a href="#line-flow">LINE連携</a></li>
+        <li><a href="#status-flow">案件ステータス</a></li>
+        <li><a href="#screens">画面構成</a></li>
+        <li><a href="#tech-stack">技術スタック</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- ═══════════════ HERO ═══════════════ -->
+  <header class="hero" id="overview">
+    <div class="container">
+      <h1>
+        <span class="gradient">ServiceFlow</span><br>
+        ワークフローアーキテクチャ
+      </h1>
+      <p>生活サービス業に特化した案件管理プラットフォームの<br>システム全体のワークフローとアーキテクチャを俯瞰します</p>
+    </div>
+  </header>
+
+  <!-- ═══════════════ SYSTEM OVERVIEW ═══════════════ -->
+  <section>
+    <div class="container">
+      <div class="reveal">
+        <div class="section-label"><span class="line"></span>System Overview</div>
+        <h2>システム概要</h2>
+        <p class="subtitle">コールセンターのLINE報告を起点に、案件の自動登録からスケジュール管理、売上分析までを一気通貫で自動化します</p>
+      </div>
+
+      <div class="flow-diagram reveal">
+        <!-- Row 1: External Inflow (Before ServiceFlow) -->
+        <div style="text-align: center; margin-bottom: 12px;">
+          <span style="font-size: 0.7rem; font-weight: 600; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.1em; background: rgba(100,116,139,0.15); padding: 4px 12px; border-radius: 100px;">ServiceFlow導入前の既存フロー</span>
+        </div>
+        <div class="flow-row">
+          <div class="flow-node" style="border-color: #8b5cf6;">
+            <div class="icon" style="background: rgba(139,92,246,0.15);">
+              <svg width="22" height="22" fill="none" stroke="#8b5cf6" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+            </div>
+            <span class="label">WEB広告・紹介</span>
+            <span class="desc">Google/Yahoo!/SNS広告、口コミ</span>
+          </div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-node" style="border-color: #3b82f6;">
+            <div class="icon" style="background: rgba(59,130,246,0.15);">
+              <svg width="22" height="22" fill="none" stroke="#3b82f6" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+            </div>
+            <span class="label">顧客の問い合わせ</span>
+            <span class="desc">LP・電話から流入</span>
+          </div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-node" style="border-color: #3b82f6;">
+            <div class="icon" style="background: rgba(59,130,246,0.15);">
+              <svg width="22" height="22" fill="none" stroke="#3b82f6" stroke-width="2" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
+            </div>
+            <span class="label">コールセンター</span>
+            <span class="desc">アポ取得・顧客対応</span>
+          </div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-node" style="border-color: #06c755; box-shadow: 0 0 20px rgba(6,199,85,0.2);">
+            <div class="icon" style="background: rgba(6,199,85,0.15);">
+              <svg width="22" height="22" fill="#06c755" viewBox="0 0 24 24"><path d="M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.627-.63h2.386c.349 0 .63.285.63.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.27.173-.51.43-.595.06-.023.136-.033.194-.033.195 0 .375.104.495.254l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.627-.63.349 0 .631.285.631.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.282.629-.629.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.038 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.078 9.436-6.975C23.176 14.393 24 12.458 24 10.314"/></svg>
+            </div>
+            <span class="label">LINE報告</span>
+            <span class="desc">アポ情報をグループに投稿</span>
+          </div>
+        </div>
+
+        <!-- Automation boundary -->
+        <div style="position: relative; margin: 24px 0; text-align: center;">
+          <div style="border-top: 2px dashed rgba(99,102,241,0.4); width: 100%;"></div>
+          <span style="position: relative; top: -12px; background: var(--bg-card); padding: 4px 16px; font-size: 0.75rem; font-weight: 700; color: var(--primary-light); letter-spacing: 0.05em;">⚡ ここからServiceFlowが自動化</span>
+        </div>
+
+        <!-- Row 2: ServiceFlow Core -->
+        <div class="flow-row">
+          <div class="flow-node" style="border-color: var(--primary); box-shadow: 0 0 30px var(--glow);">
+            <div class="icon" style="background: rgba(99,102,241,0.2);">
+              <svg width="24" height="24" fill="none" stroke="#818cf8" stroke-width="2" viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+            </div>
+            <span class="label" style="font-size: 1rem;">ServiceFlow</span>
+            <span class="desc">LINE解析 → 案件自動登録 → 振り分け・通知</span>
+          </div>
+        </div>
+
+        <div class="flow-arrow-down">▼</div>
+
+        <!-- Row 3: Core Functions -->
+        <div class="flow-row">
+          <div class="flow-node">
+            <div class="icon" style="background: rgba(99,102,241,0.15);">
+              <svg width="20" height="20" fill="none" stroke="#818cf8" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>
+            </div>
+            <span class="label">案件管理</span>
+            <span class="desc">CRUD・検索</span>
+          </div>
+          <div class="flow-node">
+            <div class="icon" style="background: rgba(6,182,212,0.15);">
+              <svg width="20" height="20" fill="none" stroke="#22d3ee" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            </div>
+            <span class="label">スケジュール</span>
+            <span class="desc">カレンダー管理</span>
+          </div>
+          <div class="flow-node">
+            <div class="icon" style="background: rgba(245,158,11,0.15);">
+              <svg width="20" height="20" fill="none" stroke="#fbbf24" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+            </div>
+            <span class="label">精算管理</span>
+            <span class="desc">日報・決済</span>
+          </div>
+          <div class="flow-node">
+            <div class="icon" style="background: rgba(16,185,129,0.15);">
+              <svg width="20" height="20" fill="none" stroke="#34d399" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+            </div>
+            <span class="label">分析・レポート</span>
+            <span class="desc">ダッシュボード</span>
+          </div>
+        </div>
+
+        <div class="flow-arrow-down">▼</div>
+
+        <!-- Row 4: Outputs -->
+        <div class="flow-row">
+          <div class="flow-node" style="border-color: var(--emerald);">
+            <div class="icon" style="background: rgba(16,185,129,0.15);">
+              <svg width="20" height="20" fill="none" stroke="#34d399" stroke-width="2" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            </div>
+            <span class="label">業務効率化</span>
+            <span class="desc">手動転記の撲滅</span>
+          </div>
+          <div class="flow-node" style="border-color: var(--accent);">
+            <div class="icon" style="background: rgba(6,182,212,0.15);">
+              <svg width="20" height="20" fill="none" stroke="#22d3ee" stroke-width="2" viewBox="0 0 24 24"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+            </div>
+            <span class="label">リアルタイム通知</span>
+            <span class="desc">対応漏れ防止</span>
+          </div>
+          <div class="flow-node" style="border-color: var(--amber);">
+            <div class="icon" style="background: rgba(245,158,11,0.15);">
+              <svg width="20" height="20" fill="none" stroke="#fbbf24" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            </div>
+            <span class="label">データ活用</span>
+            <span class="desc">経営意思決定支援</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ BUSINESS FLOW ═══════════════ -->
+  <section id="business-flow">
+    <div class="container">
+      <div class="reveal">
+        <div class="section-label"><span class="line"></span>Business Flow</div>
+        <h2>業務ワークフロー</h2>
+        <p class="subtitle">問い合わせの受付から案件完了・分析までの一連の業務フロー</p>
+      </div>
+
+      <div class="biz-flow-wrap reveal">
+        <div class="biz-flow-timeline">
+          <!-- Pre-ServiceFlow steps (existing workflow) -->
+          <div style="padding: 0 0 8px 80px; margin-bottom: 4px;">
+            <span style="font-size: 0.7rem; font-weight: 600; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.1em; background: rgba(100,116,139,0.15); padding: 4px 12px; border-radius: 100px;">既存の業務フロー</span>
+          </div>
+
+          <div class="biz-step">
+            <div class="biz-step-dot" style="background: rgba(139,92,246,0.15); border-color: #8b5cf6; color: #a78bfa;">1</div>
+            <div class="biz-step-body">
+              <h4>📢 広告・集客</h4>
+              <p>Google広告・Yahoo!広告・SNS広告・口コミ/紹介などから、顧客の問い合わせがLP・電話に流入する。</p>
+              <div class="tags">
+                <span class="tag">Google広告</span>
+                <span class="tag">Yahoo!広告</span>
+                <span class="tag">SNS広告</span>
+                <span class="tag">口コミ・紹介</span>
+                <span class="tag">LP</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="biz-step">
+            <div class="biz-step-dot" style="background: rgba(59,130,246,0.15); border-color: #3b82f6; color: #60a5fa;">2</div>
+            <div class="biz-step-body">
+              <h4>📞 コールセンター（アポ取得）</h4>
+              <p>コールセンターが顧客と電話で対応し、訪問日時・住所・品目などの詳細をヒアリングしてアポイントメントを取得する。</p>
+              <div class="tags">
+                <span class="tag">受電対応</span>
+                <span class="tag">ヒアリング</span>
+                <span class="tag">アポ取得</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="biz-step">
+            <div class="biz-step-dot" style="background: rgba(6,199,85,0.15); border-color: #06c755; color: #06c755;">3</div>
+            <div class="biz-step-body">
+              <h4>💬 LINEグループへアポ報告</h4>
+              <p>アポが取れたら、コールセンターが定型フォーマットでLINEグループに案件情報（顧客名・住所・日時・品目等）を投稿する。</p>
+              <div class="tags">
+                <span class="tag">LINEグループ</span>
+                <span class="tag">定型フォーマット</span>
+                <span class="tag">アポ報告</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- ServiceFlow automation boundary -->
+          <div style="padding: 12px 0 12px 80px; position: relative;">
+            <div style="border-top: 2px dashed rgba(99,102,241,0.4); width: 100%;"></div>
+            <span style="position: relative; top: -12px; background: var(--bg); padding: 4px 16px; font-size: 0.72rem; font-weight: 700; color: var(--primary-light); letter-spacing: 0.05em;">⚡ ここからServiceFlowが自動化</span>
+          </div>
+
+          <div class="biz-step">
+            <div class="biz-step-dot" style="background: rgba(99,102,241,0.15); border-color: #6366f1; color: #818cf8;">4</div>
+            <div class="biz-step-body">
+              <h4>🤖 自動解析・案件登録</h4>
+              <p>ServiceFlowがLINEメッセージをWebhookで受信し自動解析。顧客名・住所・電話番号・希望日時・品目などを構造化データとして抽出し、案件として自動登録する。</p>
+              <div class="tags">
+                <span class="tag">Webhook受信</span>
+                <span class="tag">メッセージ解析</span>
+                <span class="tag">案件自動登録</span>
+                <span class="tag">構造化データ</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="biz-step">
+            <div class="biz-step-dot" style="background: rgba(6,182,212,0.15); border-color: #06b6d4; color: #22d3ee;">5</div>
+            <div class="biz-step-body">
+              <h4>📋 案件振り分け・スケジュール</h4>
+              <p>緊急案件の自動判定とリアルタイム通知。担当スタッフのアサインとカレンダーへのスケジュール登録を自動実行。</p>
+              <div class="tags">
+                <span class="tag">緊急判定</span>
+                <span class="tag">スタッフアサイン</span>
+                <span class="tag">カレンダー</span>
+                <span class="tag">自動通知</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="biz-step">
+            <div class="biz-step-dot" style="background: rgba(245,158,11,0.15); border-color: #f59e0b; color: #fbbf24;">6</div>
+            <div class="biz-step-body">
+              <h4>🔧 現場対応</h4>
+              <p>現場スタッフがモバイルアプリで案件詳細を確認し、作業を実施。ステータスをリアルタイムに更新する。</p>
+              <div class="tags">
+                <span class="tag">モバイルアプリ</span>
+                <span class="tag">ステータス更新</span>
+                <span class="tag">リアルタイム</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="biz-step">
+            <div class="biz-step-dot" style="background: rgba(244,63,94,0.15); border-color: #f43f5e; color: #fb7185;">7</div>
+            <div class="biz-step-body">
+              <h4>💰 精算・決済</h4>
+              <p>作業完了後に現金/クレジットで決済。日報として精算データを登録し、スタッフ別の集計を自動算出。</p>
+              <div class="tags">
+                <span class="tag">現金</span>
+                <span class="tag">クレジット</span>
+                <span class="tag">日報</span>
+                <span class="tag">自動集計</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="biz-step">
+            <div class="biz-step-dot" style="background: rgba(16,185,129,0.15); border-color: #10b981; color: #34d399;">8</div>
+            <div class="biz-step-body">
+              <h4>📊 分析・改善</h4>
+              <p>売上推移・カテゴリ別分析・広告ROI・顧客リピート率などをダッシュボードで可視化。データドリブンな経営判断を支援する。</p>
+              <div class="tags">
+                <span class="tag">KPI</span>
+                <span class="tag">売上分析</span>
+                <span class="tag">広告ROI</span>
+                <span class="tag">レポート</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ LINE FLOW ═══════════════ -->
+  <section id="line-flow" style="background: rgba(6,199,85,0.02);">
+    <div class="container">
+      <div class="reveal">
+        <div class="section-label"><span class="line"></span>LINE Integration</div>
+        <h2>LINE自動登録フロー</h2>
+        <p class="subtitle">コールセンターからのLINEメッセージを自動解析し、案件として登録する中核プロセス</p>
+      </div>
+
+      <div class="line-flow reveal">
+        <!-- Column 1: コールセンター -->
+        <div class="line-flow-col">
+          <h4>コールセンター</h4>
+          <div class="line-flow-step" style="border-color: rgba(59,130,246,0.3);">
+            <div class="step-num">前提</div>
+            <div class="step-title">広告→問い合わせ→アポ取得</div>
+            <div class="step-desc">WEB広告等で流入した顧客にコールセンターがアポを取得済み</div>
+          </div>
+          <div class="line-flow-step" style="border-color: rgba(6,199,85,0.3);">
+            <div class="step-num">STEP 1</div>
+            <div class="step-title">アポ情報をLINEに投稿</div>
+            <div class="step-desc">アポ取得後、定型フォーマットでLINEグループへ報告</div>
+          </div>
+          <div class="line-flow-step" style="border-color: rgba(6,199,85,0.3);">
+            <div class="step-num">FORMAT</div>
+            <div class="step-title" style="font-family: monospace; font-size: 0.7rem; text-align: left; line-height: 1.5;">
+              神奈川　ネコ　受電<br>
+              あかざわ たつゆき<br>
+              〒248-0005<br>
+              神奈川県逗子市桜山...<br>
+              090-XXXX-XXXX<br>
+              2/17 9-12時
+            </div>
+            <div class="step-desc">定型フォーマットのメッセージ</div>
+          </div>
+        </div>
+
+        <div class="flow-connector">→</div>
+
+        <!-- Column 2: ServiceFlow -->
+        <div class="line-flow-col">
+          <h4>ServiceFlow</h4>
+          <div class="line-flow-step" style="border-color: rgba(99,102,241,0.3);">
+            <div class="step-num">STEP 2</div>
+            <div class="step-title">Webhook受信</div>
+            <div class="step-desc">LINE Messaging APIからメッセージイベントを受信</div>
+          </div>
+          <div class="line-flow-step" style="border-color: rgba(99,102,241,0.3);">
+            <div class="step-num">STEP 3</div>
+            <div class="step-title">メッセージ自動解析</div>
+            <div class="step-desc">都道府県・顧客名・住所・電話番号・日時・品目を抽出</div>
+          </div>
+          <div class="line-flow-step" style="border-color: rgba(99,102,241,0.3);">
+            <div class="step-num">STEP 4</div>
+            <div class="step-title">案件自動登録</div>
+            <div class="step-desc">構造化データをDBに登録、緊急案件を自動判定</div>
+          </div>
+        </div>
+
+        <div class="flow-connector">→</div>
+
+        <!-- Column 3: Output -->
+        <div class="line-flow-col">
+          <h4>出力・通知</h4>
+          <div class="line-flow-step" style="border-color: rgba(16,185,129,0.3);">
+            <div class="step-num">STEP 5</div>
+            <div class="step-title">案件管理画面に反映</div>
+            <div class="step-desc">案件一覧・カレンダーに自動追加</div>
+          </div>
+          <div class="line-flow-step" style="border-color: rgba(245,158,11,0.3);">
+            <div class="step-num">STEP 6</div>
+            <div class="step-title">緊急通知送信</div>
+            <div class="step-desc">当日依頼等をLINEグループ・アプリ内に即時通知</div>
+          </div>
+          <div class="line-flow-step" style="border-color: rgba(139,92,246,0.3);">
+            <div class="step-num">STEP 7</div>
+            <div class="step-title">スタッフ自動アサイン</div>
+            <div class="step-desc">エリア・スケジュールを考慮し最適なスタッフに振り分け</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ STATUS FLOW ═══════════════ -->
+  <section id="status-flow">
+    <div class="container">
+      <div class="reveal">
+        <div class="section-label"><span class="line"></span>Case Status</div>
+        <h2>案件ステータスフロー</h2>
+        <p class="subtitle">案件の発生から完了までの状態遷移</p>
+      </div>
+
+      <div class="flow-diagram reveal">
+        <div class="status-flow">
+          <div class="status-node new">新規</div>
+          <span class="status-arrow">→</span>
+          <div class="status-node estimate">見積</div>
+          <span class="status-arrow">→</span>
+          <div class="status-node confirmed">確定</div>
+          <span class="status-arrow">→</span>
+          <div class="status-node in-progress">対応中</div>
+          <span class="status-arrow">→</span>
+          <div class="status-node completed">完了</div>
+        </div>
+
+        <div class="cancel-zone">
+          <div class="cancel-arrows">
+            <span>↓ いつでも遷移可能</span>
+          </div>
+          <div class="status-node cancelled">キャンセル</div>
+        </div>
+
+        <div style="margin-top: 32px; display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px;">
+          <div style="display: flex; align-items: center; gap: 8px; font-size: 0.8rem;">
+            <span style="width: 12px; height: 12px; border-radius: 3px; background: #6366f1;"></span>
+            <span style="color: var(--text-muted);">新規 — 受付直後</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px; font-size: 0.8rem;">
+            <span style="width: 12px; height: 12px; border-radius: 3px; background: #8b5cf6;"></span>
+            <span style="color: var(--text-muted);">見積 — 見積提示中</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px; font-size: 0.8rem;">
+            <span style="width: 12px; height: 12px; border-radius: 3px; background: #3b82f6;"></span>
+            <span style="color: var(--text-muted);">確定 — 受注確定</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px; font-size: 0.8rem;">
+            <span style="width: 12px; height: 12px; border-radius: 3px; background: #f59e0b;"></span>
+            <span style="color: var(--text-muted);">対応中 — 作業中</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px; font-size: 0.8rem;">
+            <span style="width: 12px; height: 12px; border-radius: 3px; background: #10b981;"></span>
+            <span style="color: var(--text-muted);">完了 — 作業完了</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px; font-size: 0.8rem;">
+            <span style="width: 12px; height: 12px; border-radius: 3px; background: #f43f5e;"></span>
+            <span style="color: var(--text-muted);">キャンセル — 取消</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ SCREENS ═══════════════ -->
+  <section id="screens" style="background: rgba(99,102,241,0.02);">
+    <div class="container">
+      <div class="reveal">
+        <div class="section-label"><span class="line"></span>Screen Map</div>
+        <h2>画面構成</h2>
+        <p class="subtitle">サイドバーナビゲーションによるシンプルなUI構成</p>
+      </div>
+
+      <div class="reveal">
+        <div class="screen-tabs" id="screen-tabs">
+          <div class="screen-tab active" data-screen="dashboard">
+            <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+            ダッシュボード
+          </div>
+          <div class="screen-tab" data-screen="line">
+            <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="22 12 16 12 14 15 10 9 8 12 2 12"/></svg>
+            LINE受信
+            <span class="badge">3</span>
+          </div>
+          <div class="screen-tab" data-screen="cases">
+            <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            案件管理
+          </div>
+          <div class="screen-tab" data-screen="calendar">
+            <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            スケジュール
+          </div>
+          <div class="screen-tab" data-screen="reports">
+            <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+            レポート
+          </div>
+          <div class="screen-tab" data-screen="settings">
+            <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+            設定
+          </div>
+        </div>
+
+        <div id="screen-panels">
+          <div class="screen-panel active" data-panel="dashboard">
+            <div class="screen-panel-inner">
+              <div class="screen-screenshot">
+                <img src="screenshots/dashboard.png" alt="ダッシュボード画面" loading="lazy">
+              </div>
+              <div class="screen-info">
+                <h4>ダッシュボード</h4>
+                <p>経営状況の俯瞰と重要指標の即時把握</p>
+                <ul class="feature-list">
+                  <li><span class="check">✓</span> KPIカード（売上・案件数・キャンセル率・平均単価）</li>
+                  <li><span class="check">✓</span> 緊急案件アラート</li>
+                  <li><span class="check">✓</span> 月次売上推移チャート</li>
+                  <li><span class="check">✓</span> カテゴリ分布（ドーナツ）</li>
+                  <li><span class="check">✓</span> 直近の案件リスト</li>
+                  <li><span class="check">✓</span> 時間帯別案件数</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <div class="screen-panel" data-panel="line">
+            <div class="screen-panel-inner">
+              <div class="screen-screenshot">
+                <img src="screenshots/line.png" alt="LINE受信画面" loading="lazy">
+              </div>
+              <div class="screen-info">
+                <h4>LINE受信（自動取込）</h4>
+                <p>LINEメッセージの確認と自動登録管理</p>
+                <ul class="feature-list">
+                  <li><span class="check">✓</span> Webhook接続状態表示</li>
+                  <li><span class="check">✓</span> メッセージ一覧（ステータス別）</li>
+                  <li><span class="check">✓</span> AI自動解析プレビュー</li>
+                  <li><span class="check">✓</span> 自動登録ON/OFFトグル</li>
+                  <li><span class="check">✓</span> 生メッセージ原文表示</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <div class="screen-panel" data-panel="cases">
+            <div class="screen-panel-inner">
+              <div class="screen-screenshot">
+                <img src="screenshots/cases.png" alt="案件管理画面" loading="lazy">
+              </div>
+              <div class="screen-info">
+                <h4>案件管理</h4>
+                <p>全案件の一覧管理・詳細確認・顧客管理</p>
+                <ul class="feature-list">
+                  <li><span class="check">✓</span> 案件一覧テーブル（フィルタ・検索）</li>
+                  <li><span class="check">✓</span> 顧客一覧（VIP・リピーター判定）</li>
+                  <li><span class="check">✓</span> ステータス変更・スタッフアサイン</li>
+                  <li><span class="check">✓</span> 案件詳細モーダル</li>
+                  <li><span class="check">✓</span> 品目リスト・備考管理</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <div class="screen-panel" data-panel="calendar">
+            <div class="screen-panel-inner">
+              <div class="screen-screenshot">
+                <img src="screenshots/calendar.png" alt="スケジュール画面" loading="lazy">
+              </div>
+              <div class="screen-info">
+                <h4>スケジュール</h4>
+                <p>カレンダー形式での案件スケジュール管理</p>
+                <ul class="feature-list">
+                  <li><span class="check">✓</span> 月間カレンダーグリッド</li>
+                  <li><span class="check">✓</span> 各日の案件数表示</li>
+                  <li><span class="check">✓</span> 当日スケジュール（時間順）</li>
+                  <li><span class="check">✓</span> 前月/次月ナビゲーション</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <div class="screen-panel" data-panel="reports">
+            <div class="screen-panel-inner">
+              <div class="screen-screenshot">
+                <img src="screenshots/reports.png" alt="レポート画面" loading="lazy">
+              </div>
+              <div class="screen-info">
+                <h4>レポート</h4>
+                <p>各種レポートの生成と出力</p>
+                <ul class="feature-list">
+                  <li><span class="check">✓</span> 日次/週次/月次レポート</li>
+                  <li><span class="check">✓</span> 売上分析（月次推移・曜日別）</li>
+                  <li><span class="check">✓</span> 広告ROI・CVR指標</li>
+                  <li><span class="check">✓</span> スプレッドシート出力</li>
+                  <li><span class="check">✓</span> 日報・精算管理</li>
+                  <li><span class="check">✓</span> 広告・LP管理</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <div class="screen-panel" data-panel="settings">
+            <div class="screen-panel-inner">
+              <div class="screen-screenshot">
+                <img src="screenshots/settings.png" alt="設定画面" loading="lazy">
+              </div>
+              <div class="screen-info">
+                <h4>設定</h4>
+                <p>システム設定の管理</p>
+                <ul class="feature-list">
+                  <li><span class="check">✓</span> LINE連携設定（Webhook・トークン）</li>
+                  <li><span class="check">✓</span> 自動取込・自動振り分けON/OFF</li>
+                  <li><span class="check">✓</span> 通知設定（種別ごとのON/OFF）</li>
+                  <li><span class="check">✓</span> 会社情報（企業名・連絡先・住所）</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ FOOTER ═══════════════ -->
+  <footer>
+    <div class="container">
+      <p style="margin-bottom: 8px;">
+        <strong style="color: var(--text);">ServiceFlow</strong> — 自動顧客管理プラットフォーム
+      </p>
+      <p>Workflow Architecture Document v1.0 &nbsp;|&nbsp; Last updated: February 2026</p>
+    </div>
+  </footer>
+
+  <script>
+    // Scroll reveal animation
+    const revealEls = document.querySelectorAll('.reveal');
+    const revealObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+        }
+      });
+    }, { threshold: 0.1 });
+    revealEls.forEach(el => revealObserver.observe(el));
+
+    // Smooth scroll for nav links
+    document.querySelectorAll('nav a[href^="#"]').forEach(link => {
+      link.addEventListener('click', e => {
+        e.preventDefault();
+        const target = document.querySelector(link.getAttribute('href'));
+        if (target) {
+          target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+        document.querySelectorAll('.nav-links a').forEach(a => a.classList.remove('active'));
+        link.classList.add('active');
+      });
+    });
+
+    // Active nav highlight on scroll
+    const sections = document.querySelectorAll('section[id], header[id]');
+    window.addEventListener('scroll', () => {
+      let current = '';
+      sections.forEach(section => {
+        const top = section.offsetTop - 100;
+        if (pageYOffset >= top) current = section.getAttribute('id');
+      });
+      document.querySelectorAll('.nav-links a').forEach(a => {
+        a.classList.remove('active');
+        if (a.getAttribute('href') === '#' + current) a.classList.add('active');
+      });
+    });
+
+    // Screen map interaction
+    document.querySelectorAll('.screen-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        const screen = tab.dataset.screen;
+        document.querySelectorAll('.screen-tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        document.querySelectorAll('.screen-panel').forEach(p => p.classList.remove('active'));
+        const panel = document.querySelector(`.screen-panel[data-panel="${screen}"]`);
+        if (panel) panel.classList.add('active');
+      });
+    });
+  </script>
+</body>
+</html>

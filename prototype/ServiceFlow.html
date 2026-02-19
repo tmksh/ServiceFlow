@@ -1,0 +1,1888 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>ServiceFlow — 自動顧客管理プラットフォーム</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.26.4/babel.min.js"></script>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+JP:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Inter', 'Noto Sans JP', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 99px; }
+@keyframes pulse-dot { 0%,100%{opacity:1} 50%{opacity:.4} }
+.anim-pulse { animation: pulse-dot 2s ease-in-out infinite; }
+@keyframes slide-up { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+.slide-up { animation: slide-up .3s ease-out; }
+@keyframes fade-in { from{opacity:0} to{opacity:1} }
+.fade-in { animation: fade-in .25s ease-out; }
+@keyframes bar-grow { from{transform:scaleY(0)} to{transform:scaleY(1)} }
+.bar-grow { animation: bar-grow .6s ease-out forwards; transform-origin: center bottom; transform-box: fill-box; }
+@keyframes line-draw { from{stroke-dashoffset:2000} to{stroke-dashoffset:0} }
+.line-draw { stroke-dasharray: 2000; animation: line-draw 1.5s ease-out forwards; }
+@keyframes shimmer { 0%{background-position:-200% 0} 100%{background-position:200% 0} }
+.shimmer { background: linear-gradient(90deg, transparent 30%, rgba(255,255,255,.3) 50%, transparent 70%); background-size: 200% 100%; animation: shimmer 2s infinite; }
+</style>
+<script>
+tailwind.config = {
+  theme: { extend: { fontFamily: { sans: ['Inter','Noto Sans JP','sans-serif'] } } }
+};
+</script>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useMemo, useCallback } = React;
+
+/* ═══════════════════════════════════════════════════════
+   SECTION 1: SVG ICON SYSTEM
+   ═══════════════════════════════════════════════════════ */
+const Sv = ({ children, size = 20, className = "", ...p }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor"
+    strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} {...p}>
+    {children}
+  </svg>
+);
+
+const ic = {
+  Grid:     p => <Sv {...p}><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></Sv>,
+  FileText: p => <Sv {...p}><path d="M14.5 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></Sv>,
+  Calendar: p => <Sv {...p}><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></Sv>,
+  Msg:      p => <Sv {...p}><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></Sv>,
+  BarChart: p => <Sv {...p}><path d="M3 3v18h18"/><path d="M7 16V8"/><path d="M11 16V4"/><path d="M15 16v-5"/><path d="M19 16v-8"/></Sv>,
+  Users:    p => <Sv {...p}><path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></Sv>,
+  Gear:     p => <Sv {...p}><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></Sv>,
+  Search:   p => <Sv {...p}><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></Sv>,
+  Bell:     p => <Sv {...p}><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></Sv>,
+  Plus:     p => <Sv {...p}><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></Sv>,
+  ChevL:    p => <Sv {...p}><path d="M15 18l-6-6 6-6"/></Sv>,
+  ChevR:    p => <Sv {...p}><path d="M9 18l6-6-6-6"/></Sv>,
+  ChevD:    p => <Sv {...p}><path d="M6 9l6 6 6-6"/></Sv>,
+  ArrowUp:  p => <Sv {...p}><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></Sv>,
+  ArrowDn:  p => <Sv {...p}><line x1="7" y1="7" x2="17" y2="17"/><polyline points="17 7 17 17 7 17"/></Sv>,
+  Clock:    p => <Sv {...p}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></Sv>,
+  MapPin:   p => <Sv {...p}><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></Sv>,
+  Phone:    p => <Sv {...p}><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z"/></Sv>,
+  Star:     p => <Sv {...p}><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></Sv>,
+  Check:    p => <Sv {...p}><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></Sv>,
+  XCircle:  p => <Sv {...p}><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></Sv>,
+  X:        p => <Sv {...p}><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></Sv>,
+  Menu:     p => <Sv {...p}><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></Sv>,
+  Zap:      p => <Sv {...p}><path d="M13 2L3 14h9l-1 10 10-12h-9l1-10z"/></Sv>,
+  Yen:      p => <Sv {...p}><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></Sv>,
+  Target:   p => <Sv {...p}><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></Sv>,
+  Pct:      p => <Sv {...p}><line x1="19" y1="5" x2="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></Sv>,
+  Download: p => <Sv {...p}><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></Sv>,
+  Eye:      p => <Sv {...p}><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></Sv>,
+  Layers:   p => <Sv {...p}><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></Sv>,
+  Shield:   p => <Sv {...p}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></Sv>,
+  Refresh:  p => <Sv {...p}><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></Sv>,
+  Monitor:  p => <Sv {...p}><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></Sv>,
+  Package:  p => <Sv {...p}><line x1="16.5" y1="9.4" x2="7.5" y2="4.21"/><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></Sv>,
+  Truck:    p => <Sv {...p}><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></Sv>,
+  Home:     p => <Sv {...p}><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></Sv>,
+  Droplet:  p => <Sv {...p}><path d="M12 2.69l5.66 5.66a8 8 0 11-11.31 0z"/></Sv>,
+  Key:      p => <Sv {...p}><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 11-7.778 7.778 5.5 5.5 0 017.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></Sv>,
+  Wrench:   p => <Sv {...p}><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></Sv>,
+  Building: p => <Sv {...p}><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M9 22v-4h6v4"/><line x1="8" y1="6" x2="8.01" y2="6"/><line x1="16" y1="6" x2="16.01" y2="6"/><line x1="12" y1="6" x2="12.01" y2="6"/><line x1="8" y1="10" x2="8.01" y2="10"/><line x1="16" y1="10" x2="16.01" y2="10"/><line x1="12" y1="10" x2="12.01" y2="10"/></Sv>,
+  User:     p => <Sv {...p}><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></Sv>,
+  Activity: p => <Sv {...p}><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></Sv>,
+  CreditCard: p => <Sv {...p}><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></Sv>,
+  Clipboard:  p => <Sv {...p}><path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></Sv>,
+  Send:     p => <Sv {...p}><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></Sv>,
+  Image:    p => <Sv {...p}><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></Sv>,
+  Filter:   p => <Sv {...p}><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></Sv>,
+  Inbox:    p => <Sv {...p}><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11L2 12v6a2 2 0 002 2h16a2 2 0 002-2v-6l-3.45-6.89A2 2 0 0016.76 4H7.24a2 2 0 00-1.79 1.11z"/></Sv>,
+  Calculator: p => <Sv {...p}><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="16" y1="14" x2="16" y2="18"/><line x1="8" y1="11" x2="8.01" y2="11"/><line x1="12" y1="11" x2="12.01" y2="11"/><line x1="16" y1="11" x2="16.01" y2="11"/><line x1="8" y1="15" x2="8.01" y2="15"/><line x1="12" y1="15" x2="12.01" y2="15"/><line x1="8" y1="19" x2="8.01" y2="19"/><line x1="12" y1="19" x2="12.01" y2="19"/></Sv>,
+  Globe:    p => <Sv {...p}><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></Sv>,
+  ExtLink:  p => <Sv {...p}><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></Sv>,
+  TrendUp:  p => <Sv {...p}><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></Sv>,
+  Pause:    p => <Sv {...p}><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></Sv>,
+  Play:     p => <Sv {...p}><polygon points="5 3 19 12 5 21 5 3"/></Sv>,
+  MousePtr: p => <Sv {...p}><path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z"/><path d="M13 13l6 6"/></Sv>,
+};
+
+/* ═══════════════════════════════════════════════════════
+   SECTION 2: SVG CHART COMPONENTS
+   ═══════════════════════════════════════════════════════ */
+const BarSVG = ({ data, dk, w = 500, h = 220, color = "#6366f1" }) => {
+  const max = Math.max(...data.map(d => d[dk]));
+  const bw = Math.min(28, (w - 60) / data.length - 4);
+  const sx = 50;
+  return (
+    <svg viewBox={`0 0 ${w} ${h}`} className="w-full" style={{ maxHeight: h }}>
+      {[0, .25, .5, .75, 1].map(f => {
+        const y = h - 30 - (h - 50) * f;
+        return (
+          <g key={f}>
+            <line x1={sx} y1={y} x2={w} y2={y} stroke="#f1f5f9" strokeWidth="1"/>
+            <text x={sx - 5} y={y + 4} textAnchor="end" fill="#94a3b8" fontSize="10">
+              {Math.round(max * f).toLocaleString()}
+            </text>
+          </g>
+        );
+      })}
+      {data.map((d, i) => {
+        const bh = max > 0 ? (d[dk] / max) * (h - 50) : 0;
+        const x = sx + i * ((w - sx) / data.length) + (w - sx) / data.length / 2 - bw / 2;
+        const y = h - 30 - bh;
+        return (
+          <g key={i}>
+            <rect x={x} y={y} width={bw} height={bh} rx={bw / 4} fill={color}
+              className="bar-grow" style={{ animationDelay: `${i * 50}ms` }} opacity=".85">
+              <title>{d[dk].toLocaleString()}</title>
+            </rect>
+            <text x={x + bw / 2} y={h - 12} textAnchor="middle" fill="#94a3b8" fontSize="10">
+              {d.label || ""}
+            </text>
+          </g>
+        );
+      })}
+    </svg>
+  );
+};
+
+const AreaSVG = ({ data, dk, w = 500, h = 220, color = "#6366f1", gid = "ag" }) => {
+  const max = Math.max(...data.map(d => d[dk])) * 1.15;
+  const pts = data.map((d, i) => ({
+    x: 50 + i * ((w - 60) / (data.length - 1)),
+    y: h - 30 - ((d[dk] / max) * (h - 50))
+  }));
+  const pathD = pts.map((p, i) => `${i === 0 ? "M" : "L"}${p.x},${p.y}`).join(" ");
+  const areaD = pathD + ` L${pts[pts.length - 1].x},${h - 30} L${pts[0].x},${h - 30} Z`;
+  return (
+    <svg viewBox={`0 0 ${w} ${h}`} className="w-full" style={{ maxHeight: h }}>
+      <defs>
+        <linearGradient id={gid} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={color} stopOpacity=".15"/>
+          <stop offset="100%" stopColor={color} stopOpacity="0"/>
+        </linearGradient>
+      </defs>
+      {[0, .25, .5, .75, 1].map(f => {
+        const y = h - 30 - (h - 50) * f;
+        return (
+          <g key={f}>
+            <line x1="50" y1={y} x2={w} y2={y} stroke="#f1f5f9" strokeWidth="1"/>
+            <text x="45" y={y + 4} textAnchor="end" fill="#94a3b8" fontSize="10">
+              {Math.round(max * f).toLocaleString()}
+            </text>
+          </g>
+        );
+      })}
+      <path d={areaD} fill={`url(#${gid})`}/>
+      <path d={pathD} fill="none" stroke={color} strokeWidth="2.5" className="line-draw"/>
+      {pts.map((p, i) => (
+        <circle key={i} cx={p.x} cy={p.y} r="4" fill={color} stroke="white" strokeWidth="2"/>
+      ))}
+      {data.map((d, i) => (
+        <text key={i} x={pts[i].x} y={h - 12} textAnchor="middle" fill="#94a3b8" fontSize="10">
+          {d.label || ""}
+        </text>
+      ))}
+    </svg>
+  );
+};
+
+const Donut = ({ data, size = 170 }) => {
+  const total = data.reduce((s, d) => s + d.value, 0);
+  const r = size / 2 - 14;
+  const cx = size / 2, cy = size / 2;
+  let cum = 0;
+  const arcs = data.map(d => {
+    const sa = (cum / total) * 360 - 90; cum += d.value;
+    const ea = (cum / total) * 360 - 90;
+    const s = { x: cx + r * Math.cos(sa * Math.PI / 180), y: cy + r * Math.sin(sa * Math.PI / 180) };
+    const e = { x: cx + r * Math.cos(ea * Math.PI / 180), y: cy + r * Math.sin(ea * Math.PI / 180) };
+    return { ...d, d: `M${s.x},${s.y} A${r},${r} 0 ${ea - sa > 180 ? 1 : 0} 1 ${e.x},${e.y}` };
+  });
+  return (
+    <svg viewBox={`0 0 ${size} ${size}`} className="w-full" style={{ maxWidth: size, margin: "0 auto" }}>
+      {arcs.map((a, i) => (
+        <path key={i} d={a.d} fill="none" stroke={a.color} strokeWidth="20" strokeLinecap="round"/>
+      ))}
+      <text x={cx} y={cy - 4} textAnchor="middle" fill="#1e293b" fontSize="20" fontWeight="700">{total}</text>
+      <text x={cx} y={cy + 14} textAnchor="middle" fill="#94a3b8" fontSize="10">総案件</text>
+    </svg>
+  );
+};
+
+/* ═══════════════════════════════════════════════════════
+   SECTION 3: DATA & UTILITIES
+   ═══════════════════════════════════════════════════════ */
+const cn = (...c) => c.filter(Boolean).join(" ");
+const fmt = n => `¥${(n || 0).toLocaleString()}`;
+const rnd = (a, b) => Math.floor(Math.random() * (b - a + 1)) + a;
+
+const CATS = [
+  { id: "fuyouhin", label: "不用品回収",       color: "#6366f1", Ic: ic.Package },
+  { id: "hikkoshi", label: "引っ越し",         color: "#8b5cf6", Ic: ic.Truck },
+  { id: "cleaning", label: "ハウスクリーニング", color: "#06b6d4", Ic: ic.Home },
+  { id: "suidou",   label: "水道修理",         color: "#3b82f6", Ic: ic.Droplet },
+  { id: "kagi",     label: "鍵トラブル",       color: "#f59e0b", Ic: ic.Key },
+  { id: "repair",   label: "修理・メンテナンス", color: "#10b981", Ic: ic.Wrench },
+];
+
+const ST = {
+  new:        { l: "新規",     bg: "bg-indigo-50 text-indigo-700 border border-indigo-200" },
+  estimate:   { l: "見積",     bg: "bg-violet-50 text-violet-700 border border-violet-200" },
+  confirmed:  { l: "確定",     bg: "bg-blue-50 text-blue-700 border border-blue-200" },
+  inProgress: { l: "対応中",   bg: "bg-amber-50 text-amber-700 border border-amber-200" },
+  completed:  { l: "完了",     bg: "bg-emerald-50 text-emerald-700 border border-emerald-200" },
+  cancelled:  { l: "キャンセル", bg: "bg-red-50 text-red-700 border border-red-200" },
+};
+
+const PREFS = ["東京都","神奈川県","埼玉県","千葉県","大阪府","愛知県","福岡県","北海道","京都府","兵庫県"];
+const CENTERS = ["ネコ","わん"];
+const CHANNELS = ["受電","LINE","Web"];
+const STAFF = ["田中","佐藤","鈴木","高橋","渡辺","伊藤","山本","中村"];
+const AD_SRC = ["Google広告","Yahoo!広告","Instagram","LINE広告","口コミ","紹介","チラシ"];
+const NAMES = ["あかざわ たつゆき","ほり せいこ","むらた けんじ","たきざわ ゆうこ","かわしま りょう","いしま たける","よしだ あきら","みすぎ はるか","あんどう つよし","さとう めぐみ","おおた しんいち","なかの みき","やまだ こうへい","まつもと さやか","きむら だいすけ","はやし のぞみ","さいとう ゆうた","しみず あい","もりもと りな","いけだ そうた"];
+const ITEMS_LIST = ["ベッドフレーム","マットレス","布団","冷蔵庫","洗濯機","テレビ","エアコン","掃除機","電子レンジ","ソファ","テーブル","衣装ケース","食器棚","タンス","自転車"];
+
+const CASES = (() => {
+  const arr = [];
+  const now = new Date(2026, 1, 13);
+  const stKeys = Object.keys(ST);
+  for (let i = 0; i < 200; i++) {
+    const d = new Date(now); d.setDate(d.getDate() - rnd(0, 60));
+    const cat = CATS[rnd(0, 5)];
+    const st = stKeys[rnd(0, 5)];
+    const amt = rnd(15000, 250000);
+    const payMethod = Math.random() > 0.6 ? "credit" : "cash";
+    arr.push({
+      id: `CS-${String(10000 + i).slice(1)}`,
+      customer: NAMES[rnd(0, 19)],
+      phone: `0${rnd(7, 9)}0-${String(rnd(1000, 9999))}-${String(rnd(1000, 9999))}`,
+      postal: `${rnd(100, 999)}-${String(rnd(0, 9999)).padStart(4, "0")}`,
+      category: cat,
+      status: st,
+      pref: PREFS[rnd(0, 9)],
+      addr: `${PREFS[rnd(0, 9)]}○○市△△町${rnd(1, 10)}-${rnd(1, 30)}`,
+      date: d.toISOString().split("T")[0],
+      time: `${String(rnd(8, 18)).padStart(2, "0")}:${Math.random() > .5 ? "00" : "30"}`,
+      amount: st === "cancelled" ? 0 : amt,
+      source: AD_SRC[rnd(0, 6)],
+      center: CENTERS[rnd(0, 1)],
+      channel: CHANNELS[rnd(0, 2)],
+      staff: STAFF[rnd(0, 7)],
+      items: Array.from({ length: rnd(2, 6) }, () => ITEMS_LIST[rnd(0, 14)]),
+      payMethod: st === "cancelled" ? null : payMethod,
+      urgent: Math.random() > .85,
+      lineAuto: Math.random() > .5,
+    });
+  }
+  return arr.sort((a, b) => b.date.localeCompare(a.date));
+})();
+
+/* LINE受信メッセージ（実際のフォーマット準拠） */
+const LINE_MSGS = [
+  { id: 1, center: "ネコ", group: "神奈川案件", time: "10:23", status: "pending",
+    raw: "神奈川　ネコ　受電　滝沢\nあかざわ　たつゆき\n〒248-0005\n神奈川県逗子市桜山5-39-16\n桜山ハイム麗生206号室\n090-6195-0960\n2/17　9-12時\n現場のみ\n2月末までに目視希望\nベッドフレーム、マットレス、布団2組、180cmくらい長椅子、1人がけ椅子、42インチテレビ、サイドボード\nパック+初回費用\n相見積もり\n0217",
+    parsed: { pref: "神奈川県", center: "ネコ", ch: "受電", op: "滝沢", name: "あかざわ たつゆき", postal: "248-0005", addr: "神奈川県逗子市桜山5-39-16 桜山ハイム麗生206号室", phone: "090-6195-0960", date: "2/17", time: "9-12時", items: "ベッドフレーム、マットレス他5品", note: "パック+初回費用 / 相見積もり" }},
+  { id: 2, center: "ネコ", group: "神奈川案件", time: "10:45", status: "registered",
+    raw: "神奈川　ネコ　LINE　伴\nほり　せいこ\n〒227-0048\n神奈川県横浜市青葉区柿の木台5-13\nモナリエ101\n080-3040-4203\n2/12　10〜12時\n見積→作業\n洗濯機と冷蔵庫とベッドフレーム\n希望パック　記載なし\nS又はMパック〜・割地無料お見積り案内\n0212",
+    parsed: { pref: "神奈川県", center: "ネコ", ch: "LINE", op: "伴", name: "ほり せいこ", postal: "227-0048", addr: "神奈川県横浜市青葉区柿の木台5-13 モナリエ101", phone: "080-3040-4203", date: "2/12", time: "10〜12時", items: "洗濯機、冷蔵庫、ベッドフレーム", note: "見積→作業 / S又はMパック" }},
+  { id: 3, center: "わん", group: "東京案件", time: "11:02", status: "pending",
+    raw: "東京　わん　受電　山田\nおおた　しんいち\n〒160-0023\n東京都新宿区西新宿1-2-3\nグランドタワー1505\n090-1234-5678\n2/14　14-16時\n緊急・当日希望\nエアコン取外し、冷蔵庫、洗濯機、テーブル\nパック希望\n0214",
+    parsed: { pref: "東京都", center: "わん", ch: "受電", op: "山田", name: "おおた しんいち", postal: "160-0023", addr: "東京都新宿区西新宿1-2-3 グランドタワー1505", phone: "090-1234-5678", date: "2/14", time: "14-16時", items: "エアコン、冷蔵庫、洗濯機、テーブル", note: "緊急・当日希望 / パック希望" }},
+  { id: 4, center: "ネコ", group: "埼玉案件", time: "11:30", status: "error",
+    raw: "埼玉　ネコ　Web\nきむら　だいすけ\n330-0000\n埼玉県さいたま市\n不明\n2/15\nハウスクリーニング希望",
+    parsed: { pref: "埼玉県", center: "ネコ", ch: "Web", op: "—", name: "きむら だいすけ", postal: "330-0000", addr: "埼玉県さいたま市（詳細不明）", phone: "未記載", date: "2/15", time: "未指定", items: "ハウスクリーニング", note: "⚠ 電話番号・住所詳細・時間が未記載" }},
+  { id: 5, center: "ネコ", group: "神奈川案件", time: "12:15", status: "pending",
+    raw: "神奈川　ネコ　受電　滝沢\nやまだ　こうへい\n〒251-0052\n神奈川県藤沢市藤沢1-5-7\nパレス藤沢302\n080-9876-5432\n2/16　9-11時\n引っ越し\n2DK → 1K\nダンボール20箱程度、家電一式\n0216",
+    parsed: { pref: "神奈川県", center: "ネコ", ch: "受電", op: "滝沢", name: "やまだ こうへい", postal: "251-0052", addr: "神奈川県藤沢市藤沢1-5-7 パレス藤沢302", phone: "080-9876-5432", date: "2/16", time: "9-11時", items: "引っ越し 2DK→1K（ダンボール20箱、家電一式）", note: "" }},
+];
+
+/* 精算データ */
+const SETTLEMENT = [
+  { staff: "田中", customer: "むらた", amount: 40000, pay: "cash" },
+  { staff: "佐藤", customer: "たきざわ", amount: 22000, pay: "cash" },
+  { staff: "鈴木", customer: "かわしま", amount: 41046, creditExtra: 1654, pay: "mixed" },
+  { staff: "佐藤", customer: "ほり", amount: 75000, pay: "cash" },
+  { staff: "佐藤", customer: "みすぎ", amount: 0, pay: "cancel" },
+  { staff: "高橋", customer: "いしま", amount: 166269, creditExtra: 6731, pay: "mixed" },
+  { staff: "渡辺", customer: "よしだ", amount: 100000, pay: "cash" },
+];
+
+const monthlyRev = Array.from({ length: 12 }, (_, i) => ({ label: `${i + 1}月`, 売上: rnd(250, 550) * 10000 }));
+const weekData = ["日","月","火","水","木","金","土"].map(d => ({ label: d, 案件数: rnd(5, 28) }));
+const catDonut = CATS.map(c => ({ name: c.label, value: rnd(15, 60), color: c.color }));
+const hourData = Array.from({ length: 12 }, (_, i) => ({ label: `${i + 8}時`, 案件数: rnd(2, 15) + (i > 1 && i < 9 ? 6 : 0) }));
+
+const notifs = [
+  { id: 1, type: "urgent", msg: "当日依頼が3件あります", time: "5分前" },
+  { id: 2, type: "auto",   msg: "LINE経由で新規案件が自動登録", time: "12分前" },
+  { id: 3, type: "cancel", msg: "CS-0023がキャンセル", time: "25分前" },
+  { id: 4, type: "done",   msg: "CS-0045完了（¥85,000）", time: "1時間前" },
+];
+
+/* ---- 広告プラットフォーム & LP データ ---- */
+const PLATFORMS = [
+  { id: "google",    name: "Google広告",     type: "リスティング", color: "#4285f4", accent: "bg-blue-50 text-blue-700 border-blue-200" },
+  { id: "yahoo",     name: "Yahoo!広告",     type: "リスティング", color: "#ff0033", accent: "bg-red-50 text-red-700 border-red-200" },
+  { id: "instagram", name: "Instagram広告",  type: "SNS",         color: "#e1306c", accent: "bg-pink-50 text-pink-700 border-pink-200" },
+  { id: "facebook",  name: "Facebook広告",   type: "SNS",         color: "#1877f2", accent: "bg-sky-50 text-sky-700 border-sky-200" },
+  { id: "line_ad",   name: "LINE広告",       type: "SNS",         color: "#06c755", accent: "bg-green-50 text-green-700 border-green-200" },
+  { id: "referral",  name: "口コミ・紹介",   type: "オーガニック", color: "#f59e0b", accent: "bg-amber-50 text-amber-700 border-amber-200" },
+];
+
+const LPS = [
+  { id: "lp-001", name: "不用品回収_東京_メイン",       url: "https://example.com/fuyouhin-tokyo",     cat: "fuyouhin", platform: "google",    area: "東京都",   status: "active",  cost: 285000, impressions: 42000, clicks: 1890, cases: 67, revenue: 3685000 },
+  { id: "lp-002", name: "不用品回収_神奈川_メイン",     url: "https://example.com/fuyouhin-kanagawa",  cat: "fuyouhin", platform: "google",    area: "神奈川県", status: "active",  cost: 195000, impressions: 31000, clicks: 1430, cases: 48, revenue: 2496000 },
+  { id: "lp-003", name: "引っ越し_関東_春キャンペーン", url: "https://example.com/hikkoshi-spring",    cat: "hikkoshi", platform: "yahoo",     area: "関東",     status: "active",  cost: 180000, impressions: 28000, clicks: 1120, cases: 35, revenue: 2800000 },
+  { id: "lp-004", name: "ハウスクリーニング_東京",       url: "https://example.com/cleaning-tokyo",     cat: "cleaning", platform: "google",    area: "東京都",   status: "active",  cost: 120000, impressions: 19500, clicks: 780,  cases: 28, revenue: 1540000 },
+  { id: "lp-005", name: "不用品回収_SNS訴求",           url: "https://example.com/fuyouhin-sns",       cat: "fuyouhin", platform: "instagram", area: "全国",     status: "active",  cost: 95000,  impressions: 85000, clicks: 2100, cases: 22, revenue: 1100000 },
+  { id: "lp-006", name: "水道修理_緊急対応LP",          url: "https://example.com/suidou-emergency",   cat: "suidou",   platform: "google",    area: "東京都",   status: "active",  cost: 150000, impressions: 22000, clicks: 1320, cases: 41, revenue: 2870000 },
+  { id: "lp-007", name: "不用品回収_LINE友達登録",      url: "https://example.com/fuyouhin-line",      cat: "fuyouhin", platform: "line_ad",   area: "関東",     status: "paused",  cost: 60000,  impressions: 35000, clicks: 980,  cases: 12, revenue: 540000 },
+  { id: "lp-008", name: "引っ越し_Yahoo検索",           url: "https://example.com/hikkoshi-yahoo",     cat: "hikkoshi", platform: "yahoo",     area: "関東",     status: "paused",  cost: 85000,  impressions: 15000, clicks: 620,  cases: 15, revenue: 1050000 },
+];
+
+/* ═══════════════════════════════════════════════════════
+   SECTION 4: SHARED UI COMPONENTS
+   ═══════════════════════════════════════════════════════ */
+const Badge = ({ children, className }) => (
+  <span className={cn("inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium", className)}>
+    {children}
+  </span>
+);
+
+const Card = ({ children, className, onClick }) => (
+  <div onClick={onClick} className={cn(
+    "bg-white rounded-2xl border border-slate-200/60 shadow-sm hover:shadow-md transition-all duration-300",
+    onClick && "cursor-pointer", className
+  )}>
+    {children}
+  </div>
+);
+
+const Stat = ({ icon: II, label, value, change, up, sub, accent }) => (
+  <Card className="p-5 hover:scale-[1.02] transition-transform duration-300 slide-up">
+    <div className="flex items-start justify-between mb-3">
+      <div className={cn("p-2.5 rounded-xl", accent)}><II size={20} stroke="white"/></div>
+      {change && (
+        <div className={cn("flex items-center gap-0.5 text-xs font-semibold px-2 py-1 rounded-lg",
+          up ? "text-emerald-700 bg-emerald-50" : "text-red-600 bg-red-50")}>
+          {up ? <ic.ArrowUp size={14}/> : <ic.ArrowDn size={14}/>}{change}
+        </div>
+      )}
+    </div>
+    <p className="text-2xl font-bold text-slate-900 tracking-tight">{value}</p>
+    <p className="text-sm text-slate-500 mt-1">{label}</p>
+    {sub && <p className="text-xs text-slate-400 mt-0.5">{sub}</p>}
+  </Card>
+);
+
+const Tab = ({ active, children, onClick, count }) => (
+  <button onClick={onClick} className={cn(
+    "px-4 py-2 text-sm font-medium rounded-lg transition-all flex items-center gap-2",
+    active ? "bg-indigo-600 text-white shadow-lg shadow-indigo-200" : "text-slate-500 hover:text-slate-800 hover:bg-slate-100"
+  )}>
+    {children}
+    {count != null && <span className={cn("text-xs px-1.5 rounded-full",
+      active ? "bg-white/20" : "bg-slate-200")}>{count}</span>}
+  </button>
+);
+
+const SearchInput = ({ value, onChange, placeholder }) => (
+  <div className="relative">
+    <ic.Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"/>
+    <input type="text" value={value} onChange={e => onChange(e.target.value)}
+      placeholder={placeholder || "検索..."}
+      className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition-all"/>
+  </div>
+);
+
+const SubLabel = ({ icon: II, text }) => (
+  <p className="text-xs text-slate-400 flex items-center gap-1 px-3 py-1.5 bg-slate-50 rounded-lg border border-dashed border-slate-200">
+    <II size={12}/>{text}
+  </p>
+);
+
+/* ═══════════════════════════════════════════════════════
+   SECTION 5: DASHBOARD
+   ═══════════════════════════════════════════════════════ */
+const Dashboard = ({ onNav }) => {
+  const s = useMemo(() => {
+    const tm = CASES.filter(c => c.date.startsWith("2026-02"));
+    const co = CASES.filter(c => c.status === "completed");
+    const mr = tm.filter(c => c.status === "completed").reduce((s, c) => s + c.amount, 0);
+    const cr = ((CASES.filter(c => c.status === "cancelled").length / CASES.length) * 100).toFixed(1);
+    const avg = co.length ? Math.floor(co.reduce((s, c) => s + c.amount, 0) / co.length) : 0;
+    return { mr, tm: tm.length, cr, avg, co: co.length };
+  }, []);
+
+  const urgent = CASES.filter(c => c.urgent && c.status !== "completed" && c.status !== "cancelled").slice(0, 4);
+  const recent = CASES.slice(0, 7);
+
+  return (
+    <div className="space-y-6 fade-in">
+      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">ダッシュボード</h1>
+          <p className="text-sm text-slate-500 mt-0.5">2026年2月13日（金）の概況</p>
+        </div>
+        <button className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700 shadow-lg shadow-indigo-200 self-start">
+          <ic.Download size={16}/> レポート出力
+        </button>
+      </div>
+
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <Stat icon={ic.Yen} label="今月の売上" value={fmt(s.mr)} change="+12.5%" up sub="目標達成率 78%" accent="bg-gradient-to-br from-indigo-500 to-indigo-600"/>
+        <Stat icon={ic.FileText} label="今月の案件数" value={s.tm.toLocaleString()} change="+8件" up sub={`完了: ${s.co}件`} accent="bg-gradient-to-br from-violet-500 to-violet-600"/>
+        <Stat icon={ic.Pct} label="キャンセル率" value={`${s.cr}%`} change="-2.3%" up sub="前月比改善" accent="bg-gradient-to-br from-cyan-500 to-cyan-600"/>
+        <Stat icon={ic.Target} label="平均案件単価" value={fmt(s.avg)} change="+¥3,200" up sub="前月比" accent="bg-gradient-to-br from-emerald-500 to-emerald-600"/>
+      </div>
+
+      {urgent.length > 0 && (
+        <Card className="p-4 border-amber-200 bg-gradient-to-r from-amber-50 to-orange-50">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="p-2 bg-amber-500 rounded-xl"><ic.Zap size={16} stroke="white"/></div>
+            <div><h3 className="font-bold text-amber-900">緊急・当日案件</h3><p className="text-xs text-amber-600">{urgent.length}件の対応待ち</p></div>
+          </div>
+          <div className="space-y-2">
+            {urgent.map(c => (
+              <div key={c.id} className="flex items-center justify-between bg-white/80 rounded-xl px-4 py-2.5 border border-amber-100">
+                <div className="flex items-center gap-3 flex-wrap">
+                  <span className="text-xs font-mono text-amber-600 bg-amber-100 px-2 py-0.5 rounded">{c.id}</span>
+                  <span className="text-sm font-medium text-slate-800">{c.customer}</span>
+                  <Badge className="bg-amber-100 text-amber-700 border border-amber-200"><c.category.Ic size={12}/> {c.category.label}</Badge>
+                </div>
+                <div className="flex items-center gap-3 text-sm">
+                  <span className="text-slate-500 hidden sm:flex items-center gap-1"><ic.MapPin size={14}/>{c.pref}</span>
+                  <span className="text-slate-500 flex items-center gap-1"><ic.Clock size={14}/>{c.time}</span>
+                  <button className="px-3 py-1 bg-amber-500 text-white text-xs rounded-lg hover:bg-amber-600 font-medium">対応する</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <Card className="lg:col-span-2 p-5">
+          <h3 className="font-bold text-slate-800 mb-4">売上推移（月次）</h3>
+          <AreaSVG data={monthlyRev} dk="売上" h={240} color="#6366f1" gid="rev"/>
+        </Card>
+        <Card className="p-5">
+          <h3 className="font-bold text-slate-800 mb-4">カテゴリ別案件</h3>
+          <Donut data={catDonut} size={170}/>
+          <div className="space-y-2 mt-4">
+            {catDonut.map(d => (
+              <div key={d.name} className="flex items-center justify-between text-sm">
+                <div className="flex items-center gap-2">
+                  <div className="w-2.5 h-2.5 rounded-full" style={{ background: d.color }}/>
+                  <span className="text-slate-600">{d.name}</span>
+                </div>
+                <span className="font-medium text-slate-800">{d.value}件</span>
+              </div>
+            ))}
+          </div>
+        </Card>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <Card className="p-5">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-bold text-slate-800">直近の案件</h3>
+            <button onClick={() => onNav("cases")} className="text-sm text-indigo-600 font-medium flex items-center gap-1">すべて表示 <ic.ChevR size={16}/></button>
+          </div>
+          <div className="space-y-1">
+            {recent.map(c => (
+              <div key={c.id} className="flex items-center justify-between py-2.5 px-3 rounded-xl hover:bg-slate-50 transition-colors">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-9 h-9 rounded-xl flex items-center justify-center text-white text-xs font-bold shrink-0" style={{ background: c.category.color }}>
+                    {c.category.label[0]}
+                  </div>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium text-slate-800 truncate">{c.customer}</span>
+                      <span className="text-xs text-slate-400 font-mono">{c.id}</span>
+                      {c.urgent && <span className="w-2 h-2 bg-amber-500 rounded-full anim-pulse"/>}
+                    </div>
+                    <p className="text-xs text-slate-400">{c.date} {c.time} · {c.pref}</p>
+                  </div>
+                </div>
+                <Badge className={ST[c.status].bg}>{ST[c.status].l}</Badge>
+              </div>
+            ))}
+          </div>
+        </Card>
+        <Card className="p-5">
+          <h3 className="font-bold text-slate-800 mb-4">時間帯別の案件分布</h3>
+          <BarSVG data={hourData} dk="案件数" h={260}/>
+        </Card>
+      </div>
+    </div>
+  );
+};
+
+/* ═══════════════════════════════════════════════════════
+   SECTION 6: LINE受信（自動取込） ★ Core Innovation
+   ═══════════════════════════════════════════════════════ */
+const LineInbox = () => {
+  const [sel, setSel] = useState(LINE_MSGS[0]);
+  const [autoMode, setAutoMode] = useState(true);
+  const pending = LINE_MSGS.filter(m => m.status === "pending").length;
+
+  const stColor = { pending: "bg-amber-400", registered: "bg-emerald-400", error: "bg-red-400" };
+  const stLabel = { pending: "未処理", registered: "登録済", error: "要確認" };
+
+  return (
+    <div className="space-y-5 fade-in">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">LINE受信（自動取込）</h1>
+          <SubLabel icon={ic.Zap} text="LINE → TimeTree の手動転記を自動化"/>
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 px-4 py-2 bg-emerald-50 border border-emerald-200 rounded-xl">
+            <div className="w-2 h-2 bg-emerald-500 rounded-full anim-pulse"/><span className="text-sm font-medium text-emerald-700">Webhook接続中</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {[
+          { icon: ic.Zap, v: "847", l: "今月の自動取込", color: "bg-emerald-500", bg: "bg-gradient-to-br from-green-50 to-emerald-50 border-emerald-100" },
+          { icon: ic.Refresh, v: "98.2%", l: "自動認識精度", color: "bg-blue-500", bg: "" },
+          { icon: ic.Clock, v: "~3秒", l: "平均処理時間", color: "bg-violet-500", bg: "" },
+        ].map((s, i) => (
+          <Card key={i} className={cn("p-5", s.bg)}>
+            <div className="flex items-center gap-3">
+              <div className={cn("p-2.5 rounded-xl", s.color)}><s.icon size={20} stroke="white"/></div>
+              <div><p className="text-2xl font-bold text-slate-900">{s.v}</p><p className="text-sm text-slate-500">{s.l}</p></div>
+            </div>
+          </Card>
+        ))}
+      </div>
+
+      <Card className="p-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-indigo-100 rounded-xl"><ic.Shield size={18} stroke="#4f46e5"/></div>
+            <div><h3 className="font-semibold text-slate-800">自動案件登録モード</h3><p className="text-xs text-slate-400">LINEメッセージを自動解析し案件として即時登録</p></div>
+          </div>
+          <button onClick={() => setAutoMode(!autoMode)} className={cn("relative w-14 h-7 rounded-full transition-colors", autoMode ? "bg-indigo-600" : "bg-slate-300")}>
+            <div className={cn("absolute top-0.5 w-6 h-6 bg-white rounded-full shadow transition-transform", autoMode ? "translate-x-7" : "translate-x-0.5")}/>
+          </button>
+        </div>
+      </Card>
+
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-4" style={{ minHeight: 480 }}>
+        {/* LEFT: Message List */}
+        <Card className="lg:col-span-2 flex flex-col overflow-hidden">
+          <div className="p-4 border-b border-slate-100">
+            <h3 className="font-bold text-slate-800 text-sm">受信メッセージ</h3>
+            <p className="text-xs text-slate-400">{pending}件 未処理</p>
+          </div>
+          <div className="flex-1 overflow-y-auto">
+            {LINE_MSGS.map(m => (
+              <div key={m.id} onClick={() => setSel(m)}
+                className={cn("flex items-start gap-3 p-4 border-b border-slate-50 cursor-pointer transition-colors",
+                  sel?.id === m.id ? "bg-indigo-50" : "hover:bg-slate-50")}>
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-xs shrink-0" style={{ background: "#06C755" }}>
+                  {m.center}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-slate-800">{m.group}</span>
+                    <span className="text-xs text-slate-400">{m.time}</span>
+                  </div>
+                  <p className="text-xs text-slate-500 truncate mt-0.5">{m.raw.split("\n")[1]}</p>
+                  <div className="flex items-center gap-2 mt-1.5">
+                    <span className={cn("w-2 h-2 rounded-full", stColor[m.status])}/>
+                    <span className="text-[10px] text-slate-400">{stLabel[m.status]}</span>
+                    {m.status === "error" && <span className="text-[10px] text-red-500 font-medium">⚠ 情報不足</span>}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+
+        {/* RIGHT: Parsed Preview */}
+        <Card className="lg:col-span-3 flex flex-col overflow-hidden">
+          {sel ? (
+            <>
+              <div className="p-4 border-b border-slate-100 flex items-center justify-between">
+                <h3 className="font-bold text-slate-800 text-sm">メッセージ解析プレビュー</h3>
+                <Badge className={cn("border",
+                  sel.status === "pending" ? "bg-amber-50 text-amber-700 border-amber-200" :
+                  sel.status === "registered" ? "bg-emerald-50 text-emerald-700 border-emerald-200" :
+                  "bg-red-50 text-red-700 border-red-200")}>{stLabel[sel.status]}</Badge>
+              </div>
+              <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                {/* Raw message */}
+                <div>
+                  <p className="text-xs font-medium text-slate-400 mb-2">受信テキスト（LINE原文）</p>
+                  <div className="bg-slate-800 rounded-xl p-4 font-mono text-xs text-green-400 whitespace-pre-wrap leading-relaxed">
+                    {sel.raw}
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-center gap-2 text-indigo-500">
+                  <ic.Zap size={16}/><span className="text-xs font-bold">AI自動解析</span><ic.ArrowDn size={16} className="rotate-0"/>
+                </div>
+
+                {/* Parsed result */}
+                <div>
+                  <p className="text-xs font-medium text-slate-400 mb-2">解析結果（構造化データ）</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    {[
+                      { icon: ic.MapPin, l: "エリア", v: sel.parsed.pref },
+                      { icon: ic.Building, l: "コールセンター", v: `${sel.parsed.center}（${sel.parsed.ch}）` },
+                      { icon: ic.User, l: "顧客名", v: sel.parsed.name },
+                      { icon: ic.Phone, l: "電話番号", v: sel.parsed.phone },
+                      { icon: ic.MapPin, l: "住所", v: sel.parsed.addr },
+                      { icon: ic.Calendar, l: "希望日時", v: `${sel.parsed.date} ${sel.parsed.time}` },
+                      { icon: ic.Package, l: "品目", v: sel.parsed.items },
+                      { icon: ic.FileText, l: "備考", v: sel.parsed.note || "なし" },
+                    ].map(({ icon: II, l, v }) => (
+                      <div key={l} className={cn("flex items-start gap-2.5 p-3 rounded-xl border",
+                        v.includes("未記載") || v.includes("不明") || v.includes("⚠") ? "bg-red-50 border-red-200" : "bg-slate-50 border-slate-100")}>
+                        <II size={14} className="text-slate-400 mt-0.5 shrink-0"/>
+                        <div><p className="text-[10px] text-slate-400">{l}</p><p className="text-sm font-medium text-slate-700">{v}</p></div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex gap-2 pt-2">
+                  {sel.status === "pending" && (
+                    <>
+                      <button className="flex-1 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700 flex items-center justify-center gap-2">
+                        <ic.Check size={16}/> 案件として登録
+                      </button>
+                      <button className="px-4 py-2.5 border border-slate-200 text-slate-700 rounded-xl text-sm font-medium hover:bg-slate-50">
+                        編集して登録
+                      </button>
+                    </>
+                  )}
+                  {sel.status === "error" && (
+                    <button className="flex-1 py-2.5 bg-amber-500 text-white rounded-xl text-sm font-medium hover:bg-amber-600 flex items-center justify-center gap-2">
+                      <ic.FileText size={16}/> 手動で情報を補完
+                    </button>
+                  )}
+                  {sel.status === "registered" && (
+                    <div className="flex-1 py-2.5 bg-emerald-50 text-emerald-700 rounded-xl text-sm font-medium text-center border border-emerald-200">
+                      ✓ CS-0023 として登録済み
+                    </div>
+                  )}
+                </div>
+              </div>
+            </>
+          ) : (
+            <div className="flex-1 flex items-center justify-center text-slate-400 text-sm">メッセージを選択してください</div>
+          )}
+        </Card>
+      </div>
+    </div>
+  );
+};
+
+/* ═══════════════════════════════════════════════════════
+   SECTION 7: CASE MANAGEMENT
+   ═══════════════════════════════════════════════════════ */
+const CaseMgmt = () => {
+  const [view, setView] = useState("cases");
+  const [search, setSearch] = useState("");
+  const [sf, setSf] = useState("all");
+  const [sel, setSel] = useState(null);
+  const [sortKey, setSortKey] = useState("total");
+
+  const filtered = useMemo(() => CASES.filter(c =>
+    (!search || c.customer.includes(search) || c.id.toLowerCase().includes(search.toLowerCase()) || c.phone.includes(search)) &&
+    (sf === "all" || c.status === sf)
+  ), [search, sf]);
+
+  const counts = useMemo(() => {
+    const o = { all: CASES.length };
+    Object.keys(ST).forEach(s => { o[s] = CASES.filter(c => c.status === s).length; });
+    return o;
+  }, []);
+
+  /* 顧客ビュー用 */
+  const custs = useMemo(() => {
+    const map = {};
+    CASES.forEach(c => {
+      if (!map[c.customer]) map[c.customer] = { name: c.customer, phone: c.phone, pref: c.pref, cases: [], total: 0, last: c.date, cats: new Set() };
+      map[c.customer].cases.push(c);
+      map[c.customer].total += c.amount;
+      map[c.customer].cats.add(c.category.label);
+      if (c.date > map[c.customer].last) map[c.customer].last = c.date;
+    });
+    return Object.values(map);
+  }, []);
+  const custFiltered = useMemo(() => {
+    const arr = custs.filter(c => !search || c.name.includes(search) || c.phone.includes(search));
+    if (sortKey === "total") return arr.sort((a, b) => b.total - a.total);
+    if (sortKey === "cases") return arr.sort((a, b) => b.cases.length - a.cases.length);
+    if (sortKey === "last") return arr.sort((a, b) => b.last.localeCompare(a.last));
+    return arr.sort((a, b) => a.name.localeCompare(b.name));
+  }, [custs, search, sortKey]);
+  const custColors = ["bg-indigo-500","bg-violet-500","bg-cyan-500","bg-emerald-500","bg-amber-500","bg-rose-500"];
+  const vipThreshold = custs.length > 0 ? [...custs].sort((a, b) => b.total - a.total).slice(0, 3).pop()?.total || 0 : 0;
+
+  return (
+    <div className="space-y-5 fade-in">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">案件管理</h1>
+          <SubLabel icon={ic.Calendar} text="TimeTree のスケジュール管理を代替"/>
+        </div>
+        <button className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700 shadow-lg shadow-indigo-200 self-start">
+          <ic.Plus size={16}/> 新規案件
+        </button>
+      </div>
+
+      {/* 案件 / 顧客 切り替え */}
+      <div className="flex gap-1 bg-white rounded-2xl p-1.5 border border-slate-200/60 shadow-sm w-fit">
+        {[["cases","案件一覧",ic.FileText],["customers","顧客一覧",ic.Users]].map(([k,l,I]) => (
+          <button key={k} onClick={() => setView(k)} className={cn(
+            "flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all",
+            view === k ? "bg-indigo-50 text-indigo-700 shadow-sm" : "text-slate-400 hover:text-slate-600 hover:bg-slate-50"
+          )}><I size={16} stroke={view === k ? "#4f46e5" : "currentColor"}/>{l}</button>
+        ))}
+      </div>
+
+      {/* ===== 案件ビュー ===== */}
+      {view === "cases" && <>
+      <Card className="p-4">
+        <div className="flex flex-col lg:flex-row gap-3">
+          <div className="flex-1"><SearchInput value={search} onChange={setSearch} placeholder="案件ID、顧客名、電話番号で検索..."/></div>
+        </div>
+        <div className="flex gap-2 mt-3 flex-wrap">
+          <Tab active={sf === "all"} onClick={() => setSf("all")} count={counts.all}>すべて</Tab>
+          {Object.entries(ST).map(([k, v]) => (
+            <Tab key={k} active={sf === k} onClick={() => setSf(k)} count={counts[k]}>{v.l}</Tab>
+          ))}
+        </div>
+      </Card>
+
+      <Card className="overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-slate-100">
+                {["案件ID","顧客名","カテゴリ","エリア","日時","ステータス","金額","担当"].map(h => (
+                  <th key={h} className="text-left text-xs font-semibold text-slate-400 uppercase tracking-wider px-5 py-3.5">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.slice(0, 15).map(c => (
+                <tr key={c.id} className="border-b border-slate-50 hover:bg-indigo-50/30 transition-colors cursor-pointer" onClick={() => setSel(sel?.id === c.id ? null : c)}>
+                  <td className="px-5 py-3.5">
+                    <span className="text-sm font-mono font-medium text-indigo-600">{c.id}</span>
+                    {c.urgent && <ic.Zap size={14} stroke="#f59e0b" className="inline ml-1"/>}
+                    {c.lineAuto && <span className="ml-1 text-[10px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full">LINE</span>}
+                  </td>
+                  <td className="px-5 py-3.5">
+                    <div className="text-sm font-medium text-slate-800">{c.customer}</div>
+                    <div className="text-xs text-slate-400 flex items-center gap-1"><ic.Phone size={12}/>{c.phone}</div>
+                  </td>
+                  <td className="px-5 py-3.5">
+                    <div className="flex items-center gap-2">
+                      <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{ background: c.category.color + "20" }}>
+                        <c.category.Ic size={14} stroke={c.category.color}/>
+                      </div>
+                      <span className="text-sm text-slate-600">{c.category.label}</span>
+                    </div>
+                  </td>
+                  <td className="px-5 py-3.5 text-sm text-slate-600"><ic.MapPin size={14} className="inline text-slate-400 mr-1"/>{c.pref}</td>
+                  <td className="px-5 py-3.5 text-sm text-slate-600"><div>{c.date}</div><div className="text-xs text-slate-400">{c.time}</div></td>
+                  <td className="px-5 py-3.5"><Badge className={ST[c.status].bg}>{ST[c.status].l}</Badge></td>
+                  <td className="px-5 py-3.5 text-sm font-semibold text-slate-700">{c.amount > 0 ? fmt(c.amount) : <span className="text-slate-300">—</span>}</td>
+                  <td className="px-5 py-3.5 text-sm text-slate-500">{c.staff}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <div className="flex items-center justify-between px-5 py-3 border-t border-slate-100">
+          <p className="text-sm text-slate-500">1-15 / {filtered.length}件</p>
+          <div className="flex gap-1">
+            {[1, 2, 3].map(p => (
+              <button key={p} className={cn("w-8 h-8 rounded-lg text-sm font-medium", p === 1 ? "bg-indigo-600 text-white" : "text-slate-500 hover:bg-slate-100")}>{p}</button>
+            ))}
+          </div>
+        </div>
+      </Card>
+      </>}
+
+      {/* ===== 顧客ビュー ===== */}
+      {view === "customers" && <>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <Stat icon={ic.Users} label="総顧客数" value={`${custs.length}名`} accent="bg-gradient-to-br from-indigo-500 to-indigo-600"/>
+        <Stat icon={ic.Star} label="VIP顧客" value={`${custs.filter(c => c.total >= vipThreshold).length}名`} accent="bg-gradient-to-br from-amber-500 to-amber-600"/>
+        <Stat icon={ic.Yen} label="顧客平均単価" value={fmt(Math.round(custs.reduce((s,c) => s + c.total, 0) / (custs.length || 1)))} accent="bg-gradient-to-br from-emerald-500 to-emerald-600"/>
+        <Stat icon={ic.Activity} label="リピーター" value={`${custs.filter(c => c.cases.length >= 15).length}名`} sub={`${custs.length > 0 ? Math.round(custs.filter(c => c.cases.length >= 15).length / custs.length * 100) : 0}%`} accent="bg-gradient-to-br from-violet-500 to-violet-600"/>
+      </div>
+      <Card className="overflow-hidden">
+        <div className="p-4 border-b border-slate-100 flex items-center justify-between gap-3 flex-wrap">
+          <div className="flex-1 min-w-[200px] max-w-md"><SearchInput value={search} onChange={setSearch} placeholder="顧客名・電話番号で検索..."/></div>
+          <div className="flex gap-1 bg-slate-100 rounded-lg p-0.5">
+            {[["total","売上順"],["cases","案件数順"],["last","最新順"],["name","名前順"]].map(([k,l]) => (
+              <button key={k} onClick={() => setSortKey(k)} className={cn(
+                "px-3 py-1.5 rounded-md text-xs font-medium transition-all",
+                sortKey === k ? "bg-white text-indigo-700 shadow-sm" : "text-slate-400 hover:text-slate-600"
+              )}>{l}</button>
+            ))}
+          </div>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead><tr className="border-b border-slate-100">
+              {["","顧客名","電話番号","エリア","案件数","総売上","利用カテゴリ","最終利用","ステータス"].map(h => (
+                <th key={h} className="text-left text-xs font-semibold text-slate-400 uppercase px-4 py-3 whitespace-nowrap">{h}</th>
+              ))}
+            </tr></thead>
+            <tbody>
+              {custFiltered.slice(0, 30).map((c, i) => {
+                const isVip = c.total >= vipThreshold;
+                const rank = [...custs].sort((a, b) => b.total - a.total).findIndex(x => x.name === c.name);
+                return (
+                  <tr key={c.name} className="border-b border-slate-50 hover:bg-slate-50/80 cursor-pointer">
+                    <td className="px-4 py-3 text-center">
+                      <div className={cn("w-9 h-9 rounded-lg flex items-center justify-center text-white text-xs font-bold", custColors[rank % 6])}>
+                        {c.name[0]}{c.name[1]}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium text-slate-800">{c.name}</span>
+                        {isVip && <Badge className="bg-amber-100 text-amber-700 border border-amber-200"><ic.Star size={10}/>VIP</Badge>}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-sm text-slate-600 font-mono">{c.phone}</td>
+                    <td className="px-4 py-3 text-sm text-slate-600">{c.pref}</td>
+                    <td className="px-4 py-3">
+                      <span className={cn("text-sm font-semibold", c.cases.length >= 15 ? "text-indigo-600" : "text-slate-700")}>{c.cases.length}件</span>
+                    </td>
+                    <td className="px-4 py-3 text-sm font-bold text-slate-900">{fmt(c.total)}</td>
+                    <td className="px-4 py-3">
+                      <div className="flex gap-1 flex-wrap">
+                        {[...c.cats].slice(0, 2).map(cat => (
+                          <span key={cat} className="text-[10px] px-1.5 py-0.5 bg-slate-100 text-slate-500 rounded">{cat}</span>
+                        ))}
+                        {c.cats.size > 2 && <span className="text-[10px] text-slate-400">+{c.cats.size - 2}</span>}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-sm text-slate-500">{c.last.slice(5)}</td>
+                    <td className="px-4 py-3">
+                      {c.cases.length >= 15
+                        ? <Badge className="bg-indigo-50 text-indigo-700 border border-indigo-200">リピーター</Badge>
+                        : c.cases.length >= 10
+                        ? <Badge className="bg-emerald-50 text-emerald-700 border border-emerald-200">複数利用</Badge>
+                        : <Badge className="bg-slate-50 text-slate-500 border border-slate-200">一般</Badge>
+                      }
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+        <div className="p-3 border-t border-slate-100 text-center">
+          <span className="text-xs text-slate-400">{custFiltered.length}件中 {Math.min(30, custFiltered.length)}件表示</span>
+        </div>
+      </Card>
+      </>}
+
+      {/* Detail Modal */}
+      {sel && (
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setSel(null)}>
+          <Card className="w-full max-w-2xl max-h-[85vh] overflow-y-auto slide-up" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between p-6 border-b border-slate-100">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold" style={{ background: sel.category.color }}>
+                  <sel.category.Ic size={20} stroke="white"/>
+                </div>
+                <div><h2 className="text-lg font-bold text-slate-900">{sel.id} — {sel.customer}</h2><p className="text-sm text-slate-500">{sel.category.label}</p></div>
+              </div>
+              <button onClick={() => setSel(null)} className="p-2 rounded-lg hover:bg-slate-100"><ic.X size={20}/></button>
+            </div>
+            <div className="p-6 grid grid-cols-2 gap-3">
+              {[
+                { i: ic.User, l: "顧客名", v: sel.customer },
+                { i: ic.Phone, l: "電話番号", v: sel.phone },
+                { i: ic.MapPin, l: "住所", v: sel.addr },
+                { i: ic.Calendar, l: "日時", v: `${sel.date} ${sel.time}` },
+                { i: ic.Activity, l: "ステータス", v: ST[sel.status].l },
+                { i: ic.Yen, l: "金額", v: sel.amount > 0 ? fmt(sel.amount) : "未確定" },
+                { i: ic.User, l: "担当スタッフ", v: sel.staff },
+                { i: ic.CreditCard, l: "決済方法", v: sel.payMethod === "credit" ? "クレジット" : sel.payMethod === "cash" ? "現金" : "—" },
+                { i: ic.Building, l: "コールセンター", v: `${sel.center}（${sel.channel}）` },
+                { i: ic.Package, l: "品目", v: sel.items.join("、") },
+              ].map(({ i: II, l, v }) => (
+                <div key={l} className="flex items-start gap-3 p-3 rounded-xl bg-slate-50">
+                  <II size={16} className="text-slate-400 mt-0.5 shrink-0"/>
+                  <div><p className="text-xs text-slate-400">{l}</p><p className="text-sm font-medium text-slate-700">{v}</p></div>
+                </div>
+              ))}
+            </div>
+            <div className="flex gap-2 px-6 pb-6">
+              <button className="flex-1 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700">ステータス更新</button>
+              <button className="flex-1 py-2.5 border border-slate-200 text-slate-700 rounded-xl text-sm font-medium hover:bg-slate-50">編集</button>
+            </div>
+          </Card>
+        </div>
+      )}
+    </div>
+  );
+};
+
+/* ═══════════════════════════════════════════════════════
+   SECTION 8: CALENDAR
+   ═══════════════════════════════════════════════════════ */
+const CalView = () => {
+  const [cur, setCur] = useState(new Date(2026, 1, 1));
+  const y = cur.getFullYear(), m = cur.getMonth();
+  const dim = new Date(y, m + 1, 0).getDate(), fd = new Date(y, m, 1).getDay();
+  const ms = `${y}-${String(m + 1).padStart(2, "0")}`;
+
+  const cByDate = useMemo(() => {
+    const map = {};
+    CASES.forEach(c => { if (!map[c.date]) map[c.date] = []; map[c.date].push(c); });
+    return map;
+  }, []);
+
+  const days = [];
+  for (let i = 0; i < fd; i++) days.push(null);
+  for (let i = 1; i <= dim; i++) days.push(i);
+  const mn = ["1月","2月","3月","4月","5月","6月","7月","8月","9月","10月","11月","12月"];
+  const dn = ["日","月","火","水","木","金","土"];
+  const isToday = d => d === 13 && m === 1 && y === 2026;
+
+  return (
+    <div className="space-y-5 fade-in">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">スケジュール管理</h1>
+          <SubLabel icon={ic.Calendar} text="TimeTree のカレンダーを完全代替"/>
+        </div>
+        <button className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700">
+          <ic.Plus size={16}/> 予定追加
+        </button>
+      </div>
+
+      <Card className="p-5">
+        <div className="flex items-center justify-between mb-5">
+          <button onClick={() => setCur(new Date(y, m - 1, 1))} className="p-2 rounded-lg hover:bg-slate-100"><ic.ChevL size={20}/></button>
+          <h2 className="text-lg font-bold text-slate-800">{y}年 {mn[m]}</h2>
+          <button onClick={() => setCur(new Date(y, m + 1, 1))} className="p-2 rounded-lg hover:bg-slate-100"><ic.ChevR size={20}/></button>
+        </div>
+        <div className="grid grid-cols-7 gap-px bg-slate-200 rounded-xl overflow-hidden border border-slate-200">
+          {dn.map((d, i) => (
+            <div key={d} className={cn("py-2.5 text-center text-xs font-semibold bg-slate-50",
+              i === 0 ? "text-red-400" : i === 6 ? "text-blue-400" : "text-slate-400")}>{d}</div>
+          ))}
+          {days.map((d, i) => {
+            const ds = d ? `${ms}-${String(d).padStart(2, "0")}` : null;
+            const dc = ds ? (cByDate[ds] || []) : [];
+            const dow = i % 7;
+            return (
+              <div key={i} className={cn("min-h-[100px] bg-white p-1.5 hover:bg-slate-50", !d && "bg-slate-50/50")}>
+                {d && (
+                  <>
+                    <div className={cn("w-7 h-7 flex items-center justify-center rounded-lg text-sm font-medium mb-1",
+                      isToday(d) ? "bg-indigo-600 text-white" : dow === 0 ? "text-red-500" : dow === 6 ? "text-blue-500" : "text-slate-700")}>
+                      {d}
+                    </div>
+                    <div className="space-y-0.5">
+                      {dc.slice(0, 3).map(c => (
+                        <div key={c.id} className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] truncate"
+                          style={{ background: c.category.color + "15", color: c.category.color }}>
+                          {c.urgent && <ic.Zap size={10}/>}
+                          <span className="truncate font-medium">{c.time} {c.customer}</span>
+                        </div>
+                      ))}
+                      {dc.length > 3 && <div className="text-[10px] text-slate-400 pl-1.5">+{dc.length - 3}件</div>}
+                    </div>
+                  </>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </Card>
+
+      <Card className="p-5">
+        <h3 className="font-bold text-slate-800 mb-4">今日の予定 — 2月13日</h3>
+        <div className="space-y-2">
+          {(cByDate["2026-02-13"] || CASES.slice(0, 5)).slice(0, 5).map(c => (
+            <div key={c.id} className="flex items-center gap-4 p-3 rounded-xl hover:bg-slate-50 border border-slate-100">
+              <div className="text-center min-w-[50px]"><div className="text-sm font-bold text-slate-800">{c.time}</div></div>
+              <div className="w-1 h-10 rounded-full" style={{ background: c.category.color }}/>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-sm font-medium text-slate-800">{c.customer}</span>
+                  <Badge className={ST[c.status].bg}>{ST[c.status].l}</Badge>
+                  {c.urgent && <Badge className="bg-amber-100 text-amber-700 border border-amber-200"><ic.Zap size={12}/>緊急</Badge>}
+                </div>
+                <p className="text-xs text-slate-400 mt-0.5">{c.category.label} · {c.addr} · 担当: {c.staff}</p>
+              </div>
+              <span className="text-sm font-semibold text-slate-600 hidden sm:inline">{c.amount > 0 ? fmt(c.amount) : ""}</span>
+            </div>
+          ))}
+        </div>
+      </Card>
+    </div>
+  );
+};
+
+/* ═══════════════════════════════════════════════════════
+   SECTION 9: DAILY SETTLEMENT ★ Key Pain Point Resolver
+   ═══════════════════════════════════════════════════════ */
+const SettlementPage = () => {
+  const cashTotal = SETTLEMENT.filter(s => s.pay !== "cancel").reduce((sum, s) => sum + (s.pay === "cash" ? s.amount : s.amount), 0);
+  const creditTotal = SETTLEMENT.filter(s => s.creditExtra).reduce((sum, s) => sum + s.creditExtra, 0);
+  const grandTotal = cashTotal + creditTotal;
+  const cancelCount = SETTLEMENT.filter(s => s.pay === "cancel").length;
+
+  return (
+    <div className="space-y-5 fade-in">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">日報・精算</h1>
+          <SubLabel icon={ic.Calculator} text="精算 → スプレッドシートの手入力を自動化"/>
+        </div>
+        <div className="flex gap-2">
+          <button className="flex items-center gap-2 px-4 py-2 border border-slate-200 rounded-xl text-sm font-medium hover:bg-slate-50">
+            <ic.ChevL size={16}/> 前日
+          </button>
+          <div className="flex items-center gap-2 px-4 py-2 bg-indigo-50 border border-indigo-200 rounded-xl">
+            <ic.Calendar size={16} stroke="#4f46e5"/><span className="text-sm font-medium text-indigo-700">2026/02/13</span>
+          </div>
+          <button className="flex items-center gap-2 px-4 py-2 border border-slate-200 rounded-xl text-sm font-medium hover:bg-slate-50">
+            翌日 <ic.ChevR size={16}/>
+          </button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <Stat icon={ic.Yen} label="売上合計" value={fmt(grandTotal)} accent="bg-gradient-to-br from-indigo-500 to-indigo-600"/>
+        <Stat icon={ic.CreditCard} label="現金売上" value={fmt(cashTotal)} accent="bg-gradient-to-br from-emerald-500 to-emerald-600"/>
+        <Stat icon={ic.CreditCard} label="クレジット" value={fmt(creditTotal)} accent="bg-gradient-to-br from-violet-500 to-violet-600"/>
+        <Stat icon={ic.XCircle} label="キャンセル" value={`${cancelCount}件`} accent="bg-gradient-to-br from-red-400 to-red-500"/>
+      </div>
+
+      <Card className="overflow-hidden">
+        <div className="p-5 border-b border-slate-100 flex items-center justify-between">
+          <h3 className="font-bold text-slate-800">スタッフ別精算</h3>
+          <button className="flex items-center gap-2 px-3 py-1.5 bg-indigo-600 text-white rounded-lg text-xs font-medium hover:bg-indigo-700">
+            <ic.Download size={14}/> スプレッドシート出力
+          </button>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-slate-100">
+                {["担当","顧客名","金額","クレジット分","決済方法","ステータス"].map(h => (
+                  <th key={h} className="text-left text-xs font-semibold text-slate-400 uppercase px-5 py-3">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {SETTLEMENT.map((s, i) => (
+                <tr key={i} className={cn("border-b border-slate-50", s.pay === "cancel" && "bg-red-50/30")}>
+                  <td className="px-5 py-3.5">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-400 to-violet-500 flex items-center justify-center text-white text-xs font-bold">{s.staff[0]}</div>
+                      <span className="text-sm font-medium text-slate-800">{s.staff}</span>
+                    </div>
+                  </td>
+                  <td className="px-5 py-3.5 text-sm text-slate-700">{s.customer}</td>
+                  <td className="px-5 py-3.5 text-sm font-bold text-slate-900">{s.pay === "cancel" ? "—" : fmt(s.amount)}</td>
+                  <td className="px-5 py-3.5 text-sm text-violet-600 font-medium">{s.creditExtra ? `+${fmt(s.creditExtra)}` : "—"}</td>
+                  <td className="px-5 py-3.5">
+                    {s.pay === "cash" && <Badge className="bg-emerald-50 text-emerald-700 border border-emerald-200">現金</Badge>}
+                    {s.pay === "mixed" && <Badge className="bg-violet-50 text-violet-700 border border-violet-200">現金+クレジット</Badge>}
+                    {s.pay === "cancel" && <Badge className="bg-red-50 text-red-700 border border-red-200">キャンセル</Badge>}
+                  </td>
+                  <td className="px-5 py-3.5">
+                    {s.pay !== "cancel" ? <ic.Check size={16} stroke="#10b981"/> : <ic.XCircle size={16} stroke="#ef4444"/>}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+            <tfoot>
+              <tr className="bg-slate-50 font-bold">
+                <td className="px-5 py-4 text-sm text-slate-800" colSpan="2">合計</td>
+                <td className="px-5 py-4 text-sm text-slate-900">{fmt(cashTotal)}</td>
+                <td className="px-5 py-4 text-sm text-violet-600">{fmt(creditTotal)}</td>
+                <td className="px-5 py-4 text-lg text-indigo-600" colSpan="2">{fmt(grandTotal)}</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </Card>
+
+      <Card className="p-5 bg-gradient-to-r from-indigo-50 to-violet-50 border-indigo-200">
+        <div className="flex items-center gap-3">
+          <div className="p-2.5 bg-indigo-500 rounded-xl"><ic.Zap size={20} stroke="white"/></div>
+          <div>
+            <h3 className="font-bold text-indigo-900">自動集計完了</h3>
+            <p className="text-sm text-indigo-600">本日の精算データはスプレッドシート形式で自動保存されました。手入力は不要です。</p>
+          </div>
+        </div>
+      </Card>
+    </div>
+  );
+};
+
+/* ═══════════════════════════════════════════════════════
+   SECTION 10: REVENUE & ANALYTICS
+   ═══════════════════════════════════════════════════════ */
+const Analytics = () => {
+  const regionData = PREFS.slice(0, 7).map(p => ({ name: p.replace(/[都府県]/g, ""), rev: rnd(50, 200) * 10000 }));
+  const adData = AD_SRC.map(s => ({ name: s, cost: rnd(5, 30) * 10000, cases: rnd(10, 60), rev: rnd(30, 200) * 10000, cvr: rnd(3, 18) }));
+
+  return (
+    <div className="space-y-5 fade-in">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">売上分析</h1>
+          <SubLabel icon={ic.BarChart} text="Googleスプレッドシートの集計を自動化"/>
+        </div>
+        <button className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700">
+          <ic.Download size={16}/> エクスポート
+        </button>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <Card className="p-5">
+          <h3 className="font-bold text-slate-800 mb-4">月次売上推移</h3>
+          <AreaSVG data={monthlyRev} dk="売上" h={240} color="#6366f1" gid="an"/>
+        </Card>
+        <Card className="p-5">
+          <h3 className="font-bold text-slate-800 mb-4">曜日別案件数</h3>
+          <BarSVG data={weekData} dk="案件数" h={240} color="#8b5cf6"/>
+        </Card>
+      </div>
+
+      <Card className="overflow-hidden">
+        <div className="p-5 border-b border-slate-100"><h3 className="font-bold text-slate-800">広告媒体別ROI</h3></div>
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead><tr className="border-b border-slate-100">
+              {["媒体名","コスト","案件数","売上","ROI","CVR"].map(h => <th key={h} className="text-left text-xs font-semibold text-slate-400 uppercase px-5 py-3">{h}</th>)}
+            </tr></thead>
+            <tbody>
+              {adData.map(a => {
+                const roi = (((a.rev - a.cost) / a.cost) * 100).toFixed(0);
+                return (
+                  <tr key={a.name} className="border-b border-slate-50 hover:bg-slate-50/80">
+                    <td className="px-5 py-3 text-sm font-medium text-slate-800">{a.name}</td>
+                    <td className="px-5 py-3 text-sm text-slate-600">{fmt(a.cost)}</td>
+                    <td className="px-5 py-3 text-sm text-slate-600">{a.cases}件</td>
+                    <td className="px-5 py-3 text-sm font-semibold text-slate-800">{fmt(a.rev)}</td>
+                    <td className="px-5 py-3"><span className={cn("text-sm font-bold", Number(roi) > 100 ? "text-emerald-600" : "text-amber-600")}>{roi}%</span></td>
+                    <td className="px-5 py-3 text-sm text-slate-600">{a.cvr}%</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </Card>
+    </div>
+  );
+};
+
+/* ═══════════════════════════════════════════════════════
+   SECTION 11: CUSTOMER MANAGEMENT
+   ═══════════════════════════════════════════════════════ */
+/* CustPage は CaseMgmt に統合済み — 顧客一覧タブで表示 */
+
+/* ═══════════════════════════════════════════════════════
+   SECTION 12: SETTINGS
+   ═══════════════════════════════════════════════════════ */
+const SetPage = () => {
+  const sections = [
+    { t: "LINE連携設定", I: ic.Msg, items: [
+      { l: "LINE Messaging APIトークン", v: "lk_*****...abc", tp: "secret" },
+      { l: "Webhook URL", v: "https://api.serviceflow.jp/webhook/line", tp: "text" },
+      { l: "自動取込", v: true, tp: "toggle" },
+      { l: "緊急案件の自動振り分け", v: true, tp: "toggle" },
+    ]},
+    { t: "通知設定", I: ic.Bell, items: [
+      { l: "新規案件通知", v: true, tp: "toggle" },
+      { l: "キャンセル通知", v: true, tp: "toggle" },
+      { l: "当日リマインダー", v: true, tp: "toggle" },
+      { l: "日次レポート自動送信", v: false, tp: "toggle" },
+    ]},
+    { t: "会社情報", I: ic.Building, items: [
+      { l: "会社名", v: "株式会社サンプル", tp: "text" },
+      { l: "対応エリア", v: "関東・東海・関西", tp: "text" },
+      { l: "スタッフ数", v: "12名", tp: "text" },
+    ]},
+  ];
+
+  return (
+    <div className="space-y-5 fade-in">
+      <div><h1 className="text-2xl font-bold text-slate-900">設定</h1></div>
+      {sections.map(s => (
+        <Card key={s.t} className="p-5">
+          <div className="flex items-center gap-3 mb-5">
+            <div className="p-2.5 bg-slate-100 rounded-xl"><s.I size={20} stroke="#475569"/></div>
+            <h3 className="font-bold text-slate-800">{s.t}</h3>
+          </div>
+          <div className="space-y-4">
+            {s.items.map(item => (
+              <div key={item.l} className="flex items-center justify-between py-2">
+                <span className="text-sm text-slate-600">{item.l}</span>
+                {item.tp === "toggle" ? (
+                  <div className={cn("relative w-11 h-6 rounded-full cursor-pointer", item.v ? "bg-indigo-600" : "bg-slate-300")}>
+                    <div className={cn("absolute top-0.5 w-5 h-5 bg-white rounded-full shadow", item.v ? "translate-x-5" : "translate-x-0.5")}/>
+                  </div>
+                ) : item.tp === "secret" ? (
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-slate-400 font-mono bg-slate-50 px-3 py-1.5 rounded-lg">{item.v}</span>
+                    <button className="p-1.5 rounded-lg hover:bg-slate-100"><ic.Eye size={16} stroke="#94a3b8"/></button>
+                  </div>
+                ) : (
+                  <span className="text-sm font-medium text-slate-800 bg-slate-50 px-3 py-1.5 rounded-lg">{item.v}</span>
+                )}
+              </div>
+            ))}
+          </div>
+        </Card>
+      ))}
+    </div>
+  );
+};
+
+/* ═══════════════════════════════════════════════════════
+   SECTION 13: AD & LP MANAGEMENT
+   ═══════════════════════════════════════════════════════ */
+const AdLPPage = () => {
+  const [tab, setTab] = useState("lps");
+  const [filter, setFilter] = useState("all");
+  const [detail, setDetail] = useState(null);
+
+  /* KPI計算 */
+  const activeLPs = LPS.filter(l => l.status === "active");
+  const totalCost = LPS.reduce((s, l) => s + l.cost, 0);
+  const totalRev  = LPS.reduce((s, l) => s + l.revenue, 0);
+  const totalCases = LPS.reduce((s, l) => s + l.cases, 0);
+  const overallROAS = totalCost > 0 ? ((totalRev / totalCost) * 100).toFixed(0) : 0;
+  const overallCPA  = totalCases > 0 ? Math.round(totalCost / totalCases) : 0;
+
+  /* プラットフォーム別集計 */
+  const platStats = useMemo(() => PLATFORMS.map(p => {
+    const pLPs = LPS.filter(l => l.platform === p.id);
+    const cost = pLPs.reduce((s, l) => s + l.cost, 0);
+    const rev  = pLPs.reduce((s, l) => s + l.revenue, 0);
+    const cs   = pLPs.reduce((s, l) => s + l.cases, 0);
+    const clk  = pLPs.reduce((s, l) => s + l.clicks, 0);
+    const imp  = pLPs.reduce((s, l) => s + l.impressions, 0);
+    return { ...p, lpCount: pLPs.length, cost, rev, cases: cs, clicks: clk, impressions: imp,
+      roas: cost > 0 ? ((rev / cost) * 100).toFixed(0) : 0,
+      cpa: cs > 0 ? Math.round(cost / cs) : 0,
+      cvr: clk > 0 ? ((cs / clk) * 100).toFixed(1) : 0,
+      ctr: imp > 0 ? ((clk / imp) * 100).toFixed(2) : 0 };
+  }).filter(p => p.lpCount > 0), []);
+
+  /* フィルタリング */
+  const filtered = filter === "all" ? LPS : LPS.filter(l => l.platform === filter);
+  const platDonut = platStats.map(p => ({ name: p.name, value: p.rev, color: p.color }));
+
+  /* LP月次推移データ（シミュレーション） */
+  const monthlyLP = useMemo(() => Array.from({ length: 6 }, (_, i) => ({
+    label: `${i + 9}月`, リスティング: rnd(300, 600) * 10000, SNS: rnd(80, 200) * 10000, オーガニック: rnd(30, 80) * 10000
+  })), []);
+
+  return (
+    <div className="space-y-5 fade-in">
+      {/* ヘッダー */}
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">広告・LP管理</h1>
+          <SubLabel icon={ic.Target} text="LP別の売上・広告パフォーマンスを一元分析"/>
+        </div>
+        <button className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700 shadow-lg shadow-indigo-200">
+          <ic.Plus size={16}/> LP新規登録
+        </button>
+      </div>
+
+      {/* KPI */}
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+        <Stat icon={ic.Globe} label="登録LP数" value={`${LPS.length}件`} sub={`稼働中 ${activeLPs.length}件`} accent="bg-gradient-to-br from-indigo-500 to-indigo-600"/>
+        <Stat icon={ic.Yen} label="広告費合計" value={fmt(totalCost)} change="+8.2%" up accent="bg-gradient-to-br from-violet-500 to-violet-600"/>
+        <Stat icon={ic.TrendUp} label="LP経由売上" value={fmt(totalRev)} change="+12.5%" up accent="bg-gradient-to-br from-emerald-500 to-emerald-600"/>
+        <Stat icon={ic.Target} label="全体ROAS" value={`${overallROAS}%`} sub="目標: 800%" accent="bg-gradient-to-br from-cyan-500 to-cyan-600"/>
+        <Stat icon={ic.Users} label="平均CPA" value={fmt(overallCPA)} sub={`${totalCases}件獲得`} accent="bg-gradient-to-br from-amber-500 to-amber-600"/>
+      </div>
+
+      {/* タブ切り替え */}
+      <div className="flex gap-1 bg-slate-100 rounded-xl p-1 w-fit">
+        {[["lps","LP一覧"],["platforms","プラットフォーム比較"],["trend","推移分析"]].map(([k,l]) => (
+          <button key={k} onClick={() => setTab(k)} className={cn(
+            "px-4 py-2 rounded-lg text-sm font-medium transition-all",
+            tab === k ? "bg-white text-indigo-700 shadow-sm" : "text-slate-500 hover:text-slate-700"
+          )}>{l}</button>
+        ))}
+      </div>
+
+      {/* LP一覧タブ */}
+      {tab === "lps" && (
+        <>
+          {/* プラットフォームフィルタ */}
+          <div className="flex gap-2 flex-wrap">
+            <button onClick={() => setFilter("all")} className={cn(
+              "px-3 py-1.5 rounded-lg text-xs font-medium border transition-all",
+              filter === "all" ? "bg-indigo-50 text-indigo-700 border-indigo-200" : "bg-white text-slate-500 border-slate-200 hover:bg-slate-50"
+            )}>すべて ({LPS.length})</button>
+            {PLATFORMS.map(p => {
+              const cnt = LPS.filter(l => l.platform === p.id).length;
+              if (cnt === 0) return null;
+              return (
+                <button key={p.id} onClick={() => setFilter(p.id)} className={cn(
+                  "px-3 py-1.5 rounded-lg text-xs font-medium border transition-all",
+                  filter === p.id ? p.accent : "bg-white text-slate-500 border-slate-200 hover:bg-slate-50"
+                )}>
+                  <span className="inline-block w-2 h-2 rounded-full mr-1.5" style={{ background: p.color }}/>{p.name} ({cnt})
+                </button>
+              );
+            })}
+          </div>
+
+          {/* LP テーブル */}
+          <Card className="overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead><tr className="border-b border-slate-100">
+                  {["LP名","プラットフォーム","エリア","広告費","クリック数","案件数","売上","CPA","ROAS","CVR","状態"].map(h => (
+                    <th key={h} className="text-left text-xs font-semibold text-slate-400 uppercase px-4 py-3 whitespace-nowrap">{h}</th>
+                  ))}
+                </tr></thead>
+                <tbody>
+                  {filtered.map(lp => {
+                    const plat = PLATFORMS.find(p => p.id === lp.platform);
+                    const cpa = lp.cases > 0 ? Math.round(lp.cost / lp.cases) : 0;
+                    const roas = lp.cost > 0 ? ((lp.revenue / lp.cost) * 100).toFixed(0) : 0;
+                    const cvr = lp.clicks > 0 ? ((lp.cases / lp.clicks) * 100).toFixed(1) : 0;
+                    return (
+                      <tr key={lp.id} className={cn("border-b border-slate-50 hover:bg-slate-50/80 cursor-pointer", lp.status === "paused" && "opacity-60")} onClick={() => setDetail(lp)}>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: `${plat?.color}15` }}>
+                              <ic.Globe size={16} stroke={plat?.color || "#6366f1"}/>
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium text-slate-800 max-w-[200px] truncate">{lp.name}</p>
+                              <p className="text-[10px] text-slate-400 truncate max-w-[180px]">{lp.url}</p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <Badge className={cn("border", plat?.accent)}>
+                            <span className="w-1.5 h-1.5 rounded-full" style={{ background: plat?.color }}/>{plat?.name}
+                          </Badge>
+                        </td>
+                        <td className="px-4 py-3 text-sm text-slate-600">{lp.area}</td>
+                        <td className="px-4 py-3 text-sm text-slate-600">{fmt(lp.cost)}</td>
+                        <td className="px-4 py-3 text-sm text-slate-600">{lp.clicks.toLocaleString()}</td>
+                        <td className="px-4 py-3 text-sm font-semibold text-slate-800">{lp.cases}件</td>
+                        <td className="px-4 py-3 text-sm font-bold text-indigo-600">{fmt(lp.revenue)}</td>
+                        <td className="px-4 py-3 text-sm text-slate-600">{fmt(cpa)}</td>
+                        <td className="px-4 py-3">
+                          <span className={cn("text-sm font-bold", Number(roas) >= 500 ? "text-emerald-600" : Number(roas) >= 300 ? "text-amber-600" : "text-red-500")}>{roas}%</span>
+                        </td>
+                        <td className="px-4 py-3 text-sm text-slate-600">{cvr}%</td>
+                        <td className="px-4 py-3">
+                          {lp.status === "active"
+                            ? <Badge className="bg-emerald-50 text-emerald-700 border border-emerald-200"><ic.Play size={10}/>稼働中</Badge>
+                            : <Badge className="bg-slate-100 text-slate-500 border border-slate-200"><ic.Pause size={10}/>停止中</Badge>
+                          }
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+        </>
+      )}
+
+      {/* プラットフォーム比較タブ */}
+      {tab === "platforms" && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <div className="lg:col-span-2 space-y-4">
+            {/* リスティング vs SNS比較 */}
+            <Card className="overflow-hidden">
+              <div className="p-5 border-b border-slate-100">
+                <h3 className="font-bold text-slate-800">プラットフォーム別パフォーマンス</h3>
+                <p className="text-xs text-slate-400 mt-0.5">リスティング広告が主力チャネル</p>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead><tr className="border-b border-slate-100">
+                    {["プラットフォーム","種別","LP数","広告費","売上","案件数","ROAS","CPA","CTR","CVR"].map(h => (
+                      <th key={h} className="text-left text-xs font-semibold text-slate-400 uppercase px-4 py-3 whitespace-nowrap">{h}</th>
+                    ))}
+                  </tr></thead>
+                  <tbody>
+                    {platStats.map(p => (
+                      <tr key={p.id} className="border-b border-slate-50 hover:bg-slate-50/80">
+                        <td className="px-4 py-3.5">
+                          <div className="flex items-center gap-2">
+                            <span className="w-3 h-3 rounded-full" style={{ background: p.color }}/>
+                            <span className="text-sm font-medium text-slate-800">{p.name}</span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3.5"><Badge className={cn("border", p.accent)}>{p.type}</Badge></td>
+                        <td className="px-4 py-3.5 text-sm text-slate-600">{p.lpCount}</td>
+                        <td className="px-4 py-3.5 text-sm text-slate-600">{fmt(p.cost)}</td>
+                        <td className="px-4 py-3.5 text-sm font-bold text-slate-800">{fmt(p.rev)}</td>
+                        <td className="px-4 py-3.5 text-sm text-slate-600">{p.cases}件</td>
+                        <td className="px-4 py-3.5">
+                          <span className={cn("text-sm font-bold", Number(p.roas) >= 500 ? "text-emerald-600" : "text-amber-600")}>{p.roas}%</span>
+                        </td>
+                        <td className="px-4 py-3.5 text-sm text-slate-600">{fmt(p.cpa)}</td>
+                        <td className="px-4 py-3.5 text-sm text-slate-600">{p.ctr}%</td>
+                        <td className="px-4 py-3.5 text-sm text-slate-600">{p.cvr}%</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </Card>
+
+            {/* 広告種別サマリ */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {[{t:"リスティング",ty:"リスティング",cl:"from-blue-500 to-blue-600"},{t:"SNS広告",ty:"SNS",cl:"from-pink-500 to-pink-600"}].map(grp => {
+                const gps = platStats.filter(p => p.type === grp.ty);
+                const gRev = gps.reduce((s,p) => s+p.rev,0);
+                const gCost = gps.reduce((s,p) => s+p.cost,0);
+                const gCases = gps.reduce((s,p) => s+p.cases,0);
+                return (
+                  <Card key={grp.t} className="p-5">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className={cn("p-2.5 rounded-xl bg-gradient-to-br",grp.cl)}><ic.Target size={18} stroke="white"/></div>
+                      <div>
+                        <h4 className="font-bold text-slate-800">{grp.t}</h4>
+                        <p className="text-xs text-slate-400">{gps.length}プラットフォーム</p>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-3 gap-3 text-center">
+                      <div><p className="text-lg font-bold text-slate-800">{fmt(gRev)}</p><p className="text-[10px] text-slate-400">売上</p></div>
+                      <div><p className="text-lg font-bold text-slate-800">{gCases}件</p><p className="text-[10px] text-slate-400">案件数</p></div>
+                      <div><p className="text-lg font-bold text-emerald-600">{gCost > 0 ? ((gRev/gCost)*100).toFixed(0) : 0}%</p><p className="text-[10px] text-slate-400">ROAS</p></div>
+                    </div>
+                  </Card>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* 右カラム: ドーナツ */}
+          <div className="space-y-4">
+            <Card className="p-5">
+              <h3 className="font-bold text-slate-800 mb-4">プラットフォーム別売上構成</h3>
+              <Donut data={platDonut} size={180}/>
+              <div className="space-y-2 mt-4">
+                {platStats.map(p => (
+                  <div key={p.id} className="flex items-center justify-between text-sm">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2.5 h-2.5 rounded-full" style={{ background: p.color }}/>
+                      <span className="text-slate-600">{p.name}</span>
+                    </div>
+                    <span className="font-semibold text-slate-800">{fmt(p.rev)}</span>
+                  </div>
+                ))}
+              </div>
+            </Card>
+            <Card className="p-5 bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 bg-blue-500 rounded-xl"><ic.TrendUp size={18} stroke="white"/></div>
+                <div>
+                  <h4 className="font-bold text-blue-900">リスティング広告が主力</h4>
+                  <p className="text-xs text-blue-600 mt-0.5">売上の{totalRev > 0 ? Math.round(platStats.filter(p=>p.type==="リスティング").reduce((s,p)=>s+p.rev,0)/totalRev*100) : 0}%がリスティング経由です</p>
+                </div>
+              </div>
+            </Card>
+          </div>
+        </div>
+      )}
+
+      {/* 推移分析タブ */}
+      {tab === "trend" && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <Card className="p-5">
+            <h3 className="font-bold text-slate-800 mb-4">広告種別 月次売上推移</h3>
+            <div style={{position:"relative"}}>
+              <StackedBarSVG data={monthlyLP} keys={["リスティング","SNS","オーガニック"]} colors={["#4285f4","#e1306c","#f59e0b"]} h={260}/>
+            </div>
+            <div className="flex gap-4 mt-3 justify-center">
+              {[["リスティング","#4285f4"],["SNS","#e1306c"],["オーガニック","#f59e0b"]].map(([l,c]) => (
+                <div key={l} className="flex items-center gap-1.5 text-xs text-slate-500"><span className="w-2.5 h-2.5 rounded" style={{background:c}}/>{l}</div>
+              ))}
+            </div>
+          </Card>
+          <Card className="p-5">
+            <h3 className="font-bold text-slate-800 mb-4">LP別 案件獲得数ランキング</h3>
+            <div className="space-y-3">
+              {[...LPS].sort((a,b) => b.cases - a.cases).slice(0,6).map((lp,i) => {
+                const maxC = LPS.reduce((m,l)=>Math.max(m,l.cases),0);
+                const plat = PLATFORMS.find(p=>p.id===lp.platform);
+                return (
+                  <div key={lp.id} className="flex items-center gap-3">
+                    <span className={cn("w-6 h-6 rounded-lg flex items-center justify-center text-xs font-bold",
+                      i === 0 ? "bg-amber-100 text-amber-700" : i === 1 ? "bg-slate-200 text-slate-600" : i === 2 ? "bg-orange-100 text-orange-700" : "bg-slate-100 text-slate-500"
+                    )}>{i+1}</span>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between mb-1">
+                        <p className="text-sm font-medium text-slate-800 truncate max-w-[200px]">{lp.name}</p>
+                        <span className="text-sm font-bold text-indigo-600">{lp.cases}件</span>
+                      </div>
+                      <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                        <div className="h-full rounded-full bar-grow" style={{width:`${(lp.cases/maxC)*100}%`, background: plat?.color || "#6366f1", animationDelay:`${i*80}ms`}}/>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </Card>
+          <Card className="p-5">
+            <h3 className="font-bold text-slate-800 mb-4">CPA比較（安い順）</h3>
+            <div className="space-y-3">
+              {[...LPS].filter(l=>l.cases>0).map(l=>({...l, cpa:Math.round(l.cost/l.cases)})).sort((a,b)=>a.cpa-b.cpa).slice(0,6).map((lp,i) => {
+                const plat = PLATFORMS.find(p=>p.id===lp.platform);
+                return (
+                  <div key={lp.id} className="flex items-center justify-between py-2 border-b border-slate-50">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{background: plat?.color}}/>
+                      <p className="text-sm text-slate-700 truncate max-w-[200px]">{lp.name}</p>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <p className={cn("text-sm font-bold", lp.cpa < 5000 ? "text-emerald-600" : lp.cpa < 8000 ? "text-amber-600" : "text-red-500")}>{fmt(lp.cpa)}</p>
+                      <p className="text-[10px] text-slate-400">{lp.cases}件獲得</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </Card>
+          <Card className="p-5">
+            <h3 className="font-bold text-slate-800 mb-4">ROAS比較（高い順）</h3>
+            <div className="space-y-3">
+              {[...LPS].filter(l=>l.cost>0).map(l=>({...l, roas: Math.round(l.revenue/l.cost*100)})).sort((a,b)=>b.roas-a.roas).slice(0,6).map((lp,i) => {
+                const plat = PLATFORMS.find(p=>p.id===lp.platform);
+                return (
+                  <div key={lp.id} className="flex items-center justify-between py-2 border-b border-slate-50">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{background: plat?.color}}/>
+                      <p className="text-sm text-slate-700 truncate max-w-[200px]">{lp.name}</p>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <p className={cn("text-sm font-bold", lp.roas >= 1000 ? "text-emerald-600" : lp.roas >= 500 ? "text-amber-600" : "text-red-500")}>{lp.roas}%</p>
+                      <p className="text-[10px] text-slate-400">売上 {fmt(lp.revenue)}</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </Card>
+        </div>
+      )}
+
+      {/* LP詳細モーダル */}
+      {detail && (() => {
+        const lp = detail;
+        const plat = PLATFORMS.find(p => p.id === lp.platform);
+        const cat  = CATS.find(c => c.id === lp.cat);
+        const cpa = lp.cases > 0 ? Math.round(lp.cost / lp.cases) : 0;
+        const roas = lp.cost > 0 ? ((lp.revenue / lp.cost) * 100).toFixed(0) : 0;
+        const cvr = lp.clicks > 0 ? ((lp.cases / lp.clicks) * 100).toFixed(1) : 0;
+        const ctr = lp.impressions > 0 ? ((lp.clicks / lp.impressions) * 100).toFixed(2) : 0;
+        return (
+          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setDetail(null)}>
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[80vh] overflow-y-auto slide-up" onClick={e => e.stopPropagation()}>
+              <div className="flex items-center justify-between p-5 border-b border-slate-100">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: `${plat?.color}15` }}>
+                    <ic.Globe size={20} stroke={plat?.color || "#6366f1"}/>
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-slate-800">{lp.name}</h3>
+                    <p className="text-xs text-slate-400">{lp.url}</p>
+                  </div>
+                </div>
+                <button onClick={() => setDetail(null)} className="p-2 rounded-lg hover:bg-slate-100"><ic.X size={18}/></button>
+              </div>
+              <div className="p-5 space-y-4">
+                <div className="grid grid-cols-2 gap-3">
+                  {[["プラットフォーム", plat?.name, plat?.color],["カテゴリ", cat?.label, cat?.color],["エリア", lp.area, "#6366f1"],["ステータス", lp.status === "active" ? "稼働中" : "停止中", lp.status === "active" ? "#10b981" : "#94a3b8"]].map(([l,v,c]) => (
+                    <div key={l} className="p-3 bg-slate-50 rounded-xl">
+                      <p className="text-[10px] text-slate-400 mb-1">{l}</p>
+                      <p className="text-sm font-semibold flex items-center gap-1.5"><span className="w-2 h-2 rounded-full" style={{background:c}}/>{v}</p>
+                    </div>
+                  ))}
+                </div>
+                <div className="grid grid-cols-4 gap-3">
+                  {[["広告費",fmt(lp.cost)],["インプレッション",lp.impressions.toLocaleString()],["クリック",lp.clicks.toLocaleString()],["CTR",`${ctr}%`],["案件数",`${lp.cases}件`],["売上",fmt(lp.revenue)],["CPA",fmt(cpa)],["ROAS",`${roas}%`]].map(([l,v]) => (
+                    <div key={l} className="text-center py-3">
+                      <p className="text-xs text-slate-400">{l}</p>
+                      <p className="text-sm font-bold text-slate-800 mt-1">{v}</p>
+                    </div>
+                  ))}
+                </div>
+                <div className="pt-3 border-t border-slate-100">
+                  <p className="text-xs text-slate-400 mb-2">CVRファネル</p>
+                  <div className="space-y-2">
+                    {[["インプレッション",lp.impressions,1],["クリック",lp.clicks,lp.clicks/lp.impressions],["案件獲得",lp.cases,lp.cases/lp.impressions]].map(([l,v,r]) => (
+                      <div key={l}>
+                        <div className="flex justify-between text-xs mb-1"><span className="text-slate-600">{l}</span><span className="font-semibold text-slate-800">{v.toLocaleString()}</span></div>
+                        <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                          <div className="h-full rounded-full bg-indigo-500 bar-grow" style={{width:`${Math.max(r*100, 2)}%`}}/>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+    </div>
+  );
+};
+
+/* StackedBarSVG for Ad Trend */
+const StackedBarSVG = ({ data, keys, colors, w = 500, h = 240 }) => {
+  const maxVal = Math.max(...data.map(d => keys.reduce((s, k) => s + (d[k] || 0), 0)));
+  const bw = Math.min(40, (w - 60) / data.length - 8);
+  const sx = 50;
+  return (
+    <svg viewBox={`0 0 ${w} ${h}`} className="w-full" style={{ maxHeight: h }}>
+      {[0, .25, .5, .75, 1].map(f => {
+        const y = h - 30 - (h - 50) * f;
+        return (
+          <g key={f}>
+            <line x1={sx} y1={y} x2={w} y2={y} stroke="#f1f5f9" strokeWidth="1"/>
+            <text x={sx - 5} y={y + 4} textAnchor="end" fill="#94a3b8" fontSize="10">{(maxVal * f / 10000).toFixed(0)}万</text>
+          </g>
+        );
+      })}
+      {data.map((d, i) => {
+        let yOff = 0;
+        const xPos = sx + i * ((w - sx) / data.length) + (w - sx) / data.length / 2 - bw / 2;
+        return (
+          <g key={i}>
+            {keys.map((k, ki) => {
+              const val = d[k] || 0;
+              const bh = maxVal > 0 ? (val / maxVal) * (h - 50) : 0;
+              const yPos = h - 30 - yOff - bh;
+              yOff += bh;
+              return <rect key={k} x={xPos} y={yPos} width={bw} height={bh} rx={ki === keys.length - 1 ? bw / 5 : 0} fill={colors[ki]}
+                className="bar-grow" style={{ animationDelay: `${i * 60 + ki * 30}ms` }} opacity=".85"/>;
+            })}
+            <text x={xPos + bw / 2} y={h - 12} textAnchor="middle" fill="#94a3b8" fontSize="10">{d.label}</text>
+          </g>
+        );
+      })}
+    </svg>
+  );
+};
+
+/* ═══════════════════════════════════════════════════════
+   SECTION 14: UNIFIED REPORTS PAGE
+   ═══════════════════════════════════════════════════════ */
+const REPORT_TABS = [
+  { id: "settlement", l: "日報・精算",   I: ic.Calculator },
+  { id: "analytics",  l: "売上分析",     I: ic.BarChart },
+  { id: "adlp",       l: "広告・LP管理", I: ic.Target },
+];
+
+const ReportsPage = () => {
+  const [rtab, setRtab] = useState("settlement");
+  return (
+    <div className="fade-in">
+      <div className="flex gap-1 bg-white rounded-2xl p-1.5 mb-6 border border-slate-200/60 shadow-sm w-fit">
+        {REPORT_TABS.map(t => (
+          <button key={t.id} onClick={() => setRtab(t.id)} className={cn(
+            "flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all",
+            rtab === t.id
+              ? "bg-indigo-50 text-indigo-700 shadow-sm"
+              : "text-slate-400 hover:text-slate-600 hover:bg-slate-50"
+          )}>
+            <t.I size={16} stroke={rtab === t.id ? "#4f46e5" : "currentColor"}/>{t.l}
+          </button>
+        ))}
+      </div>
+      {rtab === "settlement" && <SettlementPage/>}
+      {rtab === "analytics"  && <Analytics/>}
+      {rtab === "adlp"       && <AdLPPage/>}
+    </div>
+  );
+};
+
+/* ═══════════════════════════════════════════════════════
+   SECTION 15: APP SHELL (Sidebar + Header + Router)
+   ═══════════════════════════════════════════════════════ */
+const NAV_MAIN = [
+  { id: "dashboard",  l: "ダッシュボード", I: ic.Grid },
+  { id: "line",       l: "LINE受信",       I: ic.Inbox, badge: LINE_MSGS.filter(m => m.status === "pending").length },
+  { id: "cases",      l: "案件管理",       I: ic.FileText },
+  { id: "calendar",   l: "スケジュール",   I: ic.Calendar },
+  { id: "reports",    l: "レポート",       I: ic.BarChart },
+];
+
+const NAV_UTIL = [
+  { id: "settings",   l: "設定",           I: ic.Gear },
+];
+
+function App() {
+  const [page, setPage] = useState("dashboard");
+  const [sbOpen, setSb] = useState(true);
+  const [notOpen, setNot] = useState(false);
+  const [mob, setMob] = useState(false);
+  const nav = useCallback(p => { setPage(p); setMob(false); }, []);
+
+  const Page = () => {
+    switch (page) {
+      case "dashboard":  return <Dashboard onNav={nav}/>;
+      case "line":       return <LineInbox/>;
+      case "cases":      return <CaseMgmt/>;
+      case "calendar":   return <CalView/>;
+      case "reports":    return <ReportsPage/>;
+      case "settings":   return <SetPage/>;
+      default:           return <Dashboard onNav={nav}/>;
+    }
+  };
+
+  return (
+    <div className="flex h-screen bg-slate-50 text-slate-900 overflow-hidden">
+      {mob && <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40 lg:hidden" onClick={() => setMob(false)}/>}
+
+      {/* Sidebar */}
+      <aside className={cn(
+        "fixed lg:relative z-50 flex flex-col bg-white border-r border-slate-200/60 h-full transition-all duration-300",
+        sbOpen ? "w-64" : "w-[72px]",
+        mob ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+      )}>
+        <div className={cn("flex items-center gap-3 h-16 border-b border-slate-100 shrink-0", sbOpen ? "px-5" : "px-4 justify-center")}>
+          <div className="w-9 h-9 bg-gradient-to-br from-indigo-500 to-violet-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-200 shrink-0">
+            <ic.Layers size={20} stroke="white"/>
+          </div>
+          {sbOpen && (
+            <div className="min-w-0">
+              <h1 className="font-bold text-sm text-slate-800 truncate">ServiceFlow</h1>
+              <p className="text-[10px] text-slate-400 truncate">顧客管理プラットフォーム</p>
+            </div>
+          )}
+        </div>
+
+        {/* Main Navigation */}
+        <nav className="flex-1 py-4 px-3 overflow-y-auto flex flex-col">
+          {sbOpen && <p className="text-[10px] font-semibold text-slate-300 uppercase tracking-widest px-3 mb-2">メニュー</p>}
+          <div className="space-y-1">
+            {NAV_MAIN.map(item => {
+              const active = page === item.id;
+              return (
+                <button key={item.id} onClick={() => nav(item.id)} className={cn(
+                  "flex items-center gap-3 w-full rounded-xl transition-all duration-200",
+                  sbOpen ? "px-3 py-2.5" : "p-2.5 justify-center",
+                  active ? "bg-indigo-50 text-indigo-700" : "text-slate-500 hover:bg-slate-50 hover:text-slate-700"
+                )}>
+                  <div className="relative">
+                    <item.I size={20} stroke={active ? "#4f46e5" : "currentColor"}/>
+                    {item.badge > 0 && (
+                      <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
+                        {item.badge}
+                      </span>
+                    )}
+                  </div>
+                  {sbOpen && <span className="text-sm font-medium truncate">{item.l}</span>}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* 設定はヘッダーに移動済み */}
+        </nav>
+
+        {/* User Profile */}
+        <div className={cn("border-t border-slate-100 p-3 shrink-0", !sbOpen && "flex justify-center")}>
+          {sbOpen ? (
+            <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-50 cursor-pointer">
+              <div className="w-8 h-8 bg-gradient-to-br from-indigo-400 to-violet-500 rounded-lg flex items-center justify-center text-white text-xs font-bold">加</div>
+              <div className="flex-1 min-w-0"><p className="text-sm font-medium text-slate-800 truncate">加藤</p><p className="text-[10px] text-slate-400">管理者</p></div>
+              <ic.ChevD size={16} stroke="#94a3b8"/>
+            </div>
+          ) : (
+            <div className="w-8 h-8 bg-gradient-to-br from-indigo-400 to-violet-500 rounded-lg flex items-center justify-center text-white text-xs font-bold cursor-pointer">加</div>
+          )}
+        </div>
+      </aside>
+
+      {/* Main Area */}
+      <div className="flex-1 flex flex-col min-w-0">
+        <header className="flex items-center justify-between h-16 px-4 lg:px-6 bg-white/80 backdrop-blur-md border-b border-slate-200/60 shrink-0">
+          <div className="flex items-center gap-3">
+            <button onClick={() => setMob(!mob)} className="p-2 rounded-lg hover:bg-slate-100 lg:hidden"><ic.Menu size={20}/></button>
+            <button onClick={() => setSb(!sbOpen)} className="p-2 rounded-lg hover:bg-slate-100 hidden lg:block"><ic.Menu size={20} stroke="#64748b"/></button>
+            <div className="hidden sm:block w-72"><SearchInput value="" onChange={() => {}} placeholder="案件ID、顧客名で検索..."/></div>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div className="hidden md:flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 rounded-lg">
+              <ic.Monitor size={14} stroke="#6366f1"/><span className="text-[10px] text-slate-400">Web</span>
+            </div>
+            <button onClick={() => nav("settings")} className={cn(
+              "p-2.5 rounded-xl transition-all",
+              page === "settings" ? "bg-indigo-50 text-indigo-600" : "hover:bg-slate-100 text-slate-500"
+            )} title="設定">
+              <ic.Gear size={20} stroke={page === "settings" ? "#4f46e5" : "#64748b"}/>
+            </button>
+            <div className="relative">
+              <button onClick={() => setNot(!notOpen)} className="relative p-2.5 rounded-xl hover:bg-slate-100">
+                <ic.Bell size={20} stroke="#64748b"/>
+                <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white"/>
+              </button>
+              {notOpen && (
+                <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-2xl shadow-xl border border-slate-200 z-50 slide-up">
+                  <div className="p-4 border-b border-slate-100"><h3 className="font-bold text-sm text-slate-800">通知</h3></div>
+                  <div className="max-h-80 overflow-y-auto">
+                    {notifs.map(n => (
+                      <div key={n.id} className="flex items-start gap-3 p-4 hover:bg-slate-50 border-b border-slate-50">
+                        <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center shrink-0",
+                          n.type === "urgent" ? "bg-amber-100" : n.type === "cancel" ? "bg-red-100" : n.type === "auto" ? "bg-green-100" : "bg-blue-100")}>
+                          {n.type === "urgent" ? <ic.Zap size={16} stroke="#d97706"/> :
+                           n.type === "cancel" ? <ic.XCircle size={16} stroke="#ef4444"/> :
+                           <ic.Check size={16} stroke={n.type === "auto" ? "#22c55e" : "#3b82f6"}/>}
+                        </div>
+                        <div><p className="text-sm text-slate-700">{n.msg}</p><p className="text-xs text-slate-400 mt-0.5">{n.time}</p></div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </header>
+
+        <main className="flex-1 overflow-y-auto p-4 lg:p-6">
+          <Page/>
+        </main>
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════
+   MOUNT
+   ═══════════════════════════════════════════════════════ */
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>
