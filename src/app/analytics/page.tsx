@@ -36,7 +36,7 @@ export default function AnalyticsPage() {
               <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
               <XAxis dataKey="label" tick={{ fontSize: 12, fill: "#94a3b8" }} />
               <YAxis tick={{ fontSize: 12, fill: "#94a3b8" }} tickFormatter={(v) => `${(v / 10000).toFixed(0)}万`} />
-              <Tooltip formatter={(value) => fmt(value as number)} />
+              <Tooltip formatter={(value: number | undefined) => value != null ? fmt(value) : ""} />
               <Area type="monotone" dataKey="売上" stroke="#6366f1" fill="url(#an)" strokeWidth={2} />
             </AreaChart>
           </ResponsiveContainer>
