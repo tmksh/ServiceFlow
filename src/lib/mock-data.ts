@@ -31,7 +31,7 @@ function generateCases(count: number): Case[] {
     const cat = CATEGORIES[rnd(0, 5)];
     const st = stKeys[rnd(0, 5)];
     const amt = rnd(15000, 250000);
-    const payMethod = st === "cancelled" ? null : Math.random() > 0.6 ? "credit" as const : "cash" as const;
+    const payMethod = st === "cancelled" ? null : rnd(0, 9) > 5 ? "credit" as const : "cash" as const;
 
     arr.push({
       id: `CS-${String(10000 + i).slice(1)}`,
@@ -43,7 +43,7 @@ function generateCases(count: number): Case[] {
       pref: PREFS[rnd(0, 9)],
       addr: `${PREFS[rnd(0, 9)]}○○市△△町${rnd(1, 10)}-${rnd(1, 30)}`,
       date: d.toISOString().split("T")[0],
-      time: `${String(rnd(8, 18)).padStart(2, "0")}:${Math.random() > 0.5 ? "00" : "30"}`,
+      time: `${String(rnd(8, 18)).padStart(2, "0")}:${rnd(0, 1) === 0 ? "00" : "30"}`,
       amount: st === "cancelled" ? 0 : amt,
       source: AD_SRC[rnd(0, 6)],
       center: CENTERS[rnd(0, 1)],
@@ -51,8 +51,8 @@ function generateCases(count: number): Case[] {
       staff: STAFF[rnd(0, 7)],
       items: Array.from({ length: rnd(2, 6) }, () => ITEMS_LIST[rnd(0, 14)]),
       payMethod,
-      urgent: Math.random() > 0.85,
-      lineAuto: Math.random() > 0.5,
+      urgent: rnd(0, 99) > 84,
+      lineAuto: rnd(0, 1) === 1,
     });
   }
 
