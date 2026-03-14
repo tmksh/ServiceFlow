@@ -9,7 +9,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "ServiceFlow — 自動顧客管理プラットフォーム",
+  title: "スマカレ — 自動顧客管理プラットフォーム",
   description: "生活サービス業に特化した案件管理・スケジュール・売上分析を一元化するSaaS",
 };
 

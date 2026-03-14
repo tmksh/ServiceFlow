@@ -8,7 +8,7 @@ const sections = [
   {
     t: "LINE連携設定", icon: MessageSquare, items: [
       { l: "LINE Messaging APIトークン", v: "lk_*****...abc", tp: "secret" as const },
-      { l: "Webhook URL", v: "https://api.serviceflow.jp/webhook/line", tp: "text" as const },
+      { l: "Webhook URL", v: "https://api.sumakare.jp/webhook/line", tp: "text" as const },
       { l: "自動取込", v: true, tp: "toggle" as const },
       { l: "緊急案件の自動振り分け", v: true, tp: "toggle" as const },
     ],

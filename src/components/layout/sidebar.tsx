@@ -36,7 +36,7 @@ export function Sidebar({ open }: SidebarProps) {
         </div>
         {open && (
           <div className="min-w-0">
-            <h1 className="font-bold text-sm text-slate-800 truncate">ServiceFlow</h1>
+            <h1 className="font-bold text-sm text-slate-800 truncate">スマカレ</h1>
             <p className="text-[10px] text-slate-400 truncate">顧客管理プラットフォーム</p>
           </div>
         )}

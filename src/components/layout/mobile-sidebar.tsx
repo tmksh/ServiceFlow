@@ -35,7 +35,7 @@ export function MobileSidebar({ open, onClose }: MobileSidebarProps) {
               <Layers size={20} className="text-white" />
             </div>
             <div>
-              <h1 className="font-bold text-sm text-slate-800">ServiceFlow</h1>
+              <h1 className="font-bold text-sm text-slate-800">スマカレ</h1>
               <p className="text-[10px] text-slate-400">顧客管理プラットフォーム</p>
             </div>
           </div>

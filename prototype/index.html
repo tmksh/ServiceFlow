@@ -1817,7 +1817,7 @@ const SetPage = ({ currentRole, onRoleChange, areas = AREAS_DEFAULT, onAreasChan
   const SETTINGS_TABS = [
     { id: "line",    l: "LINE連携",   I: ic.Msg     },
     { id: "labels",  l: "ラベル管理", I: ic.Layers  },
-    { id: "areas",   l: "エリア管理", I: ic.MapPin  },
+    { id: "areas",   l: "リスト管理", I: ic.MapPin  },
     { id: "staff",   l: "従業員管理", I: ic.Users   },
     { id: "roles",   l: "権限管理",   I: ic.Shield  },
     { id: "notify",  l: "通知設定",   I: ic.Bell    },
@@ -1931,15 +1931,15 @@ const SetPage = ({ currentRole, onRoleChange, areas = AREAS_DEFAULT, onAreasChan
         </Card>
       )}
 
-      {/* ── エリア管理タブ ── */}
+      {/* ── リスト管理タブ ── */}
       {stab === "areas" && (
         <Card className="p-5">
           <div className="flex items-center justify-between mb-5">
             <div className="flex items-center gap-3">
               <div className="p-2.5 bg-slate-100 rounded-xl"><ic.MapPin size={20} stroke="#475569"/></div>
               <div>
-                <h3 className="font-bold text-slate-800">エリア管理</h3>
-                <p className="text-xs text-slate-400">サイドバーのエリア切り替えに反映されます</p>
+                <h3 className="font-bold text-slate-800">カレンダーリスト管理</h3>
+                <p className="text-xs text-slate-400">エリア・拠点ごとのカレンダーリストを管理します</p>
               </div>
             </div>
           </div>

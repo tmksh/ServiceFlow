@@ -1,5 +1,37 @@
 export type CategoryId = "fuyouhin" | "hikkoshi" | "cleaning" | "suidou" | "kagi" | "repair";
 
+// カレンダーグループの権限レベル
+export type CalendarRole = "owner" | "editor" | "viewer" | "none";
+
+// カレンダーグループに属するメンバー
+export interface CalendarMember {
+  id: string;
+  name: string;
+  avatar: string; // イニシャル or 絵文字
+  color: string;  // アバター背景色
+  role: CalendarRole;
+}
+
+// カレンダーグループ（TimeTreeのカレンダー単位）
+export interface CalendarGroup {
+  id: string;
+  name: string;
+  description: string;
+  color: string;       // グループカラー
+  coverEmoji: string;  // カバー絵文字
+  area: string;        // エリア（例: "神奈川", "東京", "全国"）
+  category: CategoryId | "all";
+  members: CalendarMember[];
+  myRole: CalendarRole;
+  isNew: boolean;
+  isPinned: boolean;
+  caseFilter: {        // このグループで表示する案件のフィルタ条件
+    centers?: string[];
+    prefs?: string[];
+    staffIds?: string[];
+  };
+}
+
 export type CaseStatus = "new" | "estimate" | "confirmed" | "inProgress" | "completed" | "cancelled";
 
 export type Channel = "受電" | "LINE" | "Web";

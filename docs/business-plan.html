@@ -1,0 +1,1569 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>スマカレ — 事業計画書 2026</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&family=Space+Grotesk:wght@400;600;700&display=swap');
+
+  :root {
+    --ink: #0d0f14;
+    --bg: #f5f3ee;
+    --white: #ffffff;
+    --accent: #6366f1;
+    --accent2: #8b5cf6;
+    --green: #10b981;
+    --amber: #f59e0b;
+    --red: #ef4444;
+    --blue: #3b82f6;
+    --muted: #6b7280;
+    --border: #e5e0d8;
+    --card: #ffffff;
+    --tag-bg: #ede9fe;
+    --tag-color: #5b21b6;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Noto Sans JP', sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.7;
+    font-size: 15px;
+  }
+
+  /* ===== COVER ===== */
+  .cover {
+    min-height: 100vh;
+    background: var(--ink);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 60px 80px;
+    position: relative;
+    overflow: hidden;
+  }
+  .cover::before {
+    content: '';
+    position: absolute;
+    top: -200px; right: -200px;
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, rgba(99,102,241,0.3) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .cover::after {
+    content: '';
+    position: absolute;
+    bottom: -150px; left: -100px;
+    width: 500px; height: 500px;
+    background: radial-gradient(circle, rgba(139,92,246,0.2) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .cover-top { display: flex; justify-content: space-between; align-items: flex-start; }
+  .cover-logo {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 22px; font-weight: 700;
+    color: white; letter-spacing: -0.5px;
+  }
+  .cover-logo span { color: var(--accent); }
+  .cover-tag {
+    font-size: 12px; color: #9ca3af;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    padding: 6px 14px; border-radius: 20px;
+    letter-spacing: 2px; text-transform: uppercase;
+  }
+  .cover-mid {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 80px 0 40px;
+  }
+  .cover-label {
+    font-size: 13px; color: var(--accent);
+    letter-spacing: 3px; text-transform: uppercase;
+    margin-bottom: 24px;
+  }
+  .cover-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: clamp(48px, 7vw, 88px);
+    font-weight: 700;
+    color: white;
+    line-height: 1.05;
+    letter-spacing: -2px;
+    margin-bottom: 32px;
+  }
+  .cover-title em { color: var(--accent); font-style: normal; }
+  .cover-subtitle {
+    font-size: 18px;
+    color: #9ca3af;
+    max-width: 600px;
+    line-height: 1.6;
+  }
+  .cover-stats {
+    display: flex; gap: 60px;
+    padding-top: 48px;
+    border-top: 1px solid rgba(255,255,255,0.08);
+  }
+  .cover-stat-item { }
+  .cover-stat-num {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 36px; font-weight: 700; color: white;
+  }
+  .cover-stat-num span { font-size: 18px; color: var(--accent); }
+  .cover-stat-label { font-size: 12px; color: #6b7280; margin-top: 4px; letter-spacing: 1px; }
+  .cover-bottom { font-size: 13px; color: #4b5563; }
+
+  /* ===== LAYOUT ===== */
+  .page {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 80px 40px;
+  }
+  .section-label {
+    font-size: 12px;
+    color: var(--accent);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    font-weight: 600;
+    margin-bottom: 12px;
+  }
+  .section-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: clamp(28px, 4vw, 42px);
+    font-weight: 700;
+    letter-spacing: -1px;
+    margin-bottom: 48px;
+    line-height: 1.2;
+  }
+  .divider {
+    border: none; border-top: 1px solid var(--border);
+    margin: 80px 0;
+  }
+
+  /* ===== CARDS ===== */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 32px;
+    min-width: 0;
+    word-break: break-word;
+    overflow-wrap: break-word;
+  }
+  .card-title {
+    font-size: 13px; font-weight: 700;
+    color: var(--muted); letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .card-value {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 40px; font-weight: 700;
+    line-height: 1.1;
+  }
+  .card-sub { font-size: 13px; color: var(--muted); margin-top: 6px; }
+  .card-badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 12px; font-weight: 600;
+    padding: 3px 10px; border-radius: 20px;
+    margin-top: 8px;
+  }
+  .badge-green { background: #d1fae5; color: #065f46; }
+  .badge-amber { background: #fef3c7; color: #92400e; }
+  .badge-blue { background: #dbeafe; color: #1e40af; }
+  .badge-purple { background: var(--tag-bg); color: var(--tag-color); }
+
+  /* ===== GRID ===== */
+  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+  .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 28px; }
+  .grid-2-1 { display: grid; grid-template-columns: 2fr 1fr; gap: 28px; }
+  .grid-4 > *, .grid-3 > *, .grid-2 > *, .grid-2-1 > * { min-width: 0; }
+
+  /* ===== HIGHLIGHT CARD ===== */
+  .highlight-card {
+    background: var(--ink);
+    border-radius: 20px;
+    padding: 40px;
+    color: white;
+    position: relative;
+    overflow: hidden;
+    min-width: 0;
+    word-break: break-word;
+  }
+  .highlight-card::before {
+    content: '';
+    position: absolute; top: -80px; right: -80px;
+    width: 300px; height: 300px;
+    background: radial-gradient(circle, rgba(99,102,241,0.25) 0%, transparent 70%);
+  }
+  .highlight-card .card-title { color: #6b7280; }
+  .highlight-card .card-value { color: white; }
+  .highlight-card .card-sub { color: #9ca3af; }
+
+  /* ===== CHARTS ===== */
+  .chart-container { position: relative; }
+  .chart-title {
+    font-size: 15px; font-weight: 700; margin-bottom: 24px;
+  }
+
+  /* Bar Chart */
+  .bar-chart { display: flex; align-items: flex-end; gap: 8px; height: 200px; }
+  .bar-group { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .bar-wrap { flex: 1; display: flex; align-items: flex-end; width: 100%; }
+  .bar {
+    width: 100%; border-radius: 6px 6px 0 0;
+    transition: opacity 0.2s;
+    position: relative;
+  }
+  .bar:hover { opacity: 0.8; }
+  .bar-label { font-size: 11px; color: var(--muted); }
+  .bar-val { font-size: 11px; font-weight: 600; }
+
+  /* Area Chart */
+  .area-chart-wrap { width: 100%; overflow: hidden; }
+  svg.area-svg { width: 100%; }
+
+  /* Donut */
+  .donut-wrap { display: flex; align-items: center; gap: 32px; }
+  .donut-svg-wrap { position: relative; flex-shrink: 0; }
+  .donut-center {
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+  }
+  .donut-center-val {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 26px; font-weight: 700;
+  }
+  .donut-center-label { font-size: 11px; color: var(--muted); }
+  .donut-legend { flex: 1; }
+  .donut-legend-item { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .donut-legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .donut-legend-label { font-size: 13px; flex: 1; }
+  .donut-legend-val { font-size: 13px; font-weight: 600; }
+
+  /* ===== TIMELINE ===== */
+  .timeline { position: relative; padding-left: 40px; }
+  .timeline::before {
+    content: '';
+    position: absolute; left: 12px; top: 0; bottom: 0;
+    width: 2px; background: var(--border);
+  }
+  .timeline-item { position: relative; margin-bottom: 36px; }
+  .timeline-dot {
+    position: absolute; left: -34px; top: 4px;
+    width: 20px; height: 20px; border-radius: 50%;
+    border: 3px solid var(--white);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .timeline-dot-inner { width: 8px; height: 8px; border-radius: 50%; }
+  .timeline-phase {
+    font-size: 11px; font-weight: 700; letter-spacing: 2px;
+    text-transform: uppercase; color: var(--accent); margin-bottom: 4px;
+  }
+  .timeline-title { font-size: 17px; font-weight: 700; margin-bottom: 8px; }
+  .timeline-period {
+    display: inline-block; font-size: 12px;
+    background: var(--tag-bg); color: var(--tag-color);
+    padding: 2px 10px; border-radius: 10px; margin-bottom: 10px;
+  }
+  .timeline-items { list-style: none; }
+  .timeline-items li {
+    font-size: 14px; color: #374151;
+    padding: 4px 0; padding-left: 16px;
+    position: relative;
+  }
+  .timeline-items li::before {
+    content: '→'; position: absolute; left: 0;
+    color: var(--accent); font-size: 12px;
+  }
+
+  /* ===== REVENUE TABLE ===== */
+  .rev-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+  .rev-table th, .rev-table td {
+    padding: 12px 14px; text-align: right;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+    word-break: break-all;
+    overflow-wrap: break-word;
+  }
+  .rev-table th { font-size: 11px; font-weight: 700; color: var(--muted); text-align: right; }
+  .rev-table th:first-child, .rev-table td:first-child { text-align: left; }
+  .rev-table tr:last-child td { border-bottom: none; font-weight: 700; }
+  .rev-table tr.highlight td {
+    background: #f0eeff;
+    font-weight: 700;
+    color: var(--accent);
+  }
+  .rev-table td.green { color: var(--green); font-weight: 600; }
+  .rev-table td.accent { color: var(--accent); font-weight: 700; }
+
+  /* ===== FEATURE LIST ===== */
+  .feature-item {
+    display: flex; gap: 16px;
+    padding: 20px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .feature-item:last-child { border-bottom: none; }
+  .feature-icon {
+    width: 40px; height: 40px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    font-size: 18px;
+  }
+  .feature-title { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+  .feature-desc { font-size: 13px; color: var(--muted); }
+
+  /* ===== COMPETITOR TABLE ===== */
+  .comp-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+  .comp-table th {
+    padding: 10px 10px; text-align: center;
+    font-size: 11px; font-weight: 700; color: var(--muted);
+    border-bottom: 2px solid var(--border);
+    word-break: keep-all;
+  }
+  .comp-table th:first-child { text-align: left; }
+  .comp-table td {
+    padding: 12px 10px; text-align: center;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+  }
+  .comp-table td:first-child { text-align: left; font-weight: 600; }
+  .comp-table tr.our-row { background: #f5f3ff; }
+  .comp-table tr.our-row td { font-weight: 700; color: var(--accent); }
+  .circle-mark { font-size: 18px; }
+
+  /* ===== NAV ===== */
+  .toc {
+    position: sticky; top: 24px;
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+  }
+  .toc-title { font-size: 11px; font-weight: 700; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 14px; }
+  .toc-item {
+    display: block; padding: 7px 10px;
+    font-size: 12px; color: #374151;
+    text-decoration: none; border-radius: 6px;
+    margin-bottom: 2px;
+    transition: background 0.15s, color 0.15s;
+    line-height: 1.4;
+  }
+  .toc-item:hover { background: var(--tag-bg); color: var(--accent); }
+  .toc-item.active { background: var(--tag-bg); color: var(--accent); font-weight: 600; }
+
+  /* ===== LAYOUT ===== */
+  .doc-layout {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 60px 40px;
+    box-sizing: border-box;
+  }
+  .toc-col { display: none; }
+  .content-col { min-width: 0; overflow: hidden; }
+
+  /* ===== SECTION BLOCKS ===== */
+  .section-block { padding: 80px 0; border-bottom: 1px solid var(--border); }
+  .section-block:last-child { border-bottom: none; }
+
+  /* ===== FLOW ===== */
+  .flow-row {
+    display: flex; align-items: center; gap: 0;
+    overflow-x: auto;
+    padding: 8px 0;
+  }
+  .flow-step {
+    flex-shrink: 0;
+    background: var(--card);
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 20px;
+    text-align: center;
+    min-width: 120px;
+  }
+  .flow-step.active {
+    border-color: var(--accent);
+    background: #f5f3ff;
+  }
+  .flow-step-num { font-size: 11px; color: var(--accent); font-weight: 700; margin-bottom: 4px; }
+  .flow-step-label { font-size: 13px; font-weight: 600; }
+  .flow-arrow {
+    flex-shrink: 0; font-size: 20px; color: #d1d5db;
+    padding: 0 8px;
+  }
+
+  /* ===== TAGS ===== */
+  .tag {
+    display: inline-block;
+    padding: 3px 10px; border-radius: 20px;
+    font-size: 12px; font-weight: 600;
+    background: var(--tag-bg); color: var(--tag-color);
+    margin: 2px;
+  }
+
+  /* ===== RISK TABLE ===== */
+  .risk-row { display: flex; gap: 16px; margin-bottom: 16px; align-items: flex-start; }
+  .risk-badge {
+    flex-shrink: 0; width: 60px; text-align: center;
+    padding: 4px; border-radius: 6px;
+    font-size: 11px; font-weight: 700;
+  }
+  .risk-high { background: #fee2e2; color: #991b1b; }
+  .risk-mid { background: #fef3c7; color: #92400e; }
+  .risk-low { background: #d1fae5; color: #065f46; }
+  .risk-content { flex: 1; }
+  .risk-title { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+  .risk-desc { font-size: 13px; color: var(--muted); }
+
+  /* ===== PRINT ===== */
+  @media print {
+    .cover { min-height: auto; page-break-after: always; }
+  }
+
+  @media (max-width: 900px) {
+    .cover { padding: 40px 32px; }
+    .cover-stats { flex-wrap: wrap; gap: 32px; }
+    .doc-layout { padding: 40px 20px; }
+    .grid-4 { grid-template-columns: repeat(2, 1fr); }
+    .grid-3 { grid-template-columns: 1fr; }
+    .grid-2, .grid-2-1 { grid-template-columns: 1fr; }
+  }
+
+  @media (max-width: 640px) {
+    .cover { padding: 28px 24px; }
+    .cover-title { letter-spacing: -1px; }
+    .cover-stats { gap: 24px; }
+    .card { padding: 20px; }
+    .grid-4 { grid-template-columns: 1fr 1fr; }
+    .section-block { padding: 48px 0; }
+    .section-title { font-size: 28px; margin-bottom: 28px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== COVER ===== -->
+<div class="cover">
+  <div class="cover-top">
+    <div class="cover-logo">スマ<span>カレ</span></div>
+    <div class="cover-tag">CONFIDENTIAL — 2026</div>
+  </div>
+
+  <div class="cover-mid">
+    <div class="cover-label">事業計画書 Business Plan</div>
+    <div class="cover-title">
+      生活サービス業の<br>面倒な手作業を<em>全部自動化</em>する。
+    </div>
+    <div class="cover-subtitle">
+      LINEと連携して、受け付けから通知まで全部自動化<br>
+      不用品回収・引っ越し・ハウスクリーニング等に特化した業務管理ツール
+    </div>
+  </div>
+
+  <div class="cover-bottom" style="margin-top:32px;">
+    作成日：2026年3月 &nbsp;|&nbsp; 本書は機密文書です。取扱いにご注意ください。
+  </div>
+</div>
+
+<!-- ===== MAIN LAYOUT ===== -->
+<div class="doc-layout">
+
+  <!-- TOC -->
+  <div class="toc-col">
+    <nav class="toc">
+      <div class="toc-title">目次</div>
+      <a class="toc-item" href="#s1">01. このビジネスのまとめ</a>
+      <a class="toc-item" href="#s2">02. 今、何が困っているのか</a>
+      <a class="toc-item" href="#s3">03. スマカレでできること</a>
+      <a class="toc-item" href="#s4">04. どれだけ売れる市場か</a>
+      <a class="toc-item" href="#s5">05. いくら稼げるか</a>
+      <a class="toc-item" href="#s6">06. 料金と利益の分け方</a>
+      <a class="toc-item" href="#s7">07. なぜスマカレが選ばれるのか</a>
+      <a class="toc-item" href="#s8">08. 開発スケジュールと体制</a>
+      <a class="toc-item" href="#s9">09. 目標と数字で見る進捗</a>
+      <a class="toc-item" href="#s10">10. リスクと対策</a>
+    </nav>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="content-col">
+
+    <!-- ===== 01 EXECUTIVE SUMMARY ===== -->
+    <section class="section-block" id="s1">
+      <div class="section-label">01</div>
+      <div class="section-title">このビジネスのまとめ</div>
+
+      <div class="grid-2" style="margin-bottom:32px;">
+        <div class="highlight-card">
+          <div class="card-title">1年後の年間売上目標</div>
+          <div class="card-value">1億円</div>
+          <div class="card-sub">契約100社 × 月額4万円 × 12ヶ月（＋初期費用）</div>
+          <div class="card-badge badge-green" style="margin-top:12px;">✓ 1社あたり年50万円の売上貢献</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:16px;">
+          <div class="card" style="flex:1;">
+            <div class="card-title">解約率の目標</div>
+            <div class="card-value" style="font-size:32px;">月3%以下</div>
+            <div class="card-sub">業務に深く定着するので、一度使い始めたらなかなか辞めない</div>
+          </div>
+          <div class="card" style="flex:1;">
+            <div class="card-title">1社あたりの生涯売上</div>
+            <div class="card-value" style="font-size:32px;">約160万円</div>
+            <div class="card-sub">月4万円 × 平均40ヶ月の継続利用</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <p style="font-size:15px;line-height:1.9;color:#374151;">
+          スマカレは、不用品回収・引っ越し・ハウスクリーニングなど<strong>生活サービス業の会社向け</strong>に特化した、業務管理ツールです。今まで月に1,000件以上の仕事の依頼をLINE・スプレッドシートなどに<strong>人の手で転記していた手間</strong>（月約50万円分のムダ）を、スマカレが自動でやってくれます。この分野に特化したツールは他になく、まだ誰も攻めていない市場です。開発担当（加藤）と営業担当（岩田）が利益を折半して一緒に育てていきます。
+        </p>
+      </div>
+    </section>
+
+    <!-- ===== 02 PROBLEM ===== -->
+    <section class="section-block" id="s2">
+      <div class="section-label">02</div>
+      <div class="section-title">今、何が困っているのか</div>
+
+      <div class="grid-3" style="margin-bottom:40px;">
+        <div class="card" style="border-top:3px solid var(--red);">
+          <div style="font-size:32px;margin-bottom:12px;">⚡</div>
+          <div class="card-title">手作業が多すぎる</div>
+          <div style="font-size:24px;font-weight:800;font-family:'Space Grotesk';color:var(--red);margin:8px 0;">月1,000件</div>
+          <div style="font-size:13px;color:var(--muted);">LINEで届いた依頼を、スプレッドシートやスケジュールアプリに毎回手で入力している。これだけで担当者の時間の大半が消えている。</div>
+        </div>
+        <div class="card" style="border-top:3px solid var(--amber);">
+          <div style="font-size:32px;margin-bottom:12px;">🚨</div>
+          <div class="card-title">対応漏れが起きる</div>
+          <div style="font-size:24px;font-weight:800;font-family:'Space Grotesk';color:var(--amber);margin:8px 0;">入力ミス・見落とし</div>
+          <div style="font-size:13px;color:var(--muted);">手入力のため、ミスや入力漏れが起きやすい。お客様への対応漏れや、クレームにつながるリスクが常に存在している。</div>
+        </div>
+        <div class="card" style="border-top:3px solid var(--accent);">
+          <div style="font-size:32px;margin-bottom:12px;">💸</div>
+          <div class="card-title">毎月50万円のムダ</div>
+          <div style="font-size:24px;font-weight:800;font-family:'Space Grotesk';color:var(--accent);margin:8px 0;">月50万円</div>
+          <div style="font-size:13px;color:var(--muted);">この手作業のせいで取りこぼしているビジネスチャンスが、月約50万円分あると試算されている。スマカレで全部自動化する。</div>
+        </div>
+      </div>
+
+      <!-- Current Workflow -->
+      <div class="card">
+        <div class="chart-title">今の業務の流れ（問題の構造）</div>
+        <div class="flow-row">
+          <div class="flow-step">
+            <div class="flow-step-num">STEP 1</div>
+            <div class="flow-step-label">お客様から<br>LINE着信</div>
+          </div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step" style="border-color:var(--red);background:#fff5f5;">
+            <div class="flow-step-num" style="color:var(--red);">手入力 ❌</div>
+            <div class="flow-step-label">スプレッド<br>シートに転記</div>
+          </div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step" style="border-color:var(--red);background:#fff5f5;">
+            <div class="flow-step-num" style="color:var(--red);">手入力 ❌</div>
+            <div class="flow-step-label">スケジュール<br>アプリに登録</div>
+          </div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step" style="border-color:var(--red);background:#fff5f5;">
+            <div class="flow-step-num" style="color:var(--red);">手作業 ❌</div>
+            <div class="flow-step-label">担当者に<br>LINE連絡</div>
+          </div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step">
+            <div class="flow-step-num">STEP 5</div>
+            <div class="flow-step-label">現場で<br>作業・完了</div>
+          </div>
+        </div>
+        <div style="margin-top:20px;padding:16px;background:#fff5f5;border-radius:10px;border:1px solid #fecaca;">
+          <strong style="color:var(--red);">問題：</strong><span style="font-size:14px;color:#7f1d1d;">STEP 2〜4がすべて手作業 → ミス・転記漏れ・対応漏れが頻発。担当者の負担が限界に達している。</span>
+        </div>
+        <div style="margin-top:12px;padding:16px;background:#f0fdf4;border-radius:10px;border:1px solid #bbf7d0;">
+          <strong style="color:var(--green);">スマカレを使うと：</strong><span style="font-size:14px;color:#14532d;">LINEを受け取った瞬間に自動で解析・登録・通知まで完了。手入力がゼロになる。</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 03 PRODUCT ===== -->
+    <section class="section-block" id="s3">
+      <div class="section-label">03</div>
+      <div class="section-title">スマカレでできること</div>
+
+      <div class="grid-2" style="margin-bottom:32px;">
+        <div>
+          <div class="feature-item">
+            <div class="feature-icon" style="background:#ede9fe;">🤖</div>
+            <div>
+              <div class="feature-title">LINEを受けたら自動で登録</div>
+              <div class="feature-desc">コールセンターからのLINEを自動で読み取り、お客様の名前・住所・日時・品目をシステムに自動入力。手入力ゼロ。</div>
+            </div>
+          </div>
+          <div class="feature-item">
+            <div class="feature-icon" style="background:#dbeafe;">📅</div>
+            <div>
+              <div class="feature-title">スケジュールをまとめて管理</div>
+              <div class="feature-desc">カレンダー画面で全案件の予定を一覧表示。バラバラだったツールを1本化。</div>
+            </div>
+          </div>
+          <div class="feature-item">
+            <div class="feature-icon" style="background:#fef3c7;">🔔</div>
+            <div>
+              <div class="feature-title">急ぎの案件を自動でお知らせ</div>
+              <div class="feature-desc">当日依頼などの緊急案件を自動で判断し、担当者のLINEグループにすぐ通知。見落としなし。</div>
+            </div>
+          </div>
+          <div class="feature-item">
+            <div class="feature-icon" style="background:#d1fae5;">📊</div>
+            <div>
+              <div class="feature-title">売上・経営状況をひと目で確認</div>
+              <div class="feature-desc">今月の売上・広告費・成約率などをグラフでリアルタイム表示。経営判断がすぐできる。</div>
+            </div>
+          </div>
+          <div class="feature-item">
+            <div class="feature-icon" style="background:#fee2e2;">💰</div>
+            <div>
+              <div class="feature-title">日次の集金・精算も自動集計</div>
+              <div class="feature-desc">現金・クレジットの売上をスタッフ別に自動まとめ。手計算ゼロ。</div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="card" style="margin-bottom:20px;">
+            <div class="chart-title">対応している業種</div>
+            <div style="display:flex;flex-wrap:wrap;gap:8px;">
+              <span class="tag" style="background:#ede9fe;color:#5b21b6;">🗑️ 不用品回収</span>
+              <span class="tag" style="background:#ede9fe;color:#5b21b6;">🚚 引っ越し</span>
+              <span class="tag" style="background:#cffafe;color:#155e75;">🧹 ハウスクリーニング</span>
+              <span class="tag" style="background:#dbeafe;color:#1e40af;">🔧 水道修理</span>
+              <span class="tag" style="background:#fef3c7;color:#92400e;">🔑 鍵トラブル</span>
+              <span class="tag" style="background:#d1fae5;color:#065f46;">🛠️ 修理・メンテナンス</span>
+            </div>
+          </div>
+          <div class="card">
+            <div class="chart-title">使えるデバイス</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:8px;">
+              <div style="padding:16px;background:#f9fafb;border-radius:10px;text-align:center;">
+                <div style="font-size:28px;">💻</div>
+                <div style="font-size:13px;font-weight:700;margin-top:8px;">パソコン</div>
+                <div style="font-size:11px;color:var(--muted);">管理・分析・設定</div>
+              </div>
+              <div style="padding:16px;background:#f9fafb;border-radius:10px;text-align:center;">
+                <div style="font-size:28px;">📱</div>
+                <div style="font-size:13px;font-weight:700;margin-top:8px;">スマートフォン</div>
+                <div style="font-size:11px;color:var(--muted);">現場スタッフ向け</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- LINE Flow -->
+      <div class="card">
+        <div class="chart-title">スマカレを使った後の業務の流れ</div>
+        <div class="flow-row">
+          <div class="flow-step active">
+            <div class="flow-step-num">STEP 1</div>
+            <div class="flow-step-label">コールセンターが<br>LINEを受信</div>
+          </div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step active">
+            <div class="flow-step-num">自動 ✓</div>
+            <div class="flow-step-label">内容を<br>自動で読み取り</div>
+          </div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step active">
+            <div class="flow-step-num">自動 ✓</div>
+            <div class="flow-step-label">システムに<br>自動登録</div>
+          </div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step active">
+            <div class="flow-step-num">自動 ✓</div>
+            <div class="flow-step-label">担当者に<br>自動通知</div>
+          </div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step active">
+            <div class="flow-step-num">STEP 5</div>
+            <div class="flow-step-label">現場で<br>作業・完了</div>
+          </div>
+        </div>
+        <div style="margin-top:16px;display:flex;gap:16px;flex-wrap:wrap;">
+          <span style="font-size:13px;color:var(--green);font-weight:600;">✓ STEP 2〜4が完全自動化</span>
+          <span style="font-size:13px;color:var(--green);font-weight:600;">✓ 入力ミスゼロ</span>
+          <span style="font-size:13px;color:var(--green);font-weight:600;">✓ リアルタイム通知</span>
+          <span style="font-size:13px;color:var(--green);font-weight:600;">✓ 対応漏れ防止</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 04 MARKET ===== -->
+    <section class="section-block" id="s4">
+      <div class="section-label">04</div>
+      <div class="section-title">どれだけ売れる市場か</div>
+
+      <div class="grid-3" style="margin-bottom:32px;">
+        <div class="card" style="border:2px solid var(--accent);">
+          <div class="card-title">日本国内の見込み顧客数</div>
+          <div class="card-value" style="font-size:32px;">約10万社</div>
+          <div class="card-sub">不用品回収・引っ越し・クリーニングなど生活サービス業の会社数（推計）</div>
+        </div>
+        <div class="card">
+          <div class="card-title">まだITツールを使っていない会社</div>
+          <div class="card-value" style="font-size:32px;">8割以上</div>
+          <div class="card-sub">専用ツールを使っていない会社がほとんど。IT化の波がまさに来ている。</div>
+        </div>
+        <div class="card">
+          <div class="card-title">市場全体の規模（試算）</div>
+          <div class="card-value" style="font-size:32px;">年480億円</div>
+          <div class="card-sub">10万社すべてが月4万円で契約した場合の試算。まずは0.1%（100社）を目指す。</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="chart-title">競合マップ — スマカレが「空白地帯」にいる</div>
+        <div style="position:relative;width:100%;height:300px;border:1px solid var(--border);border-radius:12px;overflow:hidden;background:linear-gradient(135deg, #fafafa 0%, #f5f3ff 100%);">
+          <!-- Axes -->
+          <div style="position:absolute;left:50%;top:0;bottom:0;width:1px;background:#e5e7eb;"></div>
+          <div style="position:absolute;top:50%;left:0;right:0;height:1px;background:#e5e7eb;"></div>
+          <!-- Labels -->
+          <div style="position:absolute;top:8px;left:50%;transform:translateX(-50%);font-size:11px;color:var(--muted);">業界特化度 高い</div>
+          <div style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);font-size:11px;color:var(--muted);">業界特化度 低い</div>
+          <div style="position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:11px;color:var(--muted);">LINE連携 できる</div>
+          <div style="position:absolute;left:8px;top:50%;transform:translateY(-50%);font-size:11px;color:var(--muted);">LINE連携 できない</div>
+          <!-- Competitors -->
+          <div style="position:absolute;top:20%;left:20%;transform:translate(-50%,-50%);">
+            <div style="background:#fee2e2;padding:6px 12px;border-radius:8px;font-size:12px;font-weight:600;color:#991b1b;white-space:nowrap;">ONIKAN</div>
+          </div>
+          <div style="position:absolute;top:30%;left:25%;transform:translate(-50%,-50%);">
+            <div style="background:#fef3c7;padding:6px 12px;border-radius:8px;font-size:12px;font-weight:600;color:#92400e;white-space:nowrap;">センキャク</div>
+          </div>
+          <div style="position:absolute;top:35%;left:22%;transform:translate(-50%,-50%);">
+            <div style="background:#fef3c7;padding:6px 12px;border-radius:8px;font-size:12px;font-weight:600;color:#92400e;white-space:nowrap;">プロワン</div>
+          </div>
+          <div style="position:absolute;top:70%;right:20%;transform:translate(50%,-50%);">
+            <div style="background:#dbeafe;padding:6px 12px;border-radius:8px;font-size:12px;font-weight:600;color:#1e40af;white-space:nowrap;">LINE CRM (Liny)</div>
+          </div>
+          <div style="position:absolute;top:60%;left:20%;transform:translate(-50%,-50%);">
+            <div style="background:#f3f4f6;padding:6px 12px;border-radius:8px;font-size:12px;font-weight:600;color:#374151;white-space:nowrap;">Housecall Pro</div>
+          </div>
+          <!-- スマカレ -->
+          <div style="position:absolute;top:18%;right:22%;transform:translate(50%,-50%);">
+            <div style="background:var(--accent);padding:10px 16px;border-radius:10px;font-size:13px;font-weight:800;color:white;white-space:nowrap;box-shadow:0 4px 16px rgba(99,102,241,0.4);">
+              ★ スマカレ
+            </div>
+            <div style="font-size:11px;color:var(--accent);text-align:center;margin-top:4px;font-weight:600;">ここに競合がいない！</div>
+          </div>
+        </div>
+        <div style="margin-top:12px;font-size:13px;color:var(--muted);">「LINE連携できて、かつ生活サービス業に特化している」ツールは、今のところスマカレだけです。</div>
+      </div>
+    </section>
+
+    <!-- ===== 05 REVENUE ===== -->
+    <section class="section-block" id="s5">
+      <div class="section-label">05</div>
+      <div class="section-title">いくら稼げるか（売上の試算）</div>
+
+      <!-- Assumptions -->
+      <div class="card" style="margin-bottom:32px;background:#f9fafb;">
+        <div class="chart-title">計算の前提条件</div>
+        <div class="grid-3">
+          <div>
+            <div style="font-size:12px;color:var(--muted);margin-bottom:4px;">月額料金</div>
+            <div style="font-size:18px;font-weight:700;">月3〜5万円</div>
+            <div style="font-size:12px;color:var(--muted);">平均4万円で計算</div>
+          </div>
+          <div>
+            <div style="font-size:12px;color:var(--muted);margin-bottom:4px;">毎月辞める会社の割合</div>
+            <div style="font-size:18px;font-weight:700;">3%以下 / 月</div>
+            <div style="font-size:12px;color:var(--muted);">業務に定着するので辞めにくい</div>
+          </div>
+          <div>
+            <div style="font-size:12px;color:var(--muted);margin-bottom:4px;">毎月新しく契約する会社</div>
+            <div style="font-size:18px;font-weight:700;">10社 / 月</div>
+            <div style="font-size:12px;color:var(--muted);">岩田の業界ネットワークで獲得</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MRR Growth Chart -->
+      <div class="card" style="margin-bottom:32px;">
+        <div class="chart-title">月ごとの売上成長グラフ（標準シナリオ）</div>
+        <div id="mrr-chart" style="width:100%;height:220px;position:relative;"></div>
+        <div style="display:flex;gap:24px;margin-top:16px;flex-wrap:wrap;">
+          <div style="display:flex;align-items:center;gap:8px;font-size:13px;">
+            <div style="width:12px;height:12px;background:var(--accent);border-radius:3px;"></div>月の売上合計
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:13px;">
+            <div style="width:12px;height:12px;background:var(--green);border-radius:3px;"></div>累計の契約社数
+          </div>
+        </div>
+      </div>
+
+      <!-- Scenario Table -->
+      <div class="card" style="margin-bottom:32px;">
+        <div class="chart-title">3つのシナリオ比較（12ヶ月後）</div>
+        <table class="rev-table">
+          <thead>
+            <tr>
+              <th>シナリオ</th>
+              <th>毎月の<br>新規契約数</th>
+              <th>毎月の<br>解約率</th>
+              <th>12ヶ月後の<br>契約社数</th>
+              <th>月の売上</th>
+              <th>年間の売上</th>
+              <th>折半後の<br>取り分</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>🐢 控えめな見通し</td>
+              <td>5社/月</td>
+              <td>5%</td>
+              <td>42社</td>
+              <td>168万円</td>
+              <td>1,176万円</td>
+              <td class="green">588万円</td>
+            </tr>
+            <tr class="highlight">
+              <td>🎯 標準シナリオ</td>
+              <td>10社/月</td>
+              <td>3%</td>
+              <td>84社</td>
+              <td>336万円</td>
+              <td>2,352万円</td>
+              <td class="accent">1,176万円</td>
+            </tr>
+            <tr>
+              <td>🚀 うまくいった場合</td>
+              <td>15社/月</td>
+              <td>2%</td>
+              <td>140社</td>
+              <td>560万円</td>
+              <td>3,920万円</td>
+              <td class="green">1,960万円</td>
+            </tr>
+          </tbody>
+        </table>
+        <div style="margin-top:16px;padding:12px 16px;background:#f0fdf4;border-radius:8px;font-size:13px;color:#065f46;">
+          ※ 1年後の目標（100社・年間1億円）は、標準〜うまくいった場合の中間を達成することで実現できます。
+        </div>
+      </div>
+
+      <!-- 3-Year Projection -->
+      <div class="card">
+        <div class="chart-title">3年間の収益予測（標準シナリオ）</div>
+        <table class="rev-table">
+          <thead>
+            <tr>
+              <th>年</th>
+              <th>期末の<br>契約社数</th>
+              <th>年間の<br>月額売上合計</th>
+              <th>初期費用等</th>
+              <th>年間売上<br>合計</th>
+              <th>運営コスト</th>
+              <th>利益</th>
+              <th>折半後の<br>取り分</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>1年目（2026）</td>
+              <td>84社</td>
+              <td>2,352万円</td>
+              <td>420万円</td>
+              <td>2,772万円</td>
+              <td>800万円</td>
+              <td>1,972万円</td>
+              <td class="green">986万円</td>
+            </tr>
+            <tr>
+              <td>2年目（2027）</td>
+              <td>200社</td>
+              <td>9,600万円</td>
+              <td>640万円</td>
+              <td>1億240万円</td>
+              <td>2,400万円</td>
+              <td>7,840万円</td>
+              <td class="green">3,920万円</td>
+            </tr>
+            <tr class="highlight">
+              <td>3年目（2028）</td>
+              <td>400社</td>
+              <td>2億4,000万円</td>
+              <td>1,200万円</td>
+              <td>2億5,200万円</td>
+              <td>4,800万円</td>
+              <td>2億400万円</td>
+              <td class="accent">1億200万円</td>
+            </tr>
+          </tbody>
+        </table>
+        <div style="margin-top:16px;padding:12px 16px;background:#ede9fe;border-radius:8px;font-size:13px;color:var(--tag-color);">
+          ※ 運営コスト：サーバー費・サポート費・広告費などの合計。3年目は料金プランの値上げも想定しています。
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 06 BUSINESS MODEL ===== -->
+    <section class="section-block" id="s6">
+      <div class="section-label">06</div>
+      <div class="section-title">料金と利益の分け方</div>
+
+      <div class="grid-2" style="margin-bottom:32px;">
+        <div>
+          <div class="card" style="margin-bottom:20px;">
+            <div class="chart-title">料金プラン</div>
+            <div style="display:flex;flex-direction:column;gap:12px;">
+              <div style="padding:16px;border:2px solid var(--border);border-radius:10px;display:flex;justify-content:space-between;align-items:center;">
+                <div>
+                  <div style="font-size:14px;font-weight:700;">スタンダード</div>
+                  <div style="font-size:12px;color:var(--muted);">小規模向け（月100件以下）</div>
+                </div>
+                <div style="text-align:right;">
+                  <div style="font-size:22px;font-weight:800;font-family:'Space Grotesk';">30,000円<span style="font-size:12px;font-weight:400;">/月</span></div>
+                </div>
+              </div>
+              <div style="padding:16px;border:2px solid var(--accent);border-radius:10px;background:#f5f3ff;display:flex;justify-content:space-between;align-items:center;">
+                <div>
+                  <div style="font-size:14px;font-weight:700;">プロ <span style="background:var(--accent);color:white;font-size:10px;padding:2px 8px;border-radius:10px;margin-left:6px;">おすすめ</span></div>
+                  <div style="font-size:12px;color:var(--muted);">中規模向け（月300件以下）</div>
+                </div>
+                <div style="text-align:right;">
+                  <div style="font-size:22px;font-weight:800;font-family:'Space Grotesk';color:var(--accent);">40,000円<span style="font-size:12px;font-weight:400;color:var(--muted);">/月</span></div>
+                </div>
+              </div>
+              <div style="padding:16px;border:2px solid var(--border);border-radius:10px;display:flex;justify-content:space-between;align-items:center;">
+                <div>
+                  <div style="font-size:14px;font-weight:700;">エンタープライズ</div>
+                  <div style="font-size:12px;color:var(--muted);">大規模・複数拠点（件数無制限）</div>
+                </div>
+                <div style="text-align:right;">
+                  <div style="font-size:22px;font-weight:800;font-family:'Space Grotesk';">50,000円+<span style="font-size:12px;font-weight:400;">/月</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="chart-title">その他の収入源</div>
+            <div style="display:flex;flex-direction:column;gap:10px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);">
+                <span style="font-size:14px;">初期設定サポート費</span>
+                <span style="font-size:14px;font-weight:700;">5〜10万円</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);">
+                <span style="font-size:14px;">1年分まとめ払い割引</span>
+                <span style="font-size:14px;font-weight:700;">10%引き</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;">
+                <span style="font-size:14px;">会計ソフト連携オプション（将来）</span>
+                <span style="font-size:14px;font-weight:700;">5,000円/月</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="card" style="margin-bottom:20px;">
+            <div class="chart-title">利益の折半ルール</div>
+            <div style="margin:20px 0;">
+              <svg viewBox="0 0 300 200" style="width:100%;max-width:300px;display:block;margin:0 auto;">
+                <path d="M150 20 A130 130 0 0 1 280 150 L150 150 Z" fill="#6366f1" opacity="0.9"/>
+                <path d="M280 150 A130 130 0 1 1 150 20 L150 150 Z" fill="#8b5cf6" opacity="0.7"/>
+                <text x="200" y="100" text-anchor="middle" fill="white" font-size="18" font-weight="bold" font-family="'Space Grotesk'">50%</text>
+                <text x="200" y="118" text-anchor="middle" fill="white" font-size="11">開発（加藤）</text>
+                <text x="90" y="170" text-anchor="middle" fill="white" font-size="18" font-weight="bold" font-family="'Space Grotesk'">50%</text>
+                <text x="90" y="188" text-anchor="middle" fill="white" font-size="11">営業（岩田）</text>
+              </svg>
+            </div>
+            <div style="font-size:13px;color:var(--muted);text-align:center;">売上からコストを引いた利益を、2人で50%ずつ山分け</div>
+          </div>
+          <div class="card">
+            <div class="chart-title">1社あたりの収支イメージ</div>
+            <div style="display:flex;flex-direction:column;gap:10px;">
+              <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);">
+                <span style="font-size:13px;color:var(--muted);">平均の月額料金</span>
+                <span style="font-weight:700;">40,000円</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);">
+                <span style="font-size:13px;color:var(--muted);">毎月辞める割合の目標</span>
+                <span style="font-weight:700;">3%以下/月</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);">
+                <span style="font-size:13px;color:var(--muted);">平均の利用期間</span>
+                <span style="font-weight:700;">約33〜40ヶ月</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);">
+                <span style="font-size:13px;color:var(--muted);">1社から得られる合計売上</span>
+                <span style="font-weight:700;color:var(--accent);">132〜160万円</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;padding:8px 0;">
+                <span style="font-size:13px;color:var(--muted);">1社獲得にかかるコスト目標</span>
+                <span style="font-weight:700;">3万円以下</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 07 COMPETITION ===== -->
+    <section class="section-block" id="s7">
+      <div class="section-label">07</div>
+      <div class="section-title">なぜスマカレが選ばれるのか</div>
+
+      <div class="card" style="margin-bottom:32px;">
+        <div class="chart-title">他のツールとの比較</div>
+        <div style="overflow-x:auto;">
+          <table class="comp-table">
+            <thead>
+              <tr>
+                <th>ツール名</th>
+                <th>この業界<br>に特化</th>
+                <th>LINE<br>連携</th>
+                <th>スケジュール<br>管理</th>
+                <th>売上<br>分析</th>
+                <th>精算<br>管理</th>
+                <th>日本語<br>対応</th>
+                <th>月額<br>料金</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="our-row">
+                <td>⭐ スマカレ（本製品）</td>
+                <td>◎</td>
+                <td>◎</td>
+                <td>◎</td>
+                <td>◎</td>
+                <td>◎</td>
+                <td>◎</td>
+                <td>3〜5万円</td>
+              </tr>
+              <tr>
+                <td>ONIKAN</td>
+                <td>◎</td>
+                <td>✕</td>
+                <td>△</td>
+                <td>△</td>
+                <td>○</td>
+                <td>○</td>
+                <td>要問合せ</td>
+              </tr>
+              <tr>
+                <td>センキャク</td>
+                <td>△</td>
+                <td>✕</td>
+                <td>○</td>
+                <td>△</td>
+                <td>△</td>
+                <td>○</td>
+                <td>2〜5万円</td>
+              </tr>
+              <tr>
+                <td>プロワン</td>
+                <td>△</td>
+                <td>✕</td>
+                <td>○</td>
+                <td>○</td>
+                <td>○</td>
+                <td>○</td>
+                <td>3〜8万円</td>
+              </tr>
+              <tr>
+                <td>Housecall Pro</td>
+                <td>△</td>
+                <td>✕</td>
+                <td>○</td>
+                <td>◎</td>
+                <td>○</td>
+                <td>✕（英語のみ）</td>
+                <td>$49〜</td>
+              </tr>
+              <tr>
+                <td>LINE CRM（Liny等）</td>
+                <td>✕</td>
+                <td>◎</td>
+                <td>✕</td>
+                <td>✕</td>
+                <td>✕</td>
+                <td>○</td>
+                <td>1〜3万円</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="chart-title">スマカレが強い4つの理由</div>
+          <div style="display:flex;flex-direction:column;gap:16px;margin-top:8px;">
+            <div style="display:flex;gap:12px;align-items:flex-start;">
+              <div style="width:36px;height:36px;background:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center;color:white;font-size:16px;flex-shrink:0;">1</div>
+              <div>
+                <div style="font-size:14px;font-weight:700;margin-bottom:4px;">LINE連携 × この業種に完全特化</div>
+                <div style="font-size:13px;color:var(--muted);">コールセンターのLINE業務にそのまま組み込める。他のツールではできない組み合わせ。</div>
+              </div>
+            </div>
+            <div style="display:flex;gap:12px;align-items:flex-start;">
+              <div style="width:36px;height:36px;background:var(--accent2);border-radius:8px;display:flex;align-items:center;justify-content:center;color:white;font-size:16px;flex-shrink:0;">2</div>
+              <div>
+                <div style="font-size:14px;font-weight:700;margin-bottom:4px;">今使っているツールをそのまま置き換え</div>
+                <div style="font-size:13px;color:var(--muted);">LINE・スプレッドシート・スケジュールアプリを1本化。新しいことを覚える手間が少ない。</div>
+              </div>
+            </div>
+            <div style="display:flex;gap:12px;align-items:flex-start;">
+              <div style="width:36px;height:36px;background:var(--green);border-radius:8px;display:flex;align-items:center;justify-content:center;color:white;font-size:16px;flex-shrink:0;">3</div>
+              <div>
+                <div style="font-size:14px;font-weight:700;margin-bottom:4px;">これ1つで全部完結</div>
+                <div style="font-size:13px;color:var(--muted);">案件管理・スケジュール・精算・売上分析が全部入り。複数のツールに課金しなくていい。</div>
+              </div>
+            </div>
+            <div style="display:flex;gap:12px;align-items:flex-start;">
+              <div style="width:36px;height:36px;background:var(--amber);border-radius:8px;display:flex;align-items:center;justify-content:center;color:white;font-size:16px;flex-shrink:0;">4</div>
+              <div>
+                <div style="font-size:14px;font-weight:700;margin-bottom:4px;">一度使ったらやめられない</div>
+                <div style="font-size:13px;color:var(--muted);">業務の中心に入り込むので、乗り換えが大変になる。安定した継続利用が見込める。</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="chart-title">お客様から見たコストパフォーマンス</div>
+          <div style="padding:20px;background:#f0fdf4;border-radius:12px;margin-bottom:16px;">
+            <div style="font-size:13px;color:var(--green);font-weight:700;margin-bottom:12px;">月額4万円を払うと…</div>
+            <div style="display:flex;flex-direction:column;gap:8px;">
+              <div style="display:flex;justify-content:space-between;font-size:14px;">
+                <span>手作業がなくなって浮く時間</span>
+                <span style="font-weight:700;color:var(--green);">＋30万円相当/月</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;font-size:14px;">
+                <span>対応漏れがなくなって取れる仕事</span>
+                <span style="font-weight:700;color:var(--green);">＋20万円相当/月</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;font-size:14px;">
+                <span>スマカレの月額費用</span>
+                <span style="font-weight:700;color:var(--red);">－4万円/月</span>
+              </div>
+              <div style="height:1px;background:#86efac;margin:8px 0;"></div>
+              <div style="display:flex;justify-content:space-between;font-size:16px;">
+                <span style="font-weight:700;">月の収支改善額</span>
+                <span style="font-weight:800;font-size:20px;color:var(--green);font-family:'Space Grotesk';">＋46万円/月</span>
+              </div>
+            </div>
+          </div>
+          <div style="font-size:13px;color:var(--muted);">
+            月4万円の投資で月50万円分のムダを回収。<strong style="color:var(--ink);">「払わない理由がない」</strong>レベルのコスパ。
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 08 ROADMAP ===== -->
+    <section class="section-block" id="s8">
+      <div class="section-label">08</div>
+      <div class="section-title">開発スケジュールと体制</div>
+
+      <div class="grid-2" style="margin-bottom:32px;">
+        <div class="timeline">
+          <div class="timeline-item">
+            <div class="timeline-dot" style="background:var(--green);">
+              <div class="timeline-dot-inner" style="background:white;"></div>
+            </div>
+            <div class="timeline-phase">Phase 1 — 完了</div>
+            <div class="timeline-title">画面設計・方向性固め</div>
+            <div class="timeline-period">約1.5週間（完了）</div>
+            <ul class="timeline-items">
+              <li>画面のデザインプロトタイプ作成</li>
+              <li>開発方針・仕様のドキュメント化</li>
+              <li>競合調査・必要な機能の整理</li>
+              <li>パートナー間の合意確認</li>
+            </ul>
+          </div>
+          <div class="timeline-item">
+            <div class="timeline-dot" style="background:var(--accent);">
+              <div class="timeline-dot-inner" style="background:white;"></div>
+            </div>
+            <div class="timeline-phase">Phase 2 — 進行中</div>
+            <div class="timeline-title">主要機能の開発・試験導入</div>
+            <div class="timeline-period">約3週間〜1ヶ月</div>
+            <ul class="timeline-items">
+              <li>Webアプリ・スマホアプリの基盤構築</li>
+              <li>サーバー・データベース設計</li>
+              <li>LINE自動登録機能の実装</li>
+              <li>案件管理・カレンダー機能</li>
+              <li>1社目でのテスト利用開始</li>
+            </ul>
+          </div>
+          <div class="timeline-item">
+            <div class="timeline-dot" style="background:#d1d5db;">
+              <div class="timeline-dot-inner" style="background:white;"></div>
+            </div>
+            <div class="timeline-phase">Phase 3 — 予定</div>
+            <div class="timeline-title">改善・機能追加・品質向上</div>
+            <div class="timeline-period">約1〜2ヶ月</div>
+            <ul class="timeline-items">
+              <li>テスト利用のフィードバックを反映</li>
+              <li>精算・日報機能の完成</li>
+              <li>売上分析レポート機能</li>
+              <li>スマホアプリ完成</li>
+              <li>セキュリティチェック</li>
+            </ul>
+          </div>
+          <div class="timeline-item">
+            <div class="timeline-dot" style="background:#d1d5db;">
+              <div class="timeline-dot-inner" style="background:white;"></div>
+            </div>
+            <div class="timeline-phase">リリース — 予定</div>
+            <div class="timeline-title">外部向けサービス開始</div>
+            <div class="timeline-period">開発開始から約3〜4.5ヶ月後</div>
+            <ul class="timeline-items">
+              <li>正式リリース・最初の顧客獲得</li>
+              <li>会計ソフト連携（freee / マネーフォワード）</li>
+              <li>音声入力対応（検討中）</li>
+            </ul>
+          </div>
+        </div>
+
+        <div>
+          <div class="card" style="margin-bottom:20px;">
+            <div class="chart-title">パートナーシップ体制</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+              <div style="padding:20px;background:#f5f3ff;border-radius:12px;border:2px solid var(--accent);">
+                <div style="font-size:11px;font-weight:700;color:var(--accent);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">開発パートナー</div>
+                <div style="font-size:15px;font-weight:700;margin-bottom:12px;">加藤</div>
+                <ul style="list-style:none;font-size:13px;color:#374151;">
+                  <li style="padding:4px 0;">✓ システム設計・開発</li>
+                  <li style="padding:4px 0;">✓ インフラ構築・保守</li>
+                  <li style="padding:4px 0;">✓ 継続的アップデート</li>
+                </ul>
+              </div>
+              <div style="padding:20px;background:#f0fdf4;border-radius:12px;border:2px solid var(--green);">
+                <div style="font-size:11px;font-weight:700;color:var(--green);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">事業パートナー</div>
+                <div style="font-size:15px;font-weight:700;margin-bottom:12px;">岩田</div>
+                <ul style="list-style:none;font-size:13px;color:#374151;">
+                  <li style="padding:4px 0;">✓ 業界ノウハウ提供</li>
+                  <li style="padding:4px 0;">✓ 営業・顧客獲得</li>
+                  <li style="padding:4px 0;">✓ テストマーケティング</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="chart-title">売上拡大の進め方</div>
+            <div style="display:flex;flex-direction:column;gap:12px;">
+              <div style="padding:12px;background:#f9fafb;border-radius:8px;">
+                <div style="font-size:13px;font-weight:700;margin-bottom:4px;">Step 1：お試し提供（0〜3ヶ月）</div>
+                <div style="font-size:12px;color:var(--muted);">岩田の既存ネットワークから3〜5社に無料または低価格で試してもらう。使ってみた感想をもとに改良。</div>
+              </div>
+              <div style="padding:12px;background:#f9fafb;border-radius:8px;">
+                <div style="font-size:13px;font-weight:700;margin-bottom:4px;">Step 2：口コミで広げる（3〜6ヶ月）</div>
+                <div style="font-size:12px;color:var(--muted);">導入先企業からの紹介・口コミで広げる。業界団体や展示会への出展も検討。</div>
+              </div>
+              <div style="padding:12px;background:#f9fafb;border-radius:8px;">
+                <div style="font-size:13px;font-weight:700;margin-bottom:4px;">Step 3：ネット広告・検索で獲得（6ヶ月〜）</div>
+                <div style="font-size:12px;color:var(--muted);">SEO・ネット広告・SNSで月10社ペースを維持。複数の集客ルートを確立。</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 09 KPI ===== -->
+    <section class="section-block" id="s9">
+      <div class="section-label">09</div>
+      <div class="section-title">目標と数字で見る進捗</div>
+
+      <div class="grid-4" style="margin-bottom:32px;">
+        <div class="card" style="text-align:center;">
+          <div style="font-size:28px;margin-bottom:8px;">🎯</div>
+          <div class="card-title">3ヶ月後</div>
+          <div style="font-size:22px;font-weight:800;font-family:'Space Grotesk';color:var(--accent);">5社</div>
+          <div style="font-size:12px;color:var(--muted);">試験導入・使い勝手の確認</div>
+        </div>
+        <div class="card" style="text-align:center;">
+          <div style="font-size:28px;margin-bottom:8px;">🚀</div>
+          <div class="card-title">6ヶ月後</div>
+          <div style="font-size:22px;font-weight:800;font-family:'Space Grotesk';color:var(--accent);">30社</div>
+          <div style="font-size:12px;color:var(--muted);">正式リリース・月120万円売上</div>
+        </div>
+        <div class="card" style="text-align:center;">
+          <div style="font-size:28px;margin-bottom:8px;">📈</div>
+          <div class="card-title">12ヶ月後</div>
+          <div style="font-size:22px;font-weight:800;font-family:'Space Grotesk';color:var(--accent);">100社</div>
+          <div style="font-size:12px;color:var(--muted);">月400万円売上・年1億円圏内</div>
+        </div>
+        <div class="card" style="text-align:center;">
+          <div style="font-size:28px;margin-bottom:8px;">🏆</div>
+          <div class="card-title">24ヶ月後</div>
+          <div style="font-size:22px;font-weight:800;font-family:'Space Grotesk';color:var(--accent);">200社</div>
+          <div style="font-size:12px;color:var(--muted);">月800万円売上・次の資金調達を検討</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="chart-title">毎月確認する数字（進捗チェックリスト）</div>
+        <div style="overflow-x:auto;">
+          <table class="rev-table">
+            <thead>
+              <tr>
+                <th>チェック項目</th>
+                <th>内容</th>
+                <th>目標</th>
+                <th>確認方法</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>月の売上合計</td>
+                <td>その月に課金された金額の合計</td>
+                <td>月40万円ずつ増加</td>
+                <td>請求管理ツール</td>
+              </tr>
+              <tr>
+                <td>契約中の会社数</td>
+                <td>有料で使っている会社の数</td>
+                <td>月10社ずつ増加</td>
+                <td>顧客管理ツール</td>
+              </tr>
+              <tr>
+                <td>解約した会社の割合</td>
+                <td>その月に辞めた会社の比率</td>
+                <td>3%以下</td>
+                <td>顧客管理ツール</td>
+              </tr>
+              <tr>
+                <td>顧客満足度スコア</td>
+                <td>使ってみての満足度（10点満点）</td>
+                <td>50点以上（100点満点換算）</td>
+                <td>四半期アンケート</td>
+              </tr>
+              <tr>
+                <td>LINE自動登録の成功率</td>
+                <td>自動で登録できたメッセージの割合</td>
+                <td>90%以上</td>
+                <td>システムログ</td>
+              </tr>
+              <tr>
+                <td>システムの稼働率</td>
+                <td>ツールが止まらずに動いている割合</td>
+                <td>99.5%以上</td>
+                <td>監視ツール</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 10 RISK ===== -->
+    <section class="section-block" id="s10">
+      <div class="section-label">10</div>
+      <div class="section-title">リスクと対策</div>
+
+      <div class="card">
+        <div style="display:flex;flex-direction:column;gap:0;">
+          <div class="risk-row">
+            <div class="risk-badge risk-high">要注意</div>
+            <div class="risk-content">
+              <div class="risk-title">LINEのルール変更・サービス停止</div>
+              <div class="risk-desc">主要機能がLINEに頼っているため、LINEの仕様変更や料金値上げが直接ダメージになる可能性がある。</div>
+              <div style="font-size:12px;margin-top:6px;color:var(--green);font-weight:600;">対策：LINEのアップデートを常に確認。将来的にはSlack・チャットワーク等にも対応できるよう設計しておく。</div>
+            </div>
+          </div>
+          <div class="risk-row">
+            <div class="risk-badge risk-high">要注意</div>
+            <div class="risk-content">
+              <div class="risk-title">大手の業界参入</div>
+              <div class="risk-desc">Salesforceやkintoneなど大手IT企業が同じ業種向けツールを作った場合に競合になる可能性がある。</div>
+              <div style="font-size:12px;margin-top:6px;color:var(--green);font-weight:600;">対策：早く市場に入り込んで実績を作る。一度定着したら乗り換えにくい仕組みを作る。</div>
+            </div>
+          </div>
+          <div class="risk-row">
+            <div class="risk-badge risk-mid">注意</div>
+            <div class="risk-content">
+              <div class="risk-title">お客様情報の漏洩</div>
+              <div class="risk-desc">お客様の住所・電話番号などの大切な情報を扱うため、情報漏えいが起きると信頼を失う。</div>
+              <div style="font-size:12px;margin-top:6px;color:var(--green);font-weight:600;">対策：通信の暗号化・権限管理・定期的なセキュリティチェックを必ず行う。</div>
+            </div>
+          </div>
+          <div class="risk-row">
+            <div class="risk-badge risk-mid">注意</div>
+            <div class="risk-content">
+              <div class="risk-title">開発が遅れる・コストがかかりすぎる</div>
+              <div class="risk-desc">LINE解析の精度改善など、思った以上に開発に時間がかかる可能性がある。</div>
+              <div style="font-size:12px;margin-top:6px;color:var(--green);font-weight:600;">対策：まず最低限の機能から始めてリリース。フェーズを分けて少しずつ改良していく。</div>
+            </div>
+          </div>
+          <div class="risk-row" style="border-bottom:none;">
+            <div class="risk-badge risk-low">軽微</div>
+            <div class="risk-content">
+              <div class="risk-title">最初のお客様がなかなか増えない</div>
+              <div class="risk-desc">岩田のネットワークが想定より少なく、初期の契約数が伸びない可能性がある。</div>
+              <div style="font-size:12px;margin-top:6px;color:var(--green);font-weight:600;">対策：最初の数社は無料か格安で使ってもらい実績と事例を作る。SNS・コミュニティでの認知も並行して行う。</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top:40px;padding:40px;background:var(--ink);border-radius:20px;text-align:center;position:relative;overflow:hidden;">
+        <div style="position:absolute;top:-100px;right:-100px;width:300px;height:300px;background:radial-gradient(circle,rgba(99,102,241,0.2) 0%,transparent 70%);pointer-events:none;"></div>
+        <div style="font-size:13px;color:#6b7280;letter-spacing:2px;text-transform:uppercase;margin-bottom:16px;">まとめ</div>
+        <div style="font-size:clamp(22px,3vw,34px);font-weight:800;color:white;font-family:'Space Grotesk';letter-spacing:-1px;line-height:1.3;margin-bottom:20px;">
+          誰もいない市場に、まず入る。<br>その先行優位を武器に成長する。
+        </div>
+        <div style="font-size:15px;color:#9ca3af;max-width:600px;margin:0 auto;line-height:1.8;">
+          スマカレは、生活サービス業の「手作業だらけ」という明確な課題に対して、唯一LINEと業界特化を両立したツールとして市場をリードします。
+          加藤（開発）× 岩田（営業）の最強タッグで、3年後には累計2.5億円超の売上を目指します。
+        </div>
+        <div style="margin-top:28px;font-size:13px;color:#4b5563;">
+          作成：2026年3月 &nbsp;|&nbsp; スマカレ 事業計画書 v1.0 &nbsp;|&nbsp; 本書は機密文書です
+        </div>
+      </div>
+
+    </section>
+  </div>
+</div>
+
+<script>
+// MRR Growth Chart (Canvas)
+(function() {
+  const container = document.getElementById('mrr-chart');
+  if (!container) return;
+
+  // Simulate 12-month MRR growth
+  const months = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+  // Base scenario: +10/month, 3% churn, avg ¥40K
+  let companies = 0;
+  const mrrData = [];
+  const compData = [];
+  for (let i = 0; i < 12; i++) {
+    const newC = 10;
+    const churn = Math.floor(companies * 0.03);
+    companies = companies + newC - churn;
+    compData.push(companies);
+    mrrData.push(companies * 40); // in 万円
+  }
+  const maxMRR = Math.max(...mrrData);
+  const maxComp = Math.max(...compData);
+
+  const W = container.offsetWidth || 640;
+  const H = 220;
+  const PAD = { top: 16, right: 60, bottom: 40, left: 60 };
+  const chartW = W - PAD.left - PAD.right;
+  const chartH = H - PAD.top - PAD.bottom;
+
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  svg.setAttribute('width', '100%');
+  svg.style.overflow = 'visible';
+
+  const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+  const grad = document.createElementNS('http://www.w3.org/2000/svg', 'linearGradient');
+  grad.setAttribute('id', 'mrrGrad');
+  grad.setAttribute('x1', '0'); grad.setAttribute('y1', '0');
+  grad.setAttribute('x2', '0'); grad.setAttribute('y2', '1');
+  const s1 = document.createElementNS('http://www.w3.org/2000/svg', 'stop');
+  s1.setAttribute('offset', '0%'); s1.setAttribute('stop-color', '#6366f1'); s1.setAttribute('stop-opacity', '0.3');
+  const s2 = document.createElementNS('http://www.w3.org/2000/svg', 'stop');
+  s2.setAttribute('offset', '100%'); s2.setAttribute('stop-color', '#6366f1'); s2.setAttribute('stop-opacity', '0');
+  grad.appendChild(s1); grad.appendChild(s2);
+  defs.appendChild(grad);
+  svg.appendChild(defs);
+
+  // Grid lines
+  [0, 0.25, 0.5, 0.75, 1].forEach(t => {
+    const y = PAD.top + chartH * (1 - t);
+    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    line.setAttribute('x1', PAD.left); line.setAttribute('x2', PAD.left + chartW);
+    line.setAttribute('y1', y); line.setAttribute('y2', y);
+    line.setAttribute('stroke', '#e5e7eb'); line.setAttribute('stroke-width', '1');
+    svg.appendChild(line);
+    const txt = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    txt.setAttribute('x', PAD.left - 6); txt.setAttribute('y', y + 4);
+    txt.setAttribute('text-anchor', 'end');
+    txt.setAttribute('font-size', '10'); txt.setAttribute('fill', '#9ca3af');
+    txt.textContent = Math.round(maxMRR * t) + '万';
+    svg.appendChild(txt);
+  });
+
+  // Area path
+  const pts = mrrData.map((v, i) => {
+    const x = PAD.left + (i / (mrrData.length - 1)) * chartW;
+    const y = PAD.top + chartH * (1 - v / maxMRR);
+    return [x, y];
+  });
+  const areaD = `M${pts[0][0]},${pts[0][1]} ` + pts.slice(1).map(p => `L${p[0]},${p[1]}`).join(' ') +
+    ` L${pts[pts.length-1][0]},${PAD.top+chartH} L${pts[0][0]},${PAD.top+chartH} Z`;
+  const area = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  area.setAttribute('d', areaD);
+  area.setAttribute('fill', 'url(#mrrGrad)');
+  svg.appendChild(area);
+
+  // Line path
+  const lineD = `M${pts[0][0]},${pts[0][1]} ` + pts.slice(1).map(p => `L${p[0]},${p[1]}`).join(' ');
+  const linePath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  linePath.setAttribute('d', lineD);
+  linePath.setAttribute('fill', 'none');
+  linePath.setAttribute('stroke', '#6366f1');
+  linePath.setAttribute('stroke-width', '2.5');
+  svg.appendChild(linePath);
+
+  // Company bar chart (secondary axis, small bars)
+  compData.forEach((v, i) => {
+    const x = PAD.left + (i / (compData.length - 1)) * chartW;
+    const barH = (v / maxComp) * chartH * 0.35;
+    const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+    rect.setAttribute('x', x - 8); rect.setAttribute('width', '16');
+    rect.setAttribute('y', PAD.top + chartH - barH);
+    rect.setAttribute('height', barH);
+    rect.setAttribute('fill', '#10b981');
+    rect.setAttribute('opacity', '0.4');
+    rect.setAttribute('rx', '3');
+    svg.appendChild(rect);
+  });
+
+  // Dots + labels
+  pts.forEach(([x, y], i) => {
+    const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    circle.setAttribute('cx', x); circle.setAttribute('cy', y);
+    circle.setAttribute('r', '4');
+    circle.setAttribute('fill', '#6366f1');
+    circle.setAttribute('stroke', 'white');
+    circle.setAttribute('stroke-width', '2');
+    svg.appendChild(circle);
+
+    const txt = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    txt.setAttribute('x', x); txt.setAttribute('y', PAD.top + chartH + 20);
+    txt.setAttribute('text-anchor', 'middle');
+    txt.setAttribute('font-size', '10'); txt.setAttribute('fill', '#9ca3af');
+    txt.textContent = months[i];
+    svg.appendChild(txt);
+  });
+
+  // Last point annotation
+  const lastPt = pts[pts.length - 1];
+  const annRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+  annRect.setAttribute('x', lastPt[0] - 28); annRect.setAttribute('y', lastPt[1] - 30);
+  annRect.setAttribute('width', '58'); annRect.setAttribute('height', '22');
+  annRect.setAttribute('fill', '#6366f1'); annRect.setAttribute('rx', '4');
+  svg.appendChild(annRect);
+  const annTxt = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+  annTxt.setAttribute('x', lastPt[0] + 1); annTxt.setAttribute('y', lastPt[1] - 14);
+  annTxt.setAttribute('text-anchor', 'middle');
+  annTxt.setAttribute('font-size', '11'); annTxt.setAttribute('fill', 'white');
+  annTxt.setAttribute('font-weight', 'bold');
+  annTxt.textContent = '¥' + mrrData[11] + '万';
+  svg.appendChild(annTxt);
+
+  container.appendChild(svg);
+})();
+</script>
+</body>
+</html>
