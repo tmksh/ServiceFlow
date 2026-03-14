@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>ServiceFlow — 自動顧客管理プラットフォーム</title>
+<title>スマカレ — 自動顧客管理プラットフォーム</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.26.4/babel.min.js"></script>
@@ -527,6 +527,7 @@ const Dashboard = ({ onNav }) => {
 const LineInbox = () => {
   const [sel, setSel] = useState(LINE_MSGS[0]);
   const [autoMode, setAutoMode] = useState(true);
+  const [ltab, setLtab] = useState("inbox");
   const pending = LINE_MSGS.filter(m => m.status === "pending").length;
 
   const stColor = { pending: "bg-amber-400", registered: "bg-emerald-400", error: "bg-red-400" };
@@ -536,16 +537,56 @@ const LineInbox = () => {
     <div className="space-y-5 fade-in">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">LINE受信（自動取込）</h1>
-          <SubLabel icon={ic.Zap} text="LINE → TimeTree の手動転記を自動化"/>
+          <h1 className="text-2xl font-bold text-slate-900">LINE受信</h1>
+          <SubLabel icon={ic.Zap} text="LINE自動取込"/>
         </div>
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2 px-4 py-2 bg-emerald-50 border border-emerald-200 rounded-xl">
             <div className="w-2 h-2 bg-emerald-500 rounded-full anim-pulse"/><span className="text-sm font-medium text-emerald-700">Webhook接続中</span>
           </div>
+          {/* コールセンター入力フォームへのリンク */}
+          <a href="callcenter-form.html" target="_blank" rel="noopener noreferrer"
+            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700 transition-colors shadow-md shadow-indigo-200">
+            <ic.Phone size={14}/>
+            <span>受電入力フォームを開く</span>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
+            </svg>
+          </a>
         </div>
       </div>
 
+      {/* コールセンター専用フォーム案内カード */}
+      <div className="flex items-center gap-4 p-4 bg-indigo-50 border border-indigo-200 rounded-2xl">
+        <div className="w-10 h-10 rounded-xl bg-indigo-100 flex items-center justify-center shrink-0">
+          <ic.Phone size={18} stroke="#4f46e5"/>
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-semibold text-indigo-900">コールセンター受電入力は専用フォームで</p>
+          <p className="text-xs text-indigo-600 mt-0.5">
+            オペレーター専用URL:&nbsp;
+            <code className="bg-indigo-100 px-1.5 py-0.5 rounded text-indigo-700 font-mono text-[11px]">callcenter-form.html</code>
+            &nbsp;をコールセンタースタッフに共有してください
+          </p>
+        </div>
+        <a href="callcenter-form.html" target="_blank" rel="noopener noreferrer"
+          className="shrink-0 px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-semibold hover:bg-indigo-700 transition-colors whitespace-nowrap">
+          フォームを開く
+        </a>
+      </div>
+
+      {/* タブ（LINE取込のみ） */}
+      <div className="flex gap-1 bg-white rounded-2xl p-1.5 border border-slate-200/60 shadow-sm w-fit">
+        {[["inbox","LINE自動取込",ic.Inbox]].map(([k,l,I]) => (
+          <button key={k} onClick={() => setLtab(k)} className={cn(
+            "flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all",
+            ltab === k ? "bg-indigo-50 text-indigo-700 shadow-sm" : "text-slate-400 hover:text-slate-600 hover:bg-slate-50"
+          )}><I size={14}/>{l}{k === "inbox" && pending > 0 && <span className="w-5 h-5 bg-amber-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">{pending}</span>}</button>
+        ))}
+      </div>
+
+      {/* ── LINE自動取込タブ ── */}
+      {ltab === "inbox" && (<>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {[
           { icon: ic.Zap, v: "847", l: "今月の自動取込", color: "bg-emerald-500", bg: "bg-gradient-to-br from-green-50 to-emerald-50 border-emerald-100" },
@@ -617,19 +658,15 @@ const LineInbox = () => {
                   "bg-red-50 text-red-700 border-red-200")}>{stLabel[sel.status]}</Badge>
               </div>
               <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                {/* Raw message */}
                 <div>
                   <p className="text-xs font-medium text-slate-400 mb-2">受信テキスト（LINE原文）</p>
                   <div className="bg-slate-800 rounded-xl p-4 font-mono text-xs text-green-400 whitespace-pre-wrap leading-relaxed">
                     {sel.raw}
                   </div>
                 </div>
-
                 <div className="flex items-center justify-center gap-2 text-indigo-500">
                   <ic.Zap size={16}/><span className="text-xs font-bold">AI自動解析</span><ic.ArrowDn size={16} className="rotate-0"/>
                 </div>
-
-                {/* Parsed result */}
                 <div>
                   <p className="text-xs font-medium text-slate-400 mb-2">解析結果（構造化データ）</p>
                   <div className="grid grid-cols-2 gap-2">
@@ -651,7 +688,6 @@ const LineInbox = () => {
                     ))}
                   </div>
                 </div>
-
                 <div className="flex gap-2 pt-2">
                   {sel.status === "pending" && (
                     <>
@@ -677,16 +713,289 @@ const LineInbox = () => {
               </div>
             </>
           ) : (
-            <div className="flex-1 flex items-center justify-center text-slate-400 text-sm">メッセージを選択してください</div>
+            <div className="flex-1 flex items-center justify-center text-slate-300">
+              <div className="text-center"><ic.Inbox size={40} className="mx-auto mb-3 opacity-40"/><p className="text-sm">メッセージを選択してください</p></div>
+            </div>
           )}
         </Card>
       </div>
+      </>)}
+
     </div>
   );
 };
 
 /* ═══════════════════════════════════════════════════════
-   SECTION 7: CASE MANAGEMENT
+   SECTION 7: CASE DETAIL MODAL（共有モーダル：CaseMgmt / CalView で流用）
+   ═══════════════════════════════════════════════════════ */
+const MOCK_COMMENTS = [
+  { id: 1, author: "加藤", avatar: "加", time: "10:30", text: "現地確認済み。品目は仕様書どおり。" },
+  { id: 2, author: "田中", avatar: "田", time: "11:15", text: "到着予定時刻は9時30分になります。" },
+  { id: 3, author: "加藤", avatar: "加", time: "13:00", text: "作業完了。お客様満足度◎。" },
+];
+const MOCK_PHOTOS = [
+  { id: 1, label: "現場写真①", color: "#6366f120" },
+  { id: 2, label: "作業前",    color: "#8b5cf620" },
+  { id: 3, label: "作業後",    color: "#10b98120" },
+];
+
+/* 通話ログモーダル */
+const MOCK_CALL_LOGS = [
+  { id: 1, dir: "out", duration: "3分12秒", time: "10:15", staff: "加藤", note: "訪問日時を確認。9-12時で確定。" },
+  { id: 2, dir: "in",  duration: "1分45秒", time: "14:30", staff: "田中", note: "当日の到着時刻を連絡。" },
+];
+
+const CallModal = ({ phone, customer, onClose }) => {
+  const [calling, setCalling] = useState(false);
+  const [callNote, setCallNote] = useState("");
+  const [logs, setLogs] = useState(MOCK_CALL_LOGS);
+
+  const startCall = () => {
+    setCalling(true);
+    setTimeout(() => {
+      setCalling(false);
+      setLogs(prev => [{
+        id: Date.now(), dir: "out", duration: "—(通話中終了)", time: new Date().toLocaleTimeString("ja-JP", { hour: "2-digit", minute: "2-digit" }),
+        staff: "加藤", note: callNote || "（メモなし）"
+      }, ...prev]);
+      setCallNote("");
+    }, 3000);
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[60] flex items-center justify-center p-4" onClick={onClose}>
+      <Card className="w-full max-w-md slide-up" onClick={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between p-5 border-b border-slate-100">
+          <div className="flex items-center gap-3">
+            <div className={cn("p-2.5 rounded-xl", calling ? "bg-green-100 anim-pulse" : "bg-indigo-100")}>
+              <ic.Phone size={20} stroke={calling ? "#16a34a" : "#4f46e5"}/>
+            </div>
+            <div>
+              <p className="font-bold text-slate-800">{customer}</p>
+              <p className="text-sm font-mono text-indigo-600">{phone}</p>
+            </div>
+          </div>
+          <button onClick={onClose} className="p-2 rounded-lg hover:bg-slate-100"><ic.X size={18}/></button>
+        </div>
+        <div className="p-5 space-y-4">
+          {/* 発信UI */}
+          <div className="bg-slate-50 rounded-xl p-4 text-center space-y-3">
+            {calling ? (
+              <div className="space-y-2">
+                <div className="flex items-center justify-center gap-2 text-green-600">
+                  <div className="w-2 h-2 bg-green-500 rounded-full anim-pulse"/>
+                  <span className="text-sm font-semibold">通話中...</span>
+                </div>
+                <p className="text-xs text-slate-400">※ 実際の通話には Twilio / MiiTel 等のAPI連携が必要です</p>
+              </div>
+            ) : (
+              <>
+                <p className="text-xs text-slate-400">通話メモ（任意）</p>
+                <input value={callNote} onChange={e => setCallNote(e.target.value)} placeholder="通話前のメモを入力..."
+                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-indigo-400"/>
+                <button onClick={startCall}
+                  className="w-full py-3 bg-green-600 text-white rounded-xl text-sm font-semibold hover:bg-green-700 flex items-center justify-center gap-2">
+                  <ic.Phone size={16}/> {phone} へ発信
+                </button>
+                <p className="text-xs text-slate-400">※ デモ：3秒後に通話終了とみなします</p>
+              </>
+            )}
+          </div>
+
+          {/* 通話ログ */}
+          <div>
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">通話ログ</p>
+            <div className="space-y-2">
+              {logs.map(l => (
+                <div key={l.id} className={cn("flex gap-3 p-3 rounded-xl border",
+                  l.dir === "out" ? "bg-indigo-50 border-indigo-100" : "bg-slate-50 border-slate-100")}>
+                  <div className={cn("w-7 h-7 rounded-lg flex items-center justify-center shrink-0",
+                    l.dir === "out" ? "bg-indigo-200" : "bg-slate-200")}>
+                    {l.dir === "out" ? <ic.Phone size={13} stroke="#4f46e5"/> : <ic.Phone size={13} stroke="#64748b"/>}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-xs font-semibold text-slate-700">{l.dir === "out" ? "発信" : "着信"}</span>
+                      <span className="text-xs text-slate-400">{l.time} · {l.duration}</span>
+                      <span className="text-xs text-slate-400">担当: {l.staff}</span>
+                    </div>
+                    <p className="text-xs text-slate-600 mt-0.5">{l.note}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* API調査メモ */}
+          <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl">
+            <p className="text-xs font-semibold text-amber-700 mb-1">通話API 候補（要調査）</p>
+            <div className="flex gap-2 flex-wrap">
+              {["Twilio","カイクラ","MiiTel","モバイルコネクト"].map(api => (
+                <span key={api} className="text-[10px] px-2 py-0.5 bg-white border border-amber-200 rounded text-amber-700">{api}</span>
+              ))}
+            </div>
+          </div>
+        </div>
+      </Card>
+    </div>
+  );
+};
+
+const CaseDetailModal = ({ c, onClose }) => {
+  const [dtab, setDtab] = useState("detail");
+  const [comment, setComment] = useState("");
+  const [comments, setComments] = useState(MOCK_COMMENTS);
+  const [memo, setMemo] = useState("2月末までに目視希望。相見積もりあり。");
+  const [callOpen, setCallOpen] = useState(false);
+
+  const addComment = () => {
+    if (!comment.trim()) return;
+    setComments(prev => [...prev, { id: Date.now(), author: "加藤", avatar: "加", time: new Date().toLocaleTimeString("ja-JP", { hour: "2-digit", minute: "2-digit" }), text: comment }]);
+    setComment("");
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={onClose}>
+      <Card className="w-full max-w-2xl max-h-[90vh] flex flex-col slide-up" onClick={e => e.stopPropagation()}>
+        {/* Header */}
+        <div className="flex items-center justify-between p-5 border-b border-slate-100 shrink-0">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold shrink-0" style={{ background: c.category.color }}>
+              <c.category.Ic size={20} stroke="white"/>
+            </div>
+            <div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <h2 className="text-base font-bold text-slate-900">{c.id} — {c.customer}</h2>
+                <Badge className={ST[c.status].bg}>{ST[c.status].l}</Badge>
+                {c.urgent && <Badge className="bg-amber-100 text-amber-700 border border-amber-200"><ic.Zap size={10}/>緊急</Badge>}
+              </div>
+              <p className="text-xs text-slate-500">{c.category.label} · {c.date} {c.time}</p>
+            </div>
+          </div>
+          <button onClick={onClose} className="p-2 rounded-lg hover:bg-slate-100 shrink-0"><ic.X size={20}/></button>
+        </div>
+
+        {/* Tab Bar */}
+        <div className="flex gap-1 px-5 pt-4 shrink-0">
+          {[["detail","詳細",ic.FileText],["comments","コメント・メモ",ic.Msg],["photos","写真",ic.Image]].map(([k,l,I]) => (
+            <button key={k} onClick={() => setDtab(k)} className={cn(
+              "flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium transition-all",
+              dtab === k ? "bg-indigo-50 text-indigo-700" : "text-slate-400 hover:text-slate-600 hover:bg-slate-50"
+            )}><I size={14}/>{l}</button>
+          ))}
+        </div>
+
+        <div className="flex-1 overflow-y-auto">
+          {/* ── 詳細タブ ── */}
+          {dtab === "detail" && (
+            <div className="p-5 space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                {[
+                  { i: ic.User,       l: "顧客名",         v: c.customer },
+                  { i: ic.Phone,      l: "電話番号",       v: c.phone },
+                  { i: ic.MapPin,     l: "住所",           v: c.addr },
+                  { i: ic.Calendar,   l: "日時",           v: `${c.date} ${c.time}` },
+                  { i: ic.Activity,   l: "ステータス",     v: ST[c.status].l },
+                  { i: ic.Yen,        l: "金額",           v: c.amount > 0 ? fmt(c.amount) : "未確定" },
+                  { i: ic.User,       l: "担当スタッフ",   v: c.staff },
+                  { i: ic.CreditCard, l: "決済方法",       v: c.payMethod === "credit" ? "クレジット" : c.payMethod === "cash" ? "現金" : "—" },
+                  { i: ic.Building,   l: "コールセンター", v: `${c.center}（${c.channel}）` },
+                  { i: ic.Package,    l: "品目",           v: c.items.join("、") },
+                ].map(({ i: II, l, v }) => (
+                  <div key={l} className="flex items-start gap-3 p-3 rounded-xl bg-slate-50">
+                    <II size={15} className="text-slate-400 mt-0.5 shrink-0"/>
+                    <div><p className="text-xs text-slate-400">{l}</p><p className="text-sm font-medium text-slate-700">{v}</p></div>
+                  </div>
+                ))}
+              </div>
+              <div className="flex gap-2">
+                <button className="flex-1 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700 flex items-center justify-center gap-2">
+                  <ic.Activity size={15}/> ステータス更新
+                </button>
+                <button onClick={() => setCallOpen(true)} className="flex-1 py-2.5 border border-slate-200 text-slate-700 rounded-xl text-sm font-medium hover:bg-slate-50 flex items-center justify-center gap-2">
+                  <ic.Phone size={15}/> 電話発信
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* ── コメント・メモタブ ── */}
+          {dtab === "comments" && (
+            <div className="p-5 space-y-4">
+              {/* メモ */}
+              <div>
+                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">メモ（スタッフ共有）</p>
+                <textarea
+                  value={memo}
+                  onChange={e => setMemo(e.target.value)}
+                  rows={3}
+                  className="w-full px-4 py-3 bg-amber-50 border border-amber-200 rounded-xl text-sm text-slate-700 resize-none focus:outline-none focus:ring-2 focus:ring-amber-400/30 focus:border-amber-400"
+                  placeholder="案件に関するメモを入力..."
+                />
+              </div>
+              {/* コメント履歴 */}
+              <div>
+                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">コメント履歴</p>
+                <div className="space-y-3">
+                  {comments.map(cm => (
+                    <div key={cm.id} className="flex gap-3">
+                      <div className="w-8 h-8 bg-gradient-to-br from-indigo-400 to-violet-500 rounded-lg flex items-center justify-center text-white text-xs font-bold shrink-0">{cm.avatar}</div>
+                      <div className="flex-1 bg-slate-50 rounded-xl px-4 py-3">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-xs font-semibold text-slate-700">{cm.author}</span>
+                          <span className="text-xs text-slate-400">{cm.time}</span>
+                        </div>
+                        <p className="text-sm text-slate-600">{cm.text}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              {/* コメント入力 */}
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={comment}
+                  onChange={e => setComment(e.target.value)}
+                  onKeyDown={e => e.key === "Enter" && addComment()}
+                  placeholder="コメントを入力... (Enter で送信)"
+                  className="flex-1 px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400"
+                />
+                <button onClick={addComment} className="px-4 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700">
+                  <ic.Send size={16}/>
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* ── 写真タブ ── */}
+          {dtab === "photos" && (
+            <div className="p-5 space-y-4">
+              <div className="grid grid-cols-3 gap-3">
+                {MOCK_PHOTOS.map(ph => (
+                  <div key={ph.id} className="aspect-square rounded-xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-indigo-300 hover:bg-indigo-50/30 transition-all"
+                    style={{ background: ph.color }}>
+                    <ic.Image size={28} className="text-slate-300"/>
+                    <span className="text-xs text-slate-400">{ph.label}</span>
+                  </div>
+                ))}
+                <div className="aspect-square rounded-xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-indigo-300 hover:bg-indigo-50/30 transition-all">
+                  <ic.Plus size={24} className="text-slate-300"/>
+                  <span className="text-xs text-slate-400">写真を追加</span>
+                </div>
+              </div>
+              <p className="text-xs text-slate-400 text-center">JPG / PNG / HEIC · 最大10MB / 枚</p>
+            </div>
+          )}
+        </div>
+      </Card>
+      {callOpen && <CallModal phone={c.phone} customer={c.customer} onClose={() => setCallOpen(false)}/>}
+    </div>
+  );
+};
+
+/* ═══════════════════════════════════════════════════════
+   SECTION 6: CASE MANAGEMENT
    ═══════════════════════════════════════════════════════ */
 const CaseMgmt = () => {
   const [view, setView] = useState("cases");
@@ -894,45 +1203,8 @@ const CaseMgmt = () => {
       </Card>
       </>}
 
-      {/* Detail Modal */}
-      {sel && (
-        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setSel(null)}>
-          <Card className="w-full max-w-2xl max-h-[85vh] overflow-y-auto slide-up" onClick={e => e.stopPropagation()}>
-            <div className="flex items-center justify-between p-6 border-b border-slate-100">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold" style={{ background: sel.category.color }}>
-                  <sel.category.Ic size={20} stroke="white"/>
-                </div>
-                <div><h2 className="text-lg font-bold text-slate-900">{sel.id} — {sel.customer}</h2><p className="text-sm text-slate-500">{sel.category.label}</p></div>
-              </div>
-              <button onClick={() => setSel(null)} className="p-2 rounded-lg hover:bg-slate-100"><ic.X size={20}/></button>
-            </div>
-            <div className="p-6 grid grid-cols-2 gap-3">
-              {[
-                { i: ic.User, l: "顧客名", v: sel.customer },
-                { i: ic.Phone, l: "電話番号", v: sel.phone },
-                { i: ic.MapPin, l: "住所", v: sel.addr },
-                { i: ic.Calendar, l: "日時", v: `${sel.date} ${sel.time}` },
-                { i: ic.Activity, l: "ステータス", v: ST[sel.status].l },
-                { i: ic.Yen, l: "金額", v: sel.amount > 0 ? fmt(sel.amount) : "未確定" },
-                { i: ic.User, l: "担当スタッフ", v: sel.staff },
-                { i: ic.CreditCard, l: "決済方法", v: sel.payMethod === "credit" ? "クレジット" : sel.payMethod === "cash" ? "現金" : "—" },
-                { i: ic.Building, l: "コールセンター", v: `${sel.center}（${sel.channel}）` },
-                { i: ic.Package, l: "品目", v: sel.items.join("、") },
-              ].map(({ i: II, l, v }) => (
-                <div key={l} className="flex items-start gap-3 p-3 rounded-xl bg-slate-50">
-                  <II size={16} className="text-slate-400 mt-0.5 shrink-0"/>
-                  <div><p className="text-xs text-slate-400">{l}</p><p className="text-sm font-medium text-slate-700">{v}</p></div>
-                </div>
-              ))}
-            </div>
-            <div className="flex gap-2 px-6 pb-6">
-              <button className="flex-1 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700">ステータス更新</button>
-              <button className="flex-1 py-2.5 border border-slate-200 text-slate-700 rounded-xl text-sm font-medium hover:bg-slate-50">編集</button>
-            </div>
-          </Card>
-        </div>
-      )}
+      {/* Detail Modal — 詳細 / コメント・メモ / 写真 タブ対応 */}
+      {sel && <CaseDetailModal c={sel} onClose={() => setSel(null)}/>}
     </div>
   );
 };
@@ -942,6 +1214,8 @@ const CaseMgmt = () => {
    ═══════════════════════════════════════════════════════ */
 const CalView = () => {
   const [cur, setCur] = useState(new Date(2026, 1, 1));
+  const [selCase, setSelCase] = useState(null);
+  const [selDay, setSelDay] = useState(null);
   const y = cur.getFullYear(), m = cur.getMonth();
   const dim = new Date(y, m + 1, 0).getDate(), fd = new Date(y, m, 1).getDay();
   const ms = `${y}-${String(m + 1).padStart(2, "0")}`;
@@ -958,6 +1232,10 @@ const CalView = () => {
   const mn = ["1月","2月","3月","4月","5月","6月","7月","8月","9月","10月","11月","12月"];
   const dn = ["日","月","火","水","木","金","土"];
   const isToday = d => d === 13 && m === 1 && y === 2026;
+
+  const selectedDayCases = selDay
+    ? (cByDate[`${ms}-${String(selDay).padStart(2, "0")}`] || [])
+    : (cByDate["2026-02-13"] || CASES.slice(0, 5));
 
   return (
     <div className="space-y-5 fade-in">
@@ -986,17 +1264,27 @@ const CalView = () => {
             const ds = d ? `${ms}-${String(d).padStart(2, "0")}` : null;
             const dc = ds ? (cByDate[ds] || []) : [];
             const dow = i % 7;
+            const isSelected = d === selDay;
             return (
-              <div key={i} className={cn("min-h-[100px] bg-white p-1.5 hover:bg-slate-50", !d && "bg-slate-50/50")}>
+              <div key={i}
+                onClick={() => d && setSelDay(d === selDay ? null : d)}
+                className={cn("min-h-[100px] p-1.5 transition-colors",
+                  !d && "bg-slate-50/50",
+                  d && isSelected ? "bg-indigo-50 cursor-pointer" : d && "bg-white hover:bg-slate-50 cursor-pointer"
+                )}>
                 {d && (
                   <>
                     <div className={cn("w-7 h-7 flex items-center justify-center rounded-lg text-sm font-medium mb-1",
-                      isToday(d) ? "bg-indigo-600 text-white" : dow === 0 ? "text-red-500" : dow === 6 ? "text-blue-500" : "text-slate-700")}>
+                      isToday(d) ? "bg-indigo-600 text-white" :
+                      isSelected ? "bg-indigo-100 text-indigo-700" :
+                      dow === 0 ? "text-red-500" : dow === 6 ? "text-blue-500" : "text-slate-700")}>
                       {d}
                     </div>
                     <div className="space-y-0.5">
                       {dc.slice(0, 3).map(c => (
-                        <div key={c.id} className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] truncate"
+                        <div key={c.id}
+                          onClick={e => { e.stopPropagation(); setSelCase(c); }}
+                          className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] truncate hover:opacity-80 cursor-pointer"
                           style={{ background: c.category.color + "15", color: c.category.color }}>
                           {c.urgent && <ic.Zap size={10}/>}
                           <span className="truncate font-medium">{c.time} {c.customer}</span>
@@ -1013,25 +1301,43 @@ const CalView = () => {
       </Card>
 
       <Card className="p-5">
-        <h3 className="font-bold text-slate-800 mb-4">今日の予定 — 2月13日</h3>
-        <div className="space-y-2">
-          {(cByDate["2026-02-13"] || CASES.slice(0, 5)).slice(0, 5).map(c => (
-            <div key={c.id} className="flex items-center gap-4 p-3 rounded-xl hover:bg-slate-50 border border-slate-100">
-              <div className="text-center min-w-[50px]"><div className="text-sm font-bold text-slate-800">{c.time}</div></div>
-              <div className="w-1 h-10 rounded-full" style={{ background: c.category.color }}/>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-sm font-medium text-slate-800">{c.customer}</span>
-                  <Badge className={ST[c.status].bg}>{ST[c.status].l}</Badge>
-                  {c.urgent && <Badge className="bg-amber-100 text-amber-700 border border-amber-200"><ic.Zap size={12}/>緊急</Badge>}
+        <h3 className="font-bold text-slate-800 mb-4">
+          {selDay ? `${mn[m].replace("月","")}月${selDay}日の予定` : "今日の予定 — 2月13日"}
+          <span className="ml-2 text-sm font-normal text-slate-400">{selectedDayCases.length}件</span>
+        </h3>
+        {selectedDayCases.length === 0 ? (
+          <div className="text-center py-10 text-slate-400">
+            <ic.Calendar size={36} className="mx-auto mb-3 opacity-30"/>
+            <p className="text-sm">この日の予定はありません</p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {selectedDayCases.slice(0, 5).map(c => (
+              <div key={c.id}
+                onClick={() => setSelCase(c)}
+                className="flex items-center gap-4 p-3 rounded-xl hover:bg-slate-50 border border-slate-100 cursor-pointer">
+                <div className="text-center min-w-[50px]"><div className="text-sm font-bold text-slate-800">{c.time}</div></div>
+                <div className="w-1 h-10 rounded-full" style={{ background: c.category.color }}/>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-sm font-medium text-slate-800">{c.customer}</span>
+                    <Badge className={ST[c.status].bg}>{ST[c.status].l}</Badge>
+                    {c.urgent && <Badge className="bg-amber-100 text-amber-700 border border-amber-200"><ic.Zap size={12}/>緊急</Badge>}
+                  </div>
+                  <p className="text-xs text-slate-400 mt-0.5">{c.category.label} · {c.addr} · 担当: {c.staff}</p>
                 </div>
-                <p className="text-xs text-slate-400 mt-0.5">{c.category.label} · {c.addr} · 担当: {c.staff}</p>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-semibold text-slate-600 hidden sm:inline">{c.amount > 0 ? fmt(c.amount) : ""}</span>
+                  <ic.ChevR size={16} className="text-slate-300"/>
+                </div>
               </div>
-              <span className="text-sm font-semibold text-slate-600 hidden sm:inline">{c.amount > 0 ? fmt(c.amount) : ""}</span>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </Card>
+
+      {/* カレンダーからの案件詳細モーダル */}
+      {selCase && <CaseDetailModal c={selCase} onClose={() => setSelCase(null)}/>}
     </div>
   );
 };
@@ -1140,8 +1446,26 @@ const SettlementPage = () => {
    SECTION 10: REVENUE & ANALYTICS
    ═══════════════════════════════════════════════════════ */
 const Analytics = () => {
+  const [staffFilter, setStaffFilter] = useState("all");
   const regionData = PREFS.slice(0, 7).map(p => ({ name: p.replace(/[都府県]/g, ""), rev: rnd(50, 200) * 10000 }));
   const adData = AD_SRC.map(s => ({ name: s, cost: rnd(5, 30) * 10000, cases: rnd(10, 60), rev: rnd(30, 200) * 10000, cvr: rnd(3, 18) }));
+
+  /* 担当者別パフォーマンスデータ */
+  const staffPerf = useMemo(() => STAFF.map(s => {
+    const sCases = CASES.filter(c => c.staff === s && c.status === "completed");
+    const rev = sCases.reduce((sum, c) => sum + c.amount, 0);
+    const adCost = rnd(5, 20) * 10000;
+    return {
+      name: s,
+      cases: sCases.length,
+      rev,
+      adCost,
+      roas: adCost > 0 ? ((rev / adCost) * 100).toFixed(0) : 0,
+      avg: sCases.length > 0 ? Math.round(rev / sCases.length) : 0,
+    };
+  }), []);
+
+  const filteredStaff = staffFilter === "all" ? staffPerf : staffPerf.filter(s => s.name === staffFilter);
 
   return (
     <div className="space-y-5 fade-in">
@@ -1165,6 +1489,58 @@ const Analytics = () => {
           <BarSVG data={weekData} dk="案件数" h={240} color="#8b5cf6"/>
         </Card>
       </div>
+
+      {/* 担当者別ROAS分析 */}
+      <Card className="overflow-hidden">
+        <div className="p-5 border-b border-slate-100 flex items-center justify-between flex-wrap gap-3">
+          <h3 className="font-bold text-slate-800">担当者別パフォーマンス（ROAS）</h3>
+          <div className="flex gap-2 flex-wrap">
+            <button onClick={() => setStaffFilter("all")}
+              className={cn("px-3 py-1.5 rounded-lg text-xs font-medium transition-all",
+                staffFilter === "all" ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-500 hover:bg-slate-200")}>
+              全員
+            </button>
+            {STAFF.map(s => (
+              <button key={s} onClick={() => setStaffFilter(s)}
+                className={cn("px-3 py-1.5 rounded-lg text-xs font-medium transition-all",
+                  staffFilter === s ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-500 hover:bg-slate-200")}>
+                {s}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead><tr className="border-b border-slate-100">
+              {["担当者","完了案件数","売上","広告費（推定）","ROAS","平均単価"].map(h => (
+                <th key={h} className="text-left text-xs font-semibold text-slate-400 uppercase px-5 py-3 whitespace-nowrap">{h}</th>
+              ))}
+            </tr></thead>
+            <tbody>
+              {filteredStaff.map(s => (
+                <tr key={s.name} className="border-b border-slate-50 hover:bg-slate-50/80">
+                  <td className="px-5 py-3">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 bg-gradient-to-br from-indigo-400 to-violet-500 rounded-lg flex items-center justify-center text-white text-xs font-bold">{s.name[0]}</div>
+                      <span className="text-sm font-medium text-slate-800">{s.name}</span>
+                    </div>
+                  </td>
+                  <td className="px-5 py-3 text-sm text-slate-600">{s.cases}件</td>
+                  <td className="px-5 py-3 text-sm font-semibold text-slate-800">{fmt(s.rev)}</td>
+                  <td className="px-5 py-3 text-sm text-slate-600">{fmt(s.adCost)}</td>
+                  <td className="px-5 py-3">
+                    <div className="flex items-center gap-2">
+                      <span className={cn("text-sm font-bold", Number(s.roas) >= 300 ? "text-emerald-600" : Number(s.roas) >= 200 ? "text-amber-600" : "text-red-500")}>{s.roas}%</span>
+                      {Number(s.roas) >= 300 && <Badge className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px]">Good</Badge>}
+                    </div>
+                  </td>
+                  <td className="px-5 py-3 text-sm text-slate-600">{fmt(s.avg)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </Card>
 
       <Card className="overflow-hidden">
         <div className="p-5 border-b border-slate-100"><h3 className="font-bold text-slate-800">広告媒体別ROI</h3></div>
@@ -1203,44 +1579,123 @@ const Analytics = () => {
 /* ═══════════════════════════════════════════════════════
    SECTION 12: SETTINGS
    ═══════════════════════════════════════════════════════ */
-const SetPage = () => {
-  const sections = [
-    { t: "LINE連携設定", I: ic.Msg, items: [
-      { l: "LINE Messaging APIトークン", v: "lk_*****...abc", tp: "secret" },
-      { l: "Webhook URL", v: "https://api.serviceflow.jp/webhook/line", tp: "text" },
-      { l: "自動取込", v: true, tp: "toggle" },
-      { l: "緊急案件の自動振り分け", v: true, tp: "toggle" },
-    ]},
-    { t: "通知設定", I: ic.Bell, items: [
-      { l: "新規案件通知", v: true, tp: "toggle" },
-      { l: "キャンセル通知", v: true, tp: "toggle" },
-      { l: "当日リマインダー", v: true, tp: "toggle" },
-      { l: "日次レポート自動送信", v: false, tp: "toggle" },
-    ]},
-    { t: "会社情報", I: ic.Building, items: [
-      { l: "会社名", v: "株式会社サンプル", tp: "text" },
-      { l: "対応エリア", v: "関東・東海・関西", tp: "text" },
-      { l: "スタッフ数", v: "12名", tp: "text" },
-    ]},
+const MOCK_STAFF_LIST = [
+  { id: 1, name: "田中 一郎", role: "staff",  email: "tanaka@example.com",  area: "関東",  cases: 42, active: true  },
+  { id: 2, name: "佐藤 花子", role: "staff",  email: "sato@example.com",    area: "関東",  cases: 38, active: true  },
+  { id: 3, name: "鈴木 太郎", role: "admin",  email: "suzuki@example.com",  area: "全エリア", cases: 67, active: true  },
+  { id: 4, name: "高橋 美咲", role: "staff",  email: "takahashi@example.com",area: "神奈川", cases: 25, active: true  },
+  { id: 5, name: "渡辺 健",   role: "viewer", email: "watanabe@example.com", area: "福岡",  cases: 19, active: false },
+];
+
+const CAT_COLORS = ["#6366f1","#8b5cf6","#06b6d4","#3b82f6","#f59e0b","#10b981","#ef4444","#ec4899","#f97316","#84cc16"];
+
+const AREA_FLAGS = ["🗾","🗼","🌆","🌊","🏔","🌸","🌺","🍜","🏯","🌅","🎎","⛵","🦀","🍣","🌿"];
+
+/* エリア追加フォーム（内部コンポーネント） */
+const AddAreaForm = ({ areas, onAreasChange }) => {
+  const [name, setName] = useState("");
+  const [flag, setFlag] = useState("🌆");
+
+  const add = () => {
+    if (!name.trim()) return;
+    const id = `area-${Date.now()}`;
+    onAreasChange([...areas, { id, l: name.trim(), flag }]);
+    setName("");
+    setFlag("🌆");
+  };
+
+  return (
+    <div className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl border border-dashed border-slate-200">
+      {/* 絵文字選択 */}
+      <select
+        value={flag}
+        onChange={e => setFlag(e.target.value)}
+        className="w-14 px-1 py-2 bg-white border border-slate-200 rounded-lg text-lg text-center focus:outline-none focus:border-indigo-400"
+      >
+        {AREA_FLAGS.map(f => <option key={f} value={f}>{f}</option>)}
+      </select>
+      <input
+        value={name}
+        onChange={e => setName(e.target.value)}
+        onKeyDown={e => e.key === "Enter" && add()}
+        placeholder="新しいエリア名（例: 大阪、北海道）"
+        className="flex-1 px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400"
+      />
+      <button
+        onClick={add}
+        className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 flex items-center gap-1.5 whitespace-nowrap"
+      >
+        <ic.Plus size={14}/>追加
+      </button>
+    </div>
+  );
+};
+
+const SetPage = ({ currentRole, onRoleChange, areas = AREAS_DEFAULT, onAreasChange, currentArea, onAreaChange }) => {
+  const [stab, setStab] = useState("line");
+  const [cats, setCats] = useState(CATS.map(c => ({ ...c, editable: false })));
+  const [newCatName, setNewCatName] = useState("");
+  const [newCatColor, setNewCatColor] = useState("#6366f1");
+  const [staffList, setStaffList] = useState(MOCK_STAFF_LIST);
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [toggles, setToggles] = useState({
+    autoImport: true, urgentAuto: true,
+    notifyNew: true, notifyCancel: true, notifyRemind: true, notifyReport: false,
+  });
+
+  const addCat = () => {
+    if (!newCatName.trim()) return;
+    setCats(prev => [...prev, { id: `cat-${Date.now()}`, label: newCatName, color: newCatColor, Ic: ic.FileText }]);
+    setNewCatName("");
+  };
+  const removeCat = id => setCats(prev => prev.filter(c => c.id !== id));
+  const toggleStaff = id => setStaffList(prev => prev.map(s => s.id === id ? { ...s, active: !s.active } : s));
+
+  const SETTINGS_TABS = [
+    { id: "line",    l: "LINE連携",   I: ic.Msg     },
+    { id: "labels",  l: "ラベル管理", I: ic.Layers  },
+    { id: "areas",   l: "エリア管理", I: ic.MapPin  },
+    { id: "staff",   l: "従業員管理", I: ic.Users   },
+    { id: "roles",   l: "権限管理",   I: ic.Shield  },
+    { id: "notify",  l: "通知設定",   I: ic.Bell    },
+    { id: "company", l: "会社情報",   I: ic.Building },
   ];
 
   return (
     <div className="space-y-5 fade-in">
       <div><h1 className="text-2xl font-bold text-slate-900">設定</h1></div>
-      {sections.map(s => (
-        <Card key={s.t} className="p-5">
+
+      {/* タブ切り替え */}
+      <div className="flex gap-1 flex-wrap bg-white rounded-2xl p-1.5 border border-slate-200/60 shadow-sm">
+        {SETTINGS_TABS.map(t => (
+          <button key={t.id} onClick={() => setStab(t.id)} className={cn(
+            "flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium transition-all",
+            stab === t.id ? "bg-indigo-50 text-indigo-700 shadow-sm" : "text-slate-400 hover:text-slate-600 hover:bg-slate-50"
+          )}><t.I size={14}/>{t.l}</button>
+        ))}
+      </div>
+
+      {/* ── LINE連携タブ ── */}
+      {stab === "line" && (
+        <Card className="p-5">
           <div className="flex items-center gap-3 mb-5">
-            <div className="p-2.5 bg-slate-100 rounded-xl"><s.I size={20} stroke="#475569"/></div>
-            <h3 className="font-bold text-slate-800">{s.t}</h3>
+            <div className="p-2.5 bg-slate-100 rounded-xl"><ic.Msg size={20} stroke="#475569"/></div>
+            <h3 className="font-bold text-slate-800">LINE連携設定</h3>
           </div>
           <div className="space-y-4">
-            {s.items.map(item => (
+            {[
+              { l: "LINE Messaging APIトークン", v: "lk_*****...abc", tp: "secret" },
+              { l: "Webhook URL", v: "https://api.serviceflow.jp/webhook/line", tp: "text" },
+              { l: "自動取込", v: "autoImport", tp: "toggle" },
+              { l: "緊急案件の自動振り分け", v: "urgentAuto", tp: "toggle" },
+            ].map(item => (
               <div key={item.l} className="flex items-center justify-between py-2">
                 <span className="text-sm text-slate-600">{item.l}</span>
                 {item.tp === "toggle" ? (
-                  <div className={cn("relative w-11 h-6 rounded-full cursor-pointer", item.v ? "bg-indigo-600" : "bg-slate-300")}>
-                    <div className={cn("absolute top-0.5 w-5 h-5 bg-white rounded-full shadow", item.v ? "translate-x-5" : "translate-x-0.5")}/>
-                  </div>
+                  <button onClick={() => setToggles(t => ({ ...t, [item.v]: !t[item.v] }))}
+                    className={cn("relative w-11 h-6 rounded-full transition-colors", toggles[item.v] ? "bg-indigo-600" : "bg-slate-300")}>
+                    <div className={cn("absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform", toggles[item.v] ? "translate-x-5" : "translate-x-0.5")}/>
+                  </button>
                 ) : item.tp === "secret" ? (
                   <div className="flex items-center gap-2">
                     <span className="text-sm text-slate-400 font-mono bg-slate-50 px-3 py-1.5 rounded-lg">{item.v}</span>
@@ -1253,7 +1708,295 @@ const SetPage = () => {
             ))}
           </div>
         </Card>
-      ))}
+      )}
+
+      {/* ── ラベル（カテゴリ）管理タブ ── */}
+      {stab === "labels" && (
+        <Card className="p-5">
+          <div className="flex items-center justify-between mb-5">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 bg-slate-100 rounded-xl"><ic.Layers size={20} stroke="#475569"/></div>
+              <div>
+                <h3 className="font-bold text-slate-800">ラベル（カテゴリ）管理</h3>
+                <p className="text-xs text-slate-400">スケジュール・案件の色分けに使用されます</p>
+              </div>
+            </div>
+          </div>
+          <div className="space-y-2 mb-5">
+            {cats.map(c => (
+              <div key={c.id} className="flex items-center gap-3 p-3 rounded-xl border border-slate-100 hover:border-slate-200">
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: c.color + "25" }}>
+                  <c.Ic size={16} stroke={c.color}/>
+                </div>
+                <div className="flex-1 flex items-center gap-3">
+                  <div className="w-3 h-3 rounded-full shrink-0" style={{ background: c.color }}/>
+                  <span className="text-sm font-medium text-slate-700">{c.label}</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  {CAT_COLORS.map(col => (
+                    <button key={col} onClick={() => setCats(prev => prev.map(x => x.id === c.id ? { ...x, color: col } : x))}
+                      className={cn("w-5 h-5 rounded-full border-2 transition-all", c.color === col ? "border-slate-600 scale-110" : "border-transparent hover:scale-110")}
+                      style={{ background: col }}/>
+                  ))}
+                </div>
+                <button onClick={() => removeCat(c.id)} className="p-1.5 rounded-lg hover:bg-red-50 text-slate-300 hover:text-red-400 transition-colors">
+                  <ic.X size={14}/>
+                </button>
+              </div>
+            ))}
+          </div>
+          {/* 新規カテゴリ追加 */}
+          <div className="flex gap-3 p-4 bg-slate-50 rounded-xl border border-dashed border-slate-200">
+            <input
+              value={newCatName}
+              onChange={e => setNewCatName(e.target.value)}
+              onKeyDown={e => e.key === "Enter" && addCat()}
+              placeholder="新しいカテゴリ名"
+              className="flex-1 px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400"
+            />
+            <div className="flex items-center gap-1">
+              {CAT_COLORS.map(col => (
+                <button key={col} onClick={() => setNewCatColor(col)}
+                  className={cn("w-5 h-5 rounded-full border-2 transition-all", newCatColor === col ? "border-slate-600 scale-110" : "border-transparent hover:scale-110")}
+                  style={{ background: col }}/>
+              ))}
+            </div>
+            <button onClick={addCat} className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 flex items-center gap-1.5">
+              <ic.Plus size={14}/>追加
+            </button>
+          </div>
+        </Card>
+      )}
+
+      {/* ── エリア管理タブ ── */}
+      {stab === "areas" && (
+        <Card className="p-5">
+          <div className="flex items-center justify-between mb-5">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 bg-slate-100 rounded-xl"><ic.MapPin size={20} stroke="#475569"/></div>
+              <div>
+                <h3 className="font-bold text-slate-800">エリア管理</h3>
+                <p className="text-xs text-slate-400">サイドバーのエリア切り替えに反映されます</p>
+              </div>
+            </div>
+          </div>
+
+          {/* エリア一覧 */}
+          <div className="space-y-2 mb-5">
+            {areas.map((a, idx) => (
+              <div key={a.id} className={cn(
+                "flex items-center gap-3 p-3 rounded-xl border transition-all",
+                a.id === "all" ? "bg-slate-50 border-slate-200" : "border-slate-100 hover:border-slate-200"
+              )}>
+                {/* 絵文字セレクター */}
+                <div className="relative group">
+                  <button
+                    disabled={a.id === "all"}
+                    className={cn("w-9 h-9 rounded-xl flex items-center justify-center text-lg border transition-all",
+                      a.id === "all" ? "border-slate-200 bg-slate-100 cursor-not-allowed" : "border-slate-200 bg-white hover:border-indigo-300 hover:bg-indigo-50")}
+                    onClick={() => {
+                      const nextFlag = AREA_FLAGS[(AREA_FLAGS.indexOf(a.flag) + 1) % AREA_FLAGS.length];
+                      onAreasChange(areas.map(x => x.id === a.id ? { ...x, flag: nextFlag } : x));
+                    }}
+                  >
+                    {a.flag}
+                  </button>
+                  {a.id !== "all" && (
+                    <span className="absolute -bottom-4 left-1/2 -translate-x-1/2 text-[9px] text-slate-400 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">クリックで変更</span>
+                  )}
+                </div>
+
+                {/* エリア名 */}
+                {a.id === "all" ? (
+                  <span className="flex-1 text-sm font-medium text-slate-500">{a.l}（固定）</span>
+                ) : (
+                  <input
+                    value={a.l}
+                    onChange={e => onAreasChange(areas.map(x => x.id === a.id ? { ...x, l: e.target.value } : x))}
+                    className="flex-1 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400"
+                  />
+                )}
+
+                {/* 現在選択中バッジ */}
+                {currentArea === a.id && (
+                  <span className="text-[10px] px-2 py-0.5 bg-indigo-100 text-indigo-700 rounded-full font-medium whitespace-nowrap">選択中</span>
+                )}
+
+                {/* 削除ボタン */}
+                {a.id !== "all" && (
+                  <button
+                    onClick={() => {
+                      onAreasChange(areas.filter(x => x.id !== a.id));
+                      if (currentArea === a.id && onAreaChange) onAreaChange("all");
+                    }}
+                    className="p-1.5 rounded-lg hover:bg-red-50 text-slate-300 hover:text-red-400 transition-colors"
+                  >
+                    <ic.X size={14}/>
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+
+          {/* 新規エリア追加 */}
+          <AddAreaForm areas={areas} onAreasChange={onAreasChange}/>
+
+          <p className="text-xs text-slate-400 mt-4">
+            ※ 「全エリア」は削除できません。絵文字はクリックで順送り変更できます。
+          </p>
+        </Card>
+      )}
+
+      {/* ── 従業員管理タブ ── */}
+      {stab === "staff" && (
+        <Card className="overflow-hidden">
+          <div className="p-5 border-b border-slate-100 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 bg-slate-100 rounded-xl"><ic.Users size={20} stroke="#475569"/></div>
+              <div>
+                <h3 className="font-bold text-slate-800">従業員管理</h3>
+                <p className="text-xs text-slate-400">{staffList.filter(s => s.active).length}名稼働中 / 全{staffList.length}名</p>
+              </div>
+            </div>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead><tr className="border-b border-slate-100">
+                {["","名前","ロール","担当エリア","案件数","ステータス","操作"].map(h => (
+                  <th key={h} className="text-left text-xs font-semibold text-slate-400 uppercase px-5 py-3">{h}</th>
+                ))}
+              </tr></thead>
+              <tbody>
+                {staffList.map((s, i) => {
+                  const roleColors = ["bg-indigo-50 text-indigo-50","","",""];
+                  const rc = ROLES[s.role];
+                  const initials = s.name.split(" ").map(n => n[0]).join("");
+                  const avatarColors = ["bg-indigo-500","bg-violet-500","bg-cyan-500","bg-emerald-500","bg-amber-500"];
+                  return (
+                    <tr key={s.id} className={cn("border-b border-slate-50", !s.active && "opacity-50")}>
+                      <td className="px-5 py-3">
+                        <div className={cn("w-9 h-9 rounded-xl flex items-center justify-center text-white text-xs font-bold", avatarColors[i % 5])}>
+                          {initials}
+                        </div>
+                      </td>
+                      <td className="px-5 py-3">
+                        <p className="text-sm font-medium text-slate-800">{s.name}</p>
+                        <p className="text-xs text-slate-400">{s.email}</p>
+                      </td>
+                      <td className="px-5 py-3">
+                        <span className={cn("text-xs px-2 py-1 rounded-full font-medium", rc.color)}>{rc.l}</span>
+                      </td>
+                      <td className="px-5 py-3 text-sm text-slate-600">{s.area}</td>
+                      <td className="px-5 py-3 text-sm font-semibold text-slate-700">{s.cases}件</td>
+                      <td className="px-5 py-3">
+                        <button onClick={() => toggleStaff(s.id)}
+                          className={cn("relative w-10 h-5 rounded-full transition-colors", s.active ? "bg-emerald-500" : "bg-slate-300")}>
+                          <div className={cn("absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform", s.active ? "translate-x-5" : "translate-x-0.5")}/>
+                        </button>
+                      </td>
+                      <td className="px-5 py-3">
+                        <button className="text-xs px-3 py-1.5 border border-slate-200 rounded-lg hover:bg-slate-50 text-slate-600">編集</button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+          {/* 招待フォーム */}
+          <div className="p-5 border-t border-slate-100">
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">メンバーを招待</p>
+            <div className="flex gap-3">
+              <input
+                value={inviteEmail}
+                onChange={e => setInviteEmail(e.target.value)}
+                placeholder="メールアドレスを入力"
+                className="flex-1 px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400"
+              />
+              <button className="px-5 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700 flex items-center gap-2">
+                <ic.Send size={14}/>招待する
+              </button>
+            </div>
+          </div>
+        </Card>
+      )}
+
+      {/* ── 権限管理タブ ── */}
+      {stab === "roles" && (
+        <Card className="p-5">
+          <div className="flex items-center gap-3 mb-5">
+            <div className="p-2.5 bg-slate-100 rounded-xl"><ic.Shield size={20} stroke="#475569"/></div>
+            <h3 className="font-bold text-slate-800">権限管理</h3>
+          </div>
+          <div className="space-y-3">
+            {Object.entries(ROLES).map(([key, r]) => (
+              <div key={key} className={cn("flex items-center justify-between p-4 rounded-xl border-2 transition-all cursor-pointer",
+                currentRole === key ? "border-indigo-300 bg-indigo-50" : "border-slate-100 hover:border-slate-200")}
+                onClick={() => onRoleChange && onRoleChange(key)}>
+                <div className="flex items-center gap-3">
+                  <span className={cn("px-2.5 py-1 rounded-full text-xs font-semibold", r.color)}>{r.l}</span>
+                  <div className="flex gap-3 text-xs text-slate-500">
+                    <span className={cn(r.canEdit ? "text-emerald-600" : "text-slate-300")}>編集: {r.canEdit ? "✓" : "✕"}</span>
+                    <span className={cn(r.canDelete ? "text-emerald-600" : "text-slate-300")}>削除: {r.canDelete ? "✓" : "✕"}</span>
+                    <span className={cn(r.canViewSales ? "text-emerald-600" : "text-slate-300")}>売上閲覧: {r.canViewSales ? "✓" : "✕"}</span>
+                  </div>
+                </div>
+                {currentRole === key && <ic.Check size={18} stroke="#4f46e5"/>}
+              </div>
+            ))}
+          </div>
+          <p className="text-xs text-slate-400 mt-4">※ デモ用：ロールを切り替えると画面の権限が変わります</p>
+        </Card>
+      )}
+
+      {/* ── 通知設定タブ ── */}
+      {stab === "notify" && (
+        <Card className="p-5">
+          <div className="flex items-center gap-3 mb-5">
+            <div className="p-2.5 bg-slate-100 rounded-xl"><ic.Bell size={20} stroke="#475569"/></div>
+            <h3 className="font-bold text-slate-800">通知設定</h3>
+          </div>
+          <div className="space-y-4">
+            {[
+              { l: "新規案件通知", k: "notifyNew" },
+              { l: "キャンセル通知", k: "notifyCancel" },
+              { l: "当日リマインダー", k: "notifyRemind" },
+              { l: "日次レポート自動送信", k: "notifyReport" },
+            ].map(item => (
+              <div key={item.l} className="flex items-center justify-between py-2">
+                <span className="text-sm text-slate-600">{item.l}</span>
+                <button onClick={() => setToggles(t => ({ ...t, [item.k]: !t[item.k] }))}
+                  className={cn("relative w-11 h-6 rounded-full transition-colors", toggles[item.k] ? "bg-indigo-600" : "bg-slate-300")}>
+                  <div className={cn("absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform", toggles[item.k] ? "translate-x-5" : "translate-x-0.5")}/>
+                </button>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
+
+      {/* ── 会社情報タブ ── */}
+      {stab === "company" && (
+        <Card className="p-5">
+          <div className="flex items-center gap-3 mb-5">
+            <div className="p-2.5 bg-slate-100 rounded-xl"><ic.Building size={20} stroke="#475569"/></div>
+            <h3 className="font-bold text-slate-800">会社情報</h3>
+          </div>
+          <div className="space-y-4">
+            {[
+              { l: "会社名",     v: "株式会社サンプル" },
+              { l: "対応エリア", v: "関東・東海・関西" },
+              { l: "スタッフ数", v: "12名" },
+              { l: "ログイン方式", v: "Googleアカウント / メール&パスワード" },
+            ].map(item => (
+              <div key={item.l} className="flex items-center justify-between py-2">
+                <span className="text-sm text-slate-600">{item.l}</span>
+                <span className="text-sm font-medium text-slate-800 bg-slate-50 px-3 py-1.5 rounded-lg">{item.v}</span>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
     </div>
   );
 };
@@ -1742,12 +2485,40 @@ const NAV_UTIL = [
   { id: "settings",   l: "設定",           I: ic.Gear },
 ];
 
+/* ロール定義 */
+const ROLES = {
+  owner:   { l: "オーナー",  color: "bg-violet-100 text-violet-700", canEdit: true,  canDelete: true,  canViewSales: true  },
+  admin:   { l: "管理者",    color: "bg-indigo-100 text-indigo-700", canEdit: true,  canDelete: false, canViewSales: true  },
+  staff:   { l: "担当者",    color: "bg-emerald-100 text-emerald-700", canEdit: true,  canDelete: false, canViewSales: false },
+  viewer:  { l: "閲覧者",    color: "bg-slate-100 text-slate-600",   canEdit: false, canDelete: false, canViewSales: false },
+};
+
+/* エリア定義 */
+const AREAS_DEFAULT = [
+  { id: "all",       l: "全エリア",   flag: "🗾" },
+  { id: "kanto",     l: "関東",       flag: "🗼" },
+  { id: "kanagawa",  l: "神奈川",     flag: "⛵" },
+  { id: "fukuoka",   l: "福岡",       flag: "🍜" },
+  { id: "okinawa",   l: "沖縄",       flag: "🌺" },
+];
+
+/* ユーザー Context */
+const UserCtx = React.createContext({ name: "加藤", role: "owner", area: "all" });
+
 function App() {
   const [page, setPage] = useState("dashboard");
   const [sbOpen, setSb] = useState(true);
   const [notOpen, setNot] = useState(false);
   const [mob, setMob] = useState(false);
+  const [currentRole, setCurrentRole] = useState("owner");
+  const [areas, setAreas] = useState(AREAS_DEFAULT);
+  const [currentArea, setCurrentArea] = useState("all");
+  const [areaMenuOpen, setAreaMenuOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
   const nav = useCallback(p => { setPage(p); setMob(false); }, []);
+
+  const roleInfo = ROLES[currentRole];
+  const areaInfo = areas.find(a => a.id === currentArea) || areas[0];
 
   const Page = () => {
     switch (page) {
@@ -1755,15 +2526,23 @@ function App() {
       case "line":       return <LineInbox/>;
       case "cases":      return <CaseMgmt/>;
       case "calendar":   return <CalView/>;
-      case "reports":    return <ReportsPage/>;
-      case "settings":   return <SetPage/>;
+      case "reports":    return roleInfo.canViewSales ? <ReportsPage/> : (
+        <div className="flex flex-col items-center justify-center h-64 gap-4 text-slate-400">
+          <ic.Shield size={48} className="opacity-30"/>
+          <p className="text-sm">このページを閲覧する権限がありません</p>
+        </div>
+      );
+      case "settings":   return <SetPage currentRole={currentRole} onRoleChange={setCurrentRole} areas={areas} onAreasChange={setAreas} currentArea={currentArea} onAreaChange={setCurrentArea}/>;
       default:           return <Dashboard onNav={nav}/>;
     }
   };
 
   return (
+    <UserCtx.Provider value={{ name: "加藤", role: currentRole, area: currentArea }}>
     <div className="flex h-screen bg-slate-50 text-slate-900 overflow-hidden">
       {mob && <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40 lg:hidden" onClick={() => setMob(false)}/>}
+      {/* エリアメニュー・プロフィールメニューを閉じるオーバーレイ */}
+      {(areaMenuOpen || profileOpen) && <div className="fixed inset-0 z-30" onClick={() => { setAreaMenuOpen(false); setProfileOpen(false); }}/>}
 
       {/* Sidebar */}
       <aside className={cn(
@@ -1777,14 +2556,40 @@ function App() {
           </div>
           {sbOpen && (
             <div className="min-w-0">
-              <h1 className="font-bold text-sm text-slate-800 truncate">ServiceFlow</h1>
+              <h1 className="font-bold text-sm text-slate-800 truncate">スマカレ</h1>
               <p className="text-[10px] text-slate-400 truncate">顧客管理プラットフォーム</p>
             </div>
           )}
         </div>
 
+        {/* エリアセレクター */}
+        {sbOpen && (
+          <div className="px-3 pt-3 pb-1 relative">
+            <button
+              onClick={() => setAreaMenuOpen(!areaMenuOpen)}
+              className="w-full flex items-center gap-2 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm hover:bg-slate-100 transition-colors"
+            >
+              <span className="text-base">{areaInfo.flag}</span>
+              <span className="flex-1 text-left text-xs font-medium text-slate-700">{areaInfo.l}</span>
+              <ic.ChevD size={14} className="text-slate-400"/>
+            </button>
+            {areaMenuOpen && (
+              <div className="absolute left-3 right-3 top-full mt-1 bg-white rounded-xl border border-slate-200 shadow-lg z-50 overflow-hidden slide-up">
+                {areas.map(a => (
+                  <button key={a.id} onClick={() => { setCurrentArea(a.id); setAreaMenuOpen(false); }}
+                    className={cn("w-full flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-slate-50 transition-colors text-left",
+                      currentArea === a.id ? "bg-indigo-50 text-indigo-700 font-medium" : "text-slate-700")}>
+                    <span>{a.flag}</span><span>{a.l}</span>
+                    {currentArea === a.id && <ic.Check size={14} className="ml-auto"/>}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Main Navigation */}
-        <nav className="flex-1 py-4 px-3 overflow-y-auto flex flex-col">
+        <nav className="flex-1 py-3 px-3 overflow-y-auto flex flex-col">
           {sbOpen && <p className="text-[10px] font-semibold text-slate-300 uppercase tracking-widest px-3 mb-2">メニュー</p>}
           <div className="space-y-1">
             {NAV_MAIN.map(item => {
@@ -1808,20 +2613,58 @@ function App() {
               );
             })}
           </div>
-
-          {/* 設定はヘッダーに移動済み */}
         </nav>
 
         {/* User Profile */}
-        <div className={cn("border-t border-slate-100 p-3 shrink-0", !sbOpen && "flex justify-center")}>
+        <div className={cn("border-t border-slate-100 p-3 shrink-0 relative", !sbOpen && "flex justify-center")}>
           {sbOpen ? (
-            <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-50 cursor-pointer">
-              <div className="w-8 h-8 bg-gradient-to-br from-indigo-400 to-violet-500 rounded-lg flex items-center justify-center text-white text-xs font-bold">加</div>
-              <div className="flex-1 min-w-0"><p className="text-sm font-medium text-slate-800 truncate">加藤</p><p className="text-[10px] text-slate-400">管理者</p></div>
-              <ic.ChevD size={16} stroke="#94a3b8"/>
-            </div>
+            <>
+              <button
+                onClick={() => setProfileOpen(!profileOpen)}
+                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-50 cursor-pointer transition-colors"
+              >
+                <div className="w-9 h-9 bg-gradient-to-br from-indigo-400 to-violet-500 rounded-xl flex items-center justify-center text-white text-sm font-bold shrink-0">加</div>
+                <div className="flex-1 min-w-0 text-left">
+                  <p className="text-sm font-medium text-slate-800 truncate">加藤</p>
+                  <span className={cn("text-[10px] px-1.5 py-0.5 rounded-full font-medium", roleInfo.color)}>{roleInfo.l}</span>
+                </div>
+                <ic.ChevD size={16} stroke="#94a3b8"/>
+              </button>
+              {profileOpen && (
+                <div className="absolute bottom-full left-3 right-3 mb-1 bg-white rounded-xl border border-slate-200 shadow-lg z-50 overflow-hidden slide-up">
+                  <div className="p-4 border-b border-slate-100">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 bg-gradient-to-br from-indigo-400 to-violet-500 rounded-xl flex items-center justify-center text-white text-lg font-bold">加</div>
+                      <div>
+                        <p className="font-semibold text-slate-800">加藤</p>
+                        <p className="text-xs text-slate-500">kato@shinjidai.jp</p>
+                        <span className={cn("text-[10px] px-1.5 py-0.5 rounded-full font-medium mt-1 inline-block", roleInfo.color)}>{roleInfo.l}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="p-2">
+                    {[["owner","オーナー"],["admin","管理者"],["staff","担当者"],["viewer","閲覧者"]].map(([k,l]) => (
+                      <button key={k} onClick={() => { setCurrentRole(k); setProfileOpen(false); }}
+                        className={cn("w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm hover:bg-slate-50 transition-colors text-left",
+                          currentRole === k ? "text-indigo-700 font-medium" : "text-slate-600")}>
+                        <ic.Shield size={14}/>{l}
+                        {currentRole === k && <ic.Check size={14} className="ml-auto text-indigo-600"/>}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="px-2 pb-2">
+                    <button className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-red-500 hover:bg-red-50 transition-colors">
+                      <ic.X size={14}/>ログアウト
+                    </button>
+                  </div>
+                </div>
+              )}
+            </>
           ) : (
-            <div className="w-8 h-8 bg-gradient-to-br from-indigo-400 to-violet-500 rounded-lg flex items-center justify-center text-white text-xs font-bold cursor-pointer">加</div>
+            <button
+              onClick={() => setProfileOpen(!profileOpen)}
+              className="w-9 h-9 bg-gradient-to-br from-indigo-400 to-violet-500 rounded-xl flex items-center justify-center text-white text-sm font-bold cursor-pointer"
+            >加</button>
           )}
         </div>
       </aside>
@@ -1835,8 +2678,10 @@ function App() {
             <div className="hidden sm:block w-72"><SearchInput value="" onChange={() => {}} placeholder="案件ID、顧客名で検索..."/></div>
           </div>
           <div className="flex items-center gap-1.5">
-            <div className="hidden md:flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 rounded-lg">
-              <ic.Monitor size={14} stroke="#6366f1"/><span className="text-[10px] text-slate-400">Web</span>
+            {/* エリア表示 (ヘッダー) */}
+            <div className="hidden md:flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 rounded-lg border border-slate-200">
+              <span className="text-sm">{areaInfo.flag}</span>
+              <span className="text-xs text-slate-600 font-medium">{areaInfo.l}</span>
             </div>
             <button onClick={() => nav("settings")} className={cn(
               "p-2.5 rounded-xl transition-all",
@@ -1868,6 +2713,10 @@ function App() {
                 </div>
               )}
             </div>
+            {/* Web バッジ（一番右） */}
+            <div className="hidden md:flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 rounded-lg">
+              <ic.Monitor size={14} stroke="#6366f1"/><span className="text-[10px] text-slate-400">Web</span>
+            </div>
           </div>
         </header>
 
@@ -1876,6 +2725,7 @@ function App() {
         </main>
       </div>
     </div>
+    </UserCtx.Provider>
   );
 }
 
