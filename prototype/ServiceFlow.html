@@ -27,6 +27,9 @@ body { font-family: 'Inter', 'Noto Sans JP', system-ui, sans-serif; -webkit-font
 .line-draw { stroke-dasharray: 2000; animation: line-draw 1.5s ease-out forwards; }
 @keyframes shimmer { 0%{background-position:-200% 0} 100%{background-position:200% 0} }
 .shimmer { background: linear-gradient(90deg, transparent 30%, rgba(255,255,255,.3) 50%, transparent 70%); background-size: 200% 100%; animation: shimmer 2s infinite; }
+.safe-area-pb { padding-bottom: env(safe-area-inset-bottom, 0px); }
+@media (max-width: 1023px) { .mobile-card-list { display: block; } .desktop-table { display: none; } }
+@media (min-width: 1024px) { .mobile-card-list { display: none; } .desktop-table { display: block; } }
 </style>
 <script>
 tailwind.config = {
@@ -1074,7 +1077,8 @@ const CaseMgmt = () => {
       </Card>
 
       <Card className="overflow-hidden">
-        <div className="overflow-x-auto">
+        {/* ── デスクトップ: テーブル表示 ── */}
+        <div className="desktop-table overflow-x-auto">
           <table className="w-full">
             <thead>
               <tr className="border-b border-slate-100">
@@ -1113,6 +1117,40 @@ const CaseMgmt = () => {
             </tbody>
           </table>
         </div>
+        {/* ── モバイル: カード表示 ── */}
+        <div className="mobile-card-list divide-y divide-slate-100">
+          {filtered.slice(0, 15).map(c => (
+            <div key={c.id} className="px-4 py-3.5 active:bg-slate-50 cursor-pointer" onClick={() => setSel(sel?.id === c.id ? null : c)}>
+              <div className="flex items-start justify-between gap-2 mb-2">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-xs font-mono font-medium text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">{c.id}</span>
+                  {c.urgent && <ic.Zap size={13} stroke="#f59e0b"/>}
+                  {c.lineAuto && <span className="text-[10px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full">LINE</span>}
+                </div>
+                <Badge className={ST[c.status].bg}>{ST[c.status].l}</Badge>
+              </div>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-semibold text-slate-800">{c.customer}</p>
+                  <div className="flex items-center gap-3 mt-1 text-xs text-slate-400 flex-wrap">
+                    <span className="flex items-center gap-1">
+                      <div className="w-4 h-4 rounded flex items-center justify-center" style={{ background: c.category.color + "20" }}>
+                        <c.category.Ic size={11} stroke={c.category.color}/>
+                      </div>
+                      {c.category.label}
+                    </span>
+                    <span className="flex items-center gap-0.5"><ic.MapPin size={11}/>{c.pref}</span>
+                    <span className="flex items-center gap-0.5"><ic.Clock size={11}/>{c.date} {c.time}</span>
+                  </div>
+                </div>
+                <div className="text-right shrink-0 ml-2">
+                  <p className="text-sm font-bold text-slate-700">{c.amount > 0 ? fmt(c.amount) : "—"}</p>
+                  <p className="text-xs text-slate-400 mt-0.5">{c.staff}</p>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
         <div className="flex items-center justify-between px-5 py-3 border-t border-slate-100">
           <p className="text-sm text-slate-500">1-15 / {filtered.length}件</p>
           <div className="flex gap-1">
@@ -1144,7 +1182,7 @@ const CaseMgmt = () => {
             ))}
           </div>
         </div>
-        <div className="overflow-x-auto">
+        <div className="desktop-table overflow-x-auto">
           <table className="w-full">
             <thead><tr className="border-b border-slate-100">
               {["","顧客名","電話番号","エリア","案件数","総売上","利用カテゴリ","最終利用","ステータス"].map(h => (
@@ -1196,6 +1234,41 @@ const CaseMgmt = () => {
               })}
             </tbody>
           </table>
+        </div>
+        {/* ── モバイル: 顧客カード表示 ── */}
+        <div className="mobile-card-list divide-y divide-slate-100">
+          {custFiltered.slice(0, 30).map((c, i) => {
+            const isVip = c.total >= vipThreshold;
+            const rank = [...custs].sort((a, b) => b.total - a.total).findIndex(x => x.name === c.name);
+            const statusLabel = c.cases.length >= 15 ? { l: "リピーター", cls: "bg-indigo-50 text-indigo-700 border border-indigo-200" }
+              : c.cases.length >= 10 ? { l: "複数利用", cls: "bg-emerald-50 text-emerald-700 border border-emerald-200" }
+              : { l: "一般", cls: "bg-slate-50 text-slate-500 border border-slate-200" };
+            return (
+              <div key={c.name} className="px-4 py-3.5 active:bg-slate-50">
+                <div className="flex items-center gap-3">
+                  <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center text-white text-xs font-bold shrink-0", custColors[rank % 6])}>
+                    {c.name[0]}{c.name[1]}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-sm font-semibold text-slate-800">{c.name}</span>
+                      {isVip && <Badge className="bg-amber-100 text-amber-700 border border-amber-200"><ic.Star size={10}/>VIP</Badge>}
+                      <Badge className={statusLabel.cls}>{statusLabel.l}</Badge>
+                    </div>
+                    <div className="flex items-center gap-3 mt-0.5 text-xs text-slate-400 flex-wrap">
+                      <span className="font-mono">{c.phone}</span>
+                      <span>{c.pref}</span>
+                      <span>{c.cases.length}件</span>
+                    </div>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <p className="text-sm font-bold text-slate-800">{fmt(c.total)}</p>
+                    <p className="text-xs text-slate-400 mt-0.5">{c.last.slice(5)}</p>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
         </div>
         <div className="p-3 border-t border-slate-100 text-center">
           <span className="text-xs text-slate-400">{custFiltered.length}件中 {Math.min(30, custFiltered.length)}件表示</span>
@@ -1249,58 +1322,100 @@ const CalView = () => {
         </button>
       </div>
 
-      <Card className="p-5">
-        <div className="flex items-center justify-between mb-5">
+      <Card className="p-4 lg:p-5">
+        <div className="flex items-center justify-between mb-4 lg:mb-5">
           <button onClick={() => setCur(new Date(y, m - 1, 1))} className="p-2 rounded-lg hover:bg-slate-100"><ic.ChevL size={20}/></button>
           <h2 className="text-lg font-bold text-slate-800">{y}年 {mn[m]}</h2>
           <button onClick={() => setCur(new Date(y, m + 1, 1))} className="p-2 rounded-lg hover:bg-slate-100"><ic.ChevR size={20}/></button>
         </div>
-        <div className="grid grid-cols-7 gap-px bg-slate-200 rounded-xl overflow-hidden border border-slate-200">
-          {dn.map((d, i) => (
-            <div key={d} className={cn("py-2.5 text-center text-xs font-semibold bg-slate-50",
-              i === 0 ? "text-red-400" : i === 6 ? "text-blue-400" : "text-slate-400")}>{d}</div>
-          ))}
-          {days.map((d, i) => {
-            const ds = d ? `${ms}-${String(d).padStart(2, "0")}` : null;
-            const dc = ds ? (cByDate[ds] || []) : [];
-            const dow = i % 7;
-            const isSelected = d === selDay;
-            return (
-              <div key={i}
-                onClick={() => d && setSelDay(d === selDay ? null : d)}
-                className={cn("min-h-[100px] p-1.5 transition-colors",
-                  !d && "bg-slate-50/50",
-                  d && isSelected ? "bg-indigo-50 cursor-pointer" : d && "bg-white hover:bg-slate-50 cursor-pointer"
-                )}>
-                {d && (
-                  <>
-                    <div className={cn("w-7 h-7 flex items-center justify-center rounded-lg text-sm font-medium mb-1",
-                      isToday(d) ? "bg-indigo-600 text-white" :
-                      isSelected ? "bg-indigo-100 text-indigo-700" :
-                      dow === 0 ? "text-red-500" : dow === 6 ? "text-blue-500" : "text-slate-700")}>
-                      {d}
-                    </div>
-                    <div className="space-y-0.5">
-                      {dc.slice(0, 3).map(c => (
-                        <div key={c.id}
-                          onClick={e => { e.stopPropagation(); setSelCase(c); }}
-                          className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] truncate hover:opacity-80 cursor-pointer"
-                          style={{ background: c.category.color + "15", color: c.category.color }}>
-                          {c.urgent && <ic.Zap size={10}/>}
-                          <span className="truncate font-medium">{c.time} {c.customer}</span>
-                        </div>
-                      ))}
-                      {dc.length > 3 && <div className="text-[10px] text-slate-400 pl-1.5">+{dc.length - 3}件</div>}
-                    </div>
-                  </>
-                )}
-              </div>
-            );
-          })}
+
+        {/* ── デスクトップ: 月表示カレンダー ── */}
+        <div className="desktop-table">
+          <div className="grid grid-cols-7 gap-px bg-slate-200 rounded-xl overflow-hidden border border-slate-200">
+            {dn.map((d, i) => (
+              <div key={d} className={cn("py-2.5 text-center text-xs font-semibold bg-slate-50",
+                i === 0 ? "text-red-400" : i === 6 ? "text-blue-400" : "text-slate-400")}>{d}</div>
+            ))}
+            {days.map((d, i) => {
+              const ds = d ? `${ms}-${String(d).padStart(2, "0")}` : null;
+              const dc = ds ? (cByDate[ds] || []) : [];
+              const dow = i % 7;
+              const isSelected = d === selDay;
+              return (
+                <div key={i}
+                  onClick={() => d && setSelDay(d === selDay ? null : d)}
+                  className={cn("min-h-[100px] p-1.5 transition-colors",
+                    !d && "bg-slate-50/50",
+                    d && isSelected ? "bg-indigo-50 cursor-pointer" : d && "bg-white hover:bg-slate-50 cursor-pointer"
+                  )}>
+                  {d && (
+                    <>
+                      <div className={cn("w-7 h-7 flex items-center justify-center rounded-lg text-sm font-medium mb-1",
+                        isToday(d) ? "bg-indigo-600 text-white" :
+                        isSelected ? "bg-indigo-100 text-indigo-700" :
+                        dow === 0 ? "text-red-500" : dow === 6 ? "text-blue-500" : "text-slate-700")}>
+                        {d}
+                      </div>
+                      <div className="space-y-0.5">
+                        {dc.slice(0, 3).map(c => (
+                          <div key={c.id}
+                            onClick={e => { e.stopPropagation(); setSelCase(c); }}
+                            className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] truncate hover:opacity-80 cursor-pointer"
+                            style={{ background: c.category.color + "15", color: c.category.color }}>
+                            {c.urgent && <ic.Zap size={10}/>}
+                            <span className="truncate font-medium">{c.time} {c.customer}</span>
+                          </div>
+                        ))}
+                        {dc.length > 3 && <div className="text-[10px] text-slate-400 pl-1.5">+{dc.length - 3}件</div>}
+                      </div>
+                    </>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* ── モバイル: コンパクトカレンダー ── */}
+        <div className="mobile-card-list">
+          <div className="grid grid-cols-7 mb-1">
+            {dn.map((d, i) => (
+              <div key={d} className={cn("py-1.5 text-center text-[11px] font-semibold",
+                i === 0 ? "text-red-400" : i === 6 ? "text-blue-400" : "text-slate-400")}>{d}</div>
+            ))}
+          </div>
+          <div className="grid grid-cols-7 gap-1">
+            {days.map((d, i) => {
+              const ds = d ? `${ms}-${String(d).padStart(2, "0")}` : null;
+              const dc = ds ? (cByDate[ds] || []) : [];
+              const dow = i % 7;
+              const isSelected = d === selDay;
+              return (
+                <div key={i} onClick={() => d && setSelDay(d === selDay ? null : d)}
+                  className={cn("h-10 flex flex-col items-center justify-center rounded-lg relative cursor-pointer transition-colors",
+                    !d && "opacity-0 pointer-events-none",
+                    d && isSelected ? "bg-indigo-600" : d && isToday(d) ? "bg-indigo-100" : d && "hover:bg-slate-100"
+                  )}>
+                  {d && (
+                    <>
+                      <span className={cn("text-sm font-medium leading-none",
+                        isSelected ? "text-white" :
+                        isToday(d) ? "text-indigo-700" :
+                        dow === 0 ? "text-red-500" : dow === 6 ? "text-blue-500" : "text-slate-700"
+                      )}>{d}</span>
+                      {dc.length > 0 && (
+                        <span className={cn("w-1 h-1 rounded-full mt-0.5", isSelected ? "bg-white" : "bg-indigo-400")}/>
+                      )}
+                    </>
+                  )}
+                </div>
+              );
+            })}
+          </div>
         </div>
       </Card>
 
-      <Card className="p-5">
+      <Card className="p-4 lg:p-5">
         <h3 className="font-bold text-slate-800 mb-4">
           {selDay ? `${mn[m].replace("月","")}月${selDay}日の予定` : "今日の予定 — 2月13日"}
           <span className="ml-2 text-sm font-normal text-slate-400">{selectedDayCases.length}件</span>
@@ -1315,18 +1430,18 @@ const CalView = () => {
             {selectedDayCases.slice(0, 5).map(c => (
               <div key={c.id}
                 onClick={() => setSelCase(c)}
-                className="flex items-center gap-4 p-3 rounded-xl hover:bg-slate-50 border border-slate-100 cursor-pointer">
-                <div className="text-center min-w-[50px]"><div className="text-sm font-bold text-slate-800">{c.time}</div></div>
-                <div className="w-1 h-10 rounded-full" style={{ background: c.category.color }}/>
+                className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 border border-slate-100 cursor-pointer active:bg-slate-100">
+                <div className="text-center min-w-[42px]"><div className="text-sm font-bold text-slate-800">{c.time}</div></div>
+                <div className="w-1 h-10 rounded-full shrink-0" style={{ background: c.category.color }}/>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="text-sm font-medium text-slate-800">{c.customer}</span>
                     <Badge className={ST[c.status].bg}>{ST[c.status].l}</Badge>
                     {c.urgent && <Badge className="bg-amber-100 text-amber-700 border border-amber-200"><ic.Zap size={12}/>緊急</Badge>}
                   </div>
-                  <p className="text-xs text-slate-400 mt-0.5">{c.category.label} · {c.addr} · 担当: {c.staff}</p>
+                  <p className="text-xs text-slate-400 mt-0.5 truncate">{c.category.label} · {c.pref} · {c.staff}</p>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 shrink-0">
                   <span className="text-sm font-semibold text-slate-600 hidden sm:inline">{c.amount > 0 ? fmt(c.amount) : ""}</span>
                   <ic.ChevR size={16} className="text-slate-300"/>
                 </div>
@@ -1509,7 +1624,7 @@ const Analytics = () => {
             ))}
           </div>
         </div>
-        <div className="overflow-x-auto">
+        <div className="desktop-table overflow-x-auto">
           <table className="w-full">
             <thead><tr className="border-b border-slate-100">
               {["担当者","完了案件数","売上","広告費（推定）","ROAS","平均単価"].map(h => (
@@ -1540,11 +1655,42 @@ const Analytics = () => {
             </tbody>
           </table>
         </div>
+        {/* ── モバイル: 担当者カード ── */}
+        <div className="mobile-card-list divide-y divide-slate-100">
+          {filteredStaff.map(s => (
+            <div key={s.name} className="px-4 py-3.5">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <div className="w-9 h-9 bg-gradient-to-br from-indigo-400 to-violet-500 rounded-lg flex items-center justify-center text-white text-xs font-bold">{s.name[0]}</div>
+                  <span className="text-sm font-semibold text-slate-800">{s.name}</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className={cn("text-sm font-bold", Number(s.roas) >= 300 ? "text-emerald-600" : Number(s.roas) >= 200 ? "text-amber-600" : "text-red-500")}>ROAS {s.roas}%</span>
+                  {Number(s.roas) >= 300 && <Badge className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px]">Good</Badge>}
+                </div>
+              </div>
+              <div className="grid grid-cols-3 gap-2 text-center">
+                <div className="bg-slate-50 rounded-lg py-2">
+                  <p className="text-xs text-slate-400">完了案件</p>
+                  <p className="text-sm font-bold text-slate-700">{s.cases}件</p>
+                </div>
+                <div className="bg-slate-50 rounded-lg py-2">
+                  <p className="text-xs text-slate-400">売上</p>
+                  <p className="text-sm font-bold text-slate-700">{fmt(s.rev)}</p>
+                </div>
+                <div className="bg-slate-50 rounded-lg py-2">
+                  <p className="text-xs text-slate-400">平均単価</p>
+                  <p className="text-sm font-bold text-slate-700">{fmt(s.avg)}</p>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
       </Card>
 
       <Card className="overflow-hidden">
         <div className="p-5 border-b border-slate-100"><h3 className="font-bold text-slate-800">広告媒体別ROI</h3></div>
-        <div className="overflow-x-auto">
+        <div className="desktop-table overflow-x-auto">
           <table className="w-full">
             <thead><tr className="border-b border-slate-100">
               {["媒体名","コスト","案件数","売上","ROI","CVR"].map(h => <th key={h} className="text-left text-xs font-semibold text-slate-400 uppercase px-5 py-3">{h}</th>)}
@@ -1565,6 +1711,23 @@ const Analytics = () => {
               })}
             </tbody>
           </table>
+        </div>
+        <div className="mobile-card-list divide-y divide-slate-100">
+          {adData.map(a => {
+            const roi = (((a.rev - a.cost) / a.cost) * 100).toFixed(0);
+            return (
+              <div key={a.name} className="px-4 py-3.5 flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-semibold text-slate-800">{a.name}</p>
+                  <p className="text-xs text-slate-400 mt-0.5">{a.cases}件 · CVR {a.cvr}%</p>
+                </div>
+                <div className="text-right">
+                  <span className={cn("text-base font-bold", Number(roi) > 100 ? "text-emerald-600" : "text-amber-600")}>ROI {roi}%</span>
+                  <p className="text-xs text-slate-400 mt-0.5">{fmt(a.rev)}</p>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </Card>
     </div>
@@ -2675,6 +2838,13 @@ function App() {
           <div className="flex items-center gap-3">
             <button onClick={() => setMob(!mob)} className="p-2 rounded-lg hover:bg-slate-100 lg:hidden"><ic.Menu size={20}/></button>
             <button onClick={() => setSb(!sbOpen)} className="p-2 rounded-lg hover:bg-slate-100 hidden lg:block"><ic.Menu size={20} stroke="#64748b"/></button>
+            {/* モバイルのみロゴ表示 */}
+            <div className="flex items-center gap-2 lg:hidden">
+              <div className="w-7 h-7 bg-gradient-to-br from-indigo-500 to-violet-600 rounded-lg flex items-center justify-center shadow-sm">
+                <ic.Layers size={14} stroke="white"/>
+              </div>
+              <span className="text-sm font-bold text-slate-800">スマカレ</span>
+            </div>
             <div className="hidden sm:block w-72"><SearchInput value="" onChange={() => {}} placeholder="案件ID、顧客名で検索..."/></div>
           </div>
           <div className="flex items-center gap-1.5">
@@ -2720,10 +2890,40 @@ function App() {
           </div>
         </header>
 
-        <main className="flex-1 overflow-y-auto p-4 lg:p-6">
+        <main className="flex-1 overflow-y-auto p-4 lg:p-6 pb-20 lg:pb-6">
           <Page/>
         </main>
       </div>
+
+      {/* ── ボトムナビゲーション（モバイル専用） ── */}
+      <nav className="fixed bottom-0 left-0 right-0 z-40 lg:hidden bg-white/95 backdrop-blur-md border-t border-slate-200/60 safe-area-pb">
+        <div className="flex items-center justify-around h-16 px-2">
+          {[
+            { id: "dashboard", l: "ホーム",     I: ic.Grid },
+            { id: "cases",     l: "案件",       I: ic.FileText },
+            { id: "calendar",  l: "カレンダー", I: ic.Calendar },
+            { id: "line",      l: "LINE",       I: ic.Inbox, badge: LINE_MSGS.filter(m => m.status === "pending").length },
+            { id: "settings",  l: "設定",       I: ic.Gear },
+          ].map(item => {
+            const active = page === item.id;
+            return (
+              <button key={item.id} onClick={() => nav(item.id)}
+                className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl transition-all relative">
+                <div className="relative">
+                  <item.I size={22} stroke={active ? "#4f46e5" : "#94a3b8"}/>
+                  {item.badge > 0 && (
+                    <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
+                      {item.badge}
+                    </span>
+                  )}
+                </div>
+                <span className={cn("text-[10px] font-medium", active ? "text-indigo-600" : "text-slate-400")}>{item.l}</span>
+                {active && <span className="absolute top-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-indigo-500 rounded-full"/>}
+              </button>
+            );
+          })}
+        </div>
+      </nav>
     </div>
     </UserCtx.Provider>
   );
