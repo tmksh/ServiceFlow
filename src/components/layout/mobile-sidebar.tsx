@@ -7,12 +7,12 @@ import { NAV_ITEMS } from "@/lib/constants";
 import { Logo } from "@/components/ui/logo";
 import {
   LayoutGrid, Inbox, FileText, Calendar, Calculator, BarChart3,
-  Globe, ClipboardList, X, Settings,
+  Globe, ClipboardList, X, Settings, Folder,
 } from "lucide-react";
 
 const iconMap: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
   LayoutGrid, Inbox, FileText, Calendar, Calculator, BarChart3,
-  Globe, ClipboardList,
+  Globe, ClipboardList, Folder,
 };
 
 interface MobileSidebarProps {

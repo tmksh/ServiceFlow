@@ -1,5 +1,86 @@
 import { cn } from "@/lib/utils";
 
+// ─── 共通座標定義 ──────────────────────────────────────────────────────────────
+// 3×3 グリッド：spacing=8, offset=4, r=2.4（favicon.svg と同一）
+const DOTS_BASE = [
+  [8,  8 ], [16, 8 ],               // row 0: col 0, 1  (col 2 = 星)
+  [8,  16], [16, 16], [24, 16],      // row 1
+  [8,  24], [16, 24], [24, 24],      // row 2
+] as const;
+const STAR_POINTS = "24,3.6 25.1,6.9 28.4,6.9 25.8,8.9 26.8,12.2 24,10.3 21.2,12.2 22.2,8.9 19.6,6.9 22.9,6.9";
+
+// ─── ロゴシンボル（共通定義） ─────────────────────────────────────────────────
+// SVG <symbol> を使うとグラデーション ID の衝突を避けられるが、
+// React では各 SVG に defs を埋め込む方が確実なため、
+// id を "logo-grad" に固定（同一ページに複数レンダーされても同じグラデーション定義は上書きで問題なし）
+const GRAD_ID = "logo-grad";
+
+function LogoDefs() {
+  return (
+    <defs>
+      <linearGradient id={GRAD_ID} x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor="#818CF8" />
+        <stop offset="100%" stopColor="#6366F1" />
+      </linearGradient>
+      <filter id="logo-shadow" x="-20%" y="-20%" width="140%" height="140%">
+        <feDropShadow dx="0" dy="1" stdDeviation="1.5" floodColor="#6366F1" floodOpacity="0.35" />
+      </filter>
+    </defs>
+  );
+}
+
+function GridDots({ r = 2.4 }: { r?: number }) {
+  return (
+    <>
+      {DOTS_BASE.map(([cx, cy]) => (
+        <circle key={`${cx}-${cy}`} cx={cx} cy={cy} r={r} fill="#6B7FA3" opacity="0.8" />
+      ))}
+      <polygon
+        points={STAR_POINTS}
+        fill={`url(#${GRAD_ID})`}
+        filter={`url(#logo-shadow)`}
+      />
+    </>
+  );
+}
+
+// ─── コンポーネント ───────────────────────────────────────────────────────────
+
+interface LogoIconProps {
+  size?: number;
+  /** ガラス背景つき角丸矩形（サイドバー・ヘッダーロゴ用） */
+  bg?: boolean;
+  className?: string;
+}
+
+/**
+ * スマカレ ロゴアイコン
+ * - bg=true: iOSアイコン風の角丸ダーク背景付き
+ * - bg=false (default): 透明背景（テキストロゴと並べる用途）
+ */
+export function LogoIcon({ size = 36, bg = false, className }: LogoIconProps) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 32 32"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className={className}
+      aria-label="スマカレ"
+    >
+      <LogoDefs />
+      {bg && (
+        <rect
+          width="32" height="32" rx="8"
+          fill="#0F0F1A"
+        />
+      )}
+      <GridDots />
+    </svg>
+  );
+}
+
 interface LogoProps {
   variant?: "full" | "icon";
   theme?: "dark" | "light" | "auto";
@@ -7,140 +88,38 @@ interface LogoProps {
   size?: "sm" | "md" | "lg";
 }
 
+const SIZE_MAP = {
+  sm: { icon: 26, fontSize: "text-[15px]", subSize: "text-[9px]",  gap: "gap-2"   },
+  md: { icon: 32, fontSize: "text-lg",      subSize: "text-[10px]", gap: "gap-2.5" },
+  lg: { icon: 42, fontSize: "text-2xl",     subSize: "text-xs",     gap: "gap-3"   },
+} as const;
+
 /**
- * スマカレ ロゴコンポーネント
- * - full: アイコン + テキスト横並び
- * - icon: アイコンのみ
- * - theme dark: 黒背景用（ロゴ本来の色）
- * - theme light: 白背景用（ダークテキスト）
- * - theme auto: サイドバー等、背景に応じて自動
+ * スマカレ ロゴ（アイコン + テキスト）
  */
 export function Logo({ variant = "full", theme = "auto", className, size = "md" }: LogoProps) {
-  const sizes = {
-    sm: { icon: 28, fontSize: "text-base", subSize: "text-[9px]", gap: "gap-2" },
-    md: { icon: 36, fontSize: "text-lg", subSize: "text-[10px]", gap: "gap-2.5" },
-    lg: { icon: 48, fontSize: "text-2xl", subSize: "text-xs", gap: "gap-3" },
-  };
-  const s = sizes[size];
-
-  const textColor = theme === "dark"
-    ? "text-white"
-    : theme === "light"
-    ? "text-slate-800"
-    : "text-slate-800";
-
-  const subColor = theme === "dark"
-    ? "text-slate-400"
-    : "text-slate-400";
+  const s = SIZE_MAP[size];
+  const textColor = theme === "dark" ? "text-white" : "text-slate-800";
 
   return (
     <div className={cn("flex items-center", s.gap, className)}>
       <LogoIcon size={s.icon} />
       {variant === "full" && (
         <div className="min-w-0">
-          <div className={cn("font-bold leading-tight tracking-tight", s.fontSize, textColor)}>
+          <p className={cn("font-bold leading-none tracking-tight", s.fontSize, textColor)}>
             スマカレ
-          </div>
-          <div className={cn("leading-tight", s.subSize, subColor)}>
+          </p>
+          <p className={cn("leading-none mt-0.5", s.subSize, "text-slate-400")}>
             顧客管理プラットフォーム
-          </div>
+          </p>
         </div>
       )}
     </div>
   );
 }
 
-interface LogoIconProps {
-  size?: number;
-  className?: string;
-}
-
 /**
- * スマカレ アイコンSVG
- * 3×3 グリッドドット（右上が4角星）
- */
-export function LogoIcon({ size = 36, className }: LogoIconProps) {
-  const dotR = 3.2;
-  const spacing = 9;
-  const starSize = 5.5;
-  const offset = 4;
-
-  // 3x3 グリッドの左上を原点として配置
-  // 右上(col=2, row=0) のみ星
-  const dots: { cx: number; cy: number; isStar?: boolean }[] = [
-    // row 0
-    { cx: offset, cy: offset },
-    { cx: offset + spacing, cy: offset },
-    { cx: offset + spacing * 2, cy: offset, isStar: true },
-    // row 1
-    { cx: offset, cy: offset + spacing },
-    { cx: offset + spacing, cy: offset + spacing },
-    { cx: offset + spacing * 2, cy: offset + spacing },
-    // row 2
-    { cx: offset, cy: offset + spacing * 2 },
-    { cx: offset + spacing, cy: offset + spacing * 2 },
-    { cx: offset + spacing * 2, cy: offset + spacing * 2 },
-  ];
-
-  const viewSize = offset * 2 + spacing * 2;
-
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox={`0 0 ${viewSize} ${viewSize}`}
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      className={className}
-      aria-label="スマカレ ロゴアイコン"
-    >
-      {dots.map((d, i) => {
-        if (d.isStar) {
-          return <StarShape key={i} cx={d.cx} cy={d.cy} size={starSize} />;
-        }
-        return (
-          <circle
-            key={i}
-            cx={d.cx}
-            cy={d.cy}
-            r={dotR}
-            fill="#6B7FA3"
-            opacity={0.85}
-          />
-        );
-      })}
-    </svg>
-  );
-}
-
-function StarShape({ cx, cy, size }: { cx: number; cy: number; size: number }) {
-  const r = size;
-  const innerR = r * 0.38;
-
-  const points = [];
-  for (let i = 0; i < 8; i++) {
-    const angle = (i * Math.PI) / 4 - Math.PI / 2;
-    const radius = i % 2 === 0 ? r : innerR;
-    points.push(`${cx + radius * Math.cos(angle)},${cy + radius * Math.sin(angle)}`);
-  }
-
-  return (
-    <polygon
-      points={points.join(" ")}
-      fill="url(#starGrad)"
-    >
-      <defs>
-        <linearGradient id="starGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#818CF8" />
-          <stop offset="100%" stopColor="#6366F1" />
-        </linearGradient>
-      </defs>
-    </polygon>
-  );
-}
-
-/**
- * SVG全幅ロゴ (ヘッダー・OGP等の横長用途)
+ * 横長フルロゴ（OGP・ランディングページ用）
  */
 export function LogoHorizontal({
   width = 160,
@@ -151,85 +130,54 @@ export function LogoHorizontal({
   theme?: "dark" | "light";
   className?: string;
 }) {
+  const h = Math.round(width * 0.3);
+  const iconSize = h;
+  const scale = iconSize / 32;
   const textColor = theme === "dark" ? "#E2E8F0" : "#1E293B";
-  const subColor = theme === "dark" ? "#64748B" : "#94A3B8";
-
-  const iconSize = 28;
-  const spacing = 7.5;
-  const dotR = 2.6;
-  const starSize = 4.5;
-  const offset = 3.5;
-  const viewSize = offset * 2 + spacing * 2;
-
-  const dots = [
-    { cx: offset, cy: offset },
-    { cx: offset + spacing, cy: offset },
-    { cx: offset + spacing * 2, cy: offset, isStar: true },
-    { cx: offset, cy: offset + spacing },
-    { cx: offset + spacing, cy: offset + spacing },
-    { cx: offset + spacing * 2, cy: offset + spacing },
-    { cx: offset, cy: offset + spacing * 2 },
-    { cx: offset + spacing, cy: offset + spacing * 2 },
-    { cx: offset + spacing * 2, cy: offset + spacing * 2 },
-  ];
+  const subColor  = theme === "dark" ? "#64748B" : "#94A3B8";
 
   return (
     <svg
       width={width}
-      height={Math.round(width * 0.3)}
-      viewBox="0 0 160 48"
+      height={h}
+      viewBox={`0 0 ${width} ${h}`}
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       className={className}
       aria-label="スマカレ"
     >
       <defs>
-        <linearGradient id="hStarGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <linearGradient id="lh-grad" x1="0%" y1="0%" x2="100%" y2="100%">
           <stop offset="0%" stopColor="#818CF8" />
           <stop offset="100%" stopColor="#6366F1" />
         </linearGradient>
+        <filter id="lh-shadow" x="-20%" y="-20%" width="140%" height="140%">
+          <feDropShadow dx="0" dy="1" stdDeviation="1.5" floodColor="#6366F1" floodOpacity="0.35" />
+        </filter>
       </defs>
 
-      {/* Icon group, centered vertically at y=24 */}
-      <g transform={`translate(4, ${24 - iconSize / 2})`}>
-        <svg width={iconSize} height={iconSize} viewBox={`0 0 ${viewSize} ${viewSize}`}>
-          {dots.map((d, i) => {
-            if (d.isStar) {
-              const cx = d.cx;
-              const cy = d.cy;
-              const r = starSize;
-              const innerR = r * 0.38;
-              const pts = [];
-              for (let j = 0; j < 8; j++) {
-                const angle = (j * Math.PI) / 4 - Math.PI / 2;
-                const radius = j % 2 === 0 ? r : innerR;
-                pts.push(`${cx + radius * Math.cos(angle)},${cy + radius * Math.sin(angle)}`);
-              }
-              return <polygon key={i} points={pts.join(" ")} fill="url(#hStarGrad)" />;
-            }
-            return <circle key={i} cx={d.cx} cy={d.cy} r={dotR} fill="#6B7FA3" opacity={0.85} />;
-          })}
-        </svg>
+      <g transform={`scale(${scale})`}>
+        {DOTS_BASE.map(([cx, cy]) => (
+          <circle key={`${cx}-${cy}`} cx={cx} cy={cy} r={2.4} fill="#6B7FA3" opacity="0.8" />
+        ))}
+        <polygon points={STAR_POINTS} fill="url(#lh-grad)" filter="url(#lh-shadow)" />
       </g>
 
-      {/* Text */}
       <text
-        x="40"
-        y="28"
+        x={iconSize + 8} y={h * 0.58}
         fontFamily="'Noto Sans JP', 'Hiragino Kaku Gothic ProN', sans-serif"
         fontWeight="700"
-        fontSize="20"
+        fontSize={h * 0.44}
         fill={textColor}
         letterSpacing="-0.3"
       >
         スマカレ
       </text>
       <text
-        x="41"
-        y="40"
+        x={iconSize + 9} y={h * 0.88}
         fontFamily="'Noto Sans JP', 'Hiragino Kaku Gothic ProN', sans-serif"
         fontWeight="400"
-        fontSize="9"
+        fontSize={h * 0.2}
         fill={subColor}
         letterSpacing="0.2"
       >

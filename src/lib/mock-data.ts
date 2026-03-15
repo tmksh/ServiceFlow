@@ -159,6 +159,19 @@ export const adROIData = AD_SRC.map((s) => ({
   cvr: rnd(3, 18),
 }));
 
+// ─── リスト（エリア）データ ────────────────────────────────────────────────
+export const LIST_DATA = [
+  { id: "all",      label: "すべて",                        flag: "🗂️", type: "all"     as const, members: 12, color: "#6366f1", desc: "全リストを一括表示" },
+  { id: "kanto",    label: "不用品回収 チーム関東",           flag: "🗼", type: "shared"  as const, members: 16, color: "#8b5cf6", desc: "関東エリア担当チーム" },
+  { id: "kanagawa", label: "Susanoo 関東 シフト",            flag: "⛵", type: "shared"  as const, members: 8,  color: "#06b6d4", desc: "神奈川・横浜エリア" },
+  { id: "cleaning", label: "Susanoo ハウスクリーニング",      flag: "🧹", type: "shared"  as const, members: 7,  color: "#10b981", desc: "ハウスクリーニング専任" },
+  { id: "kansai",   label: "関西スマコレ〜片付けじゃけえ〜", flag: "🌸", type: "private" as const, members: 3,  color: "#f59e0b", desc: "関西エリア" },
+  { id: "fukuoka",  label: "不用品回収 チーム福岡",           flag: "🍜", type: "shared"  as const, members: 10, color: "#ef4444", desc: "福岡・九州エリア" },
+  { id: "neko",     label: "ネコ わん",                      flag: "🐱", type: "private" as const, members: 2,  color: "#ec4899", desc: "コールセンター専用" },
+];
+
+export const LIST_MEMBER_COLORS = ["#6366f1","#8b5cf6","#06b6d4","#10b981","#f59e0b","#ef4444","#ec4899","#0ea5e9","#84cc16"];
+
 // ─── カレンダーグループ（エリア・チーム別） ───────────────────────────────
 export const CALENDAR_GROUPS: CalendarGroup[] = [
   {

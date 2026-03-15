@@ -8,7 +8,14 @@
 
 body {
   font-family: var(--font-sans);
-  background: #f8fafc;
+  background: linear-gradient(
+    135deg,
+    #eef2ff 0%,
+    #f0f9ff 30%,
+    #f5f3ff 60%,
+    #ecfdf5 100%
+  );
+  background-attachment: fixed;
   color: var(--color-foreground);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -216,4 +223,90 @@ body {
 
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
+}
+
+/* ─── Liquid Glass ─────────────────────────────────────────────── */
+.liquid-glass {
+  background: rgba(255, 255, 255, 0.58);
+  backdrop-filter: blur(32px) saturate(2) brightness(1.04);
+  -webkit-backdrop-filter: blur(32px) saturate(2) brightness(1.04);
+  border: 1px solid rgba(255, 255, 255, 0.75);
+  box-shadow:
+    0 4px 16px rgba(0, 0, 0, 0.07),
+    0 1px 4px rgba(0, 0, 0, 0.04),
+    0 0 0 0.5px rgba(255, 255, 255, 0.6) inset,
+    0 1.5px 0 rgba(255, 255, 255, 0.95) inset;
+}
+
+.liquid-glass-dark {
+  background: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(32px) saturate(2);
+  -webkit-backdrop-filter: blur(32px) saturate(2);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow:
+    0 2px 16px rgba(0, 0, 0, 0.25),
+    0 0 0 0.5px rgba(255, 255, 255, 0.08) inset,
+    0 1px 0 rgba(255, 255, 255, 0.15) inset;
+}
+
+/* ガラスカード内アイコン背景 */
+.liquid-glass-icon {
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  box-shadow:
+    0 1px 4px rgba(0, 0, 0, 0.08),
+    0 0 0 0.5px rgba(255, 255, 255, 0.7) inset;
+}
+
+/* バッジ（変化率表示） */
+.liquid-glass-badge {
+  background: rgba(255, 255, 255, 0.55);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+/* ハイライトライン（上縁） */
+.liquid-glass::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 8%;
+  right: 8%;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.98) 35%,
+    rgba(255, 255, 255, 0.98) 65%,
+    transparent
+  );
+  border-radius: 99px;
+  pointer-events: none;
+  z-index: 1;
+}
+
+@keyframes glass-shimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+.liquid-glass-shimmer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    108deg,
+    transparent 38%,
+    rgba(255, 255, 255, 0.22) 50%,
+    transparent 62%
+  );
+  background-size: 200% 100%;
+  animation: glass-shimmer 4s ease-in-out infinite;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 0;
 }

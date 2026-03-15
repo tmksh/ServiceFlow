@@ -1,5 +1,7 @@
 import type { Category, StatusDef, CaseStatus, NavItem } from "@/types";
 
+export const STAFF = ["田中", "佐藤", "鈴木", "高橋", "渡辺", "伊藤", "山本", "中村"];
+
 export const CATEGORIES: Category[] = [
   { id: "fuyouhin", label: "不用品回収", color: "#6366f1", icon: "Package" },
   { id: "hikkoshi", label: "引っ越し", color: "#8b5cf6", icon: "Truck" },
@@ -22,7 +24,8 @@ export const NAV_ITEMS: NavItem[] = [
   { id: "dashboard", label: "ホーム", icon: "LayoutGrid", href: "/" },
   { id: "line", label: "LINE受信", icon: "Inbox", href: "/line", badge: 3 },
   { id: "cases", label: "案件管理", icon: "FileText", href: "/cases" },
-  { id: "calendar", label: "スケジュール", icon: "Calendar", href: "/calendar" },
+  { id: "calendar", label: "カレンダー", icon: "Calendar", href: "/calendar" },
+  { id: "docs", label: "書類管理", icon: "Folder", href: "/docs", badge: 1 },
   { id: "settlement", label: "日報・精算", icon: "Calculator", href: "/settlement" },
   { id: "analytics", label: "売上分析", icon: "BarChart3", href: "/analytics" },
   { id: "ads", label: "広告・LP管理", icon: "Globe", href: "/ads" },

@@ -54,11 +54,11 @@ export default function AdsPage() {
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-        <StatCard icon={Globe} label="登録LP数" value={`${LPS.length}件`} sub={`稼働中 ${activeLPs.length}件`} accent="bg-gradient-to-br from-indigo-500 to-indigo-600" />
-        <StatCard icon={Target} label="広告費合計" value={fmt(totalCost)} accent="bg-gradient-to-br from-violet-500 to-violet-600" />
-        <StatCard icon={TrendingUp} label="LP経由売上" value={fmt(totalRev)} accent="bg-gradient-to-br from-emerald-500 to-emerald-600" />
-        <StatCard icon={Target} label="全体ROAS" value={`${overallROAS}%`} sub="目標: 800%" accent="bg-gradient-to-br from-cyan-500 to-cyan-600" />
-        <StatCard icon={Users} label="平均CPA" value={fmt(overallCPA)} sub={`${totalCases}件獲得`} accent="bg-gradient-to-br from-amber-500 to-amber-600" />
+        <StatCard icon={Globe} label="登録LP数" value={`${LPS.length}件`} sub={`稼働中 ${activeLPs.length}件`} gradientFrom="#6366f1" gradientTo="#818cf8" />
+        <StatCard icon={Target} label="広告費合計" value={fmt(totalCost)} gradientFrom="#8b5cf6" gradientTo="#a78bfa" />
+        <StatCard icon={TrendingUp} label="LP経由売上" value={fmt(totalRev)} gradientFrom="#10b981" gradientTo="#34d399" />
+        <StatCard icon={Target} label="全体ROAS" value={`${overallROAS}%`} sub="目標: 800%" gradientFrom="#06b6d4" gradientTo="#67e8f9" />
+        <StatCard icon={Users} label="平均CPA" value={fmt(overallCPA)} sub={`${totalCases}件獲得`} gradientFrom="#f59e0b" gradientTo="#fbbf24" />
       </div>
 
       <div className="flex gap-1 bg-slate-100 rounded-xl p-1 w-fit">
@@ -92,7 +92,7 @@ export default function AdsPage() {
             })}
           </div>
 
-          <Card className="overflow-hidden">
+          <Card glass={false} className="overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead><tr className="border-b border-slate-100">
@@ -154,7 +154,7 @@ export default function AdsPage() {
       {tab === "platforms" && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           <div className="lg:col-span-2 space-y-4">
-            <Card className="overflow-hidden">
+            <Card glass={false} className="overflow-hidden">
               <div className="p-5 border-b border-slate-100">
                 <h3 className="font-bold text-slate-800">プラットフォーム別パフォーマンス</h3>
               </div>
@@ -238,7 +238,7 @@ export default function AdsPage() {
                 })}
               </div>
             </Card>
-            <Card className="p-5 bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200">
+            <Card glass={false} className="p-5 bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200">
               <div className="flex items-center gap-3">
                 <div className="p-2.5 bg-blue-500 rounded-xl"><TrendingUp size={18} className="text-white" /></div>
                 <div>
@@ -253,9 +253,67 @@ export default function AdsPage() {
 
       {/* 推移分析タブ */}
       {tab === "trend" && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <Card className="p-5">
-            <h3 className="font-bold text-slate-800 mb-4">LP別 案件獲得数ランキング</h3>
+        <div className="space-y-4">
+          {/* 月次推移グラフ */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <Card className="p-5">
+              <h3 className="font-bold text-slate-800 mb-4">チャネル別月次売上推移</h3>
+              <div className="space-y-2">
+                {[
+                  { label: "9月",  listing: 4200000, sns: 1100000, organic: 520000 },
+                  { label: "10月", listing: 3800000, sns: 1400000, organic: 450000 },
+                  { label: "11月", listing: 5100000, sns: 1250000, organic: 680000 },
+                  { label: "12月", listing: 5800000, sns: 1600000, organic: 720000 },
+                  { label: "1月",  listing: 4600000, sns: 1900000, organic: 580000 },
+                  { label: "2月",  listing: 5400000, sns: 2100000, organic: 750000 },
+                ].map((d) => {
+                  const total = d.listing + d.sns + d.organic;
+                  const maxTotal = 8500000;
+                  return (
+                    <div key={d.label}>
+                      <div className="flex items-center justify-between text-xs mb-1">
+                        <span className="text-slate-500 w-7">{d.label}</span>
+                        <span className="font-semibold text-slate-800">{fmt(total)}</span>
+                      </div>
+                      <div className="flex h-3 rounded-full overflow-hidden">
+                        <div className="h-full" style={{ width: `${(d.listing / maxTotal) * 100}%`, background: "#4285f4" }} />
+                        <div className="h-full" style={{ width: `${(d.sns / maxTotal) * 100}%`, background: "#e1306c" }} />
+                        <div className="h-full" style={{ width: `${(d.organic / maxTotal) * 100}%`, background: "#f59e0b" }} />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="flex gap-4 mt-4 justify-center">
+                {[["リスティング","#4285f4"],["SNS","#e1306c"],["オーガニック","#f59e0b"]].map(([l,c]) => (
+                  <div key={l} className="flex items-center gap-1.5 text-xs text-slate-500"><span className="w-2.5 h-2.5 rounded" style={{ background: c }} />{l}</div>
+                ))}
+              </div>
+            </Card>
+            <Card className="p-5">
+              <h3 className="font-bold text-slate-800 mb-4">ROAS月次推移</h3>
+              <div className="space-y-2">
+                {[
+                  { label: "9月",  roas: 680 }, { label: "10月", roas: 720 }, { label: "11月", roas: 810 },
+                  { label: "12月", roas: 890 }, { label: "1月",  roas: 760 }, { label: "2月",  roas: 930 },
+                ].map((d) => (
+                  <div key={d.label} className="flex items-center gap-3">
+                    <span className="text-xs text-slate-500 w-7 shrink-0">{d.label}</span>
+                    <div className="flex-1 h-3 bg-slate-100 rounded-full overflow-hidden">
+                      <div className={cn("h-full rounded-full transition-all", d.roas >= 800 ? "bg-emerald-500" : d.roas >= 600 ? "bg-amber-400" : "bg-red-400")}
+                        style={{ width: `${Math.min((d.roas / 1200) * 100, 100)}%` }} />
+                    </div>
+                    <span className={cn("text-xs font-bold w-14 text-right", d.roas >= 800 ? "text-emerald-600" : d.roas >= 600 ? "text-amber-600" : "text-red-500")}>{d.roas}%</span>
+                  </div>
+                ))}
+              </div>
+              <p className="text-xs text-slate-400 text-center mt-3">目標ROAS: 800%</p>
+            </Card>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <Card className="p-5">
+              <h3 className="font-bold text-slate-800 mb-4">LP別 案件獲得数ランキング</h3>
             <div className="space-y-3">
               {[...LPS].sort((a, b) => b.cases - a.cases).slice(0, 6).map((lp, i) => {
                 const maxC = LPS.reduce((m, l) => Math.max(m, l.cases), 0);
@@ -319,6 +377,7 @@ export default function AdsPage() {
               })}
             </div>
           </Card>
+        </div>
         </div>
       )}
 

@@ -7,13 +7,25 @@ import { NAV_ITEMS } from "@/lib/constants";
 import { Logo, LogoIcon } from "@/components/ui/logo";
 import {
   LayoutGrid, Inbox, FileText, Calendar, Calculator, BarChart3,
-  Globe, ClipboardList, ChevronDown,
+  Globe, ClipboardList, ChevronRight, ChevronDown, Folder,
 } from "lucide-react";
 
 const iconMap: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
   LayoutGrid, Inbox, FileText, Calendar, Calculator, BarChart3,
-  Globe, ClipboardList,
+  Globe, ClipboardList, Folder,
 };
+
+// ナビゲーションのグループ定義
+const NAV_GROUPS = [
+  {
+    label: "業務",
+    ids: ["dashboard", "line", "cases", "calendar", "docs"],
+  },
+  {
+    label: "管理",
+    ids: ["settlement", "analytics", "ads", "reports"],
+  },
+];
 
 interface SidebarProps {
   open: boolean;
@@ -24,8 +36,10 @@ export function Sidebar({ open }: SidebarProps) {
 
   return (
     <aside className={cn(
-      "hidden lg:flex flex-col bg-white border-r border-slate-200/60 h-full transition-all duration-300 shrink-0",
-      open ? "w-64" : "w-[72px]"
+      "hidden lg:flex flex-col h-full transition-all duration-300 shrink-0",
+      "bg-white/60 backdrop-blur-2xl border-r border-white/60",
+      "shadow-[1px_0_0_0_rgba(255,255,255,0.5)_inset]",
+      open ? "w-52" : "w-[72px]"
     )}>
       {/* Logo */}
       <div className={cn(
@@ -35,47 +49,73 @@ export function Sidebar({ open }: SidebarProps) {
         {open ? (
           <Logo variant="full" theme="auto" size="sm" />
         ) : (
-          <LogoIcon size={32} />
+          <LogoIcon size={32} bg />
         )}
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 py-4 px-3 overflow-y-auto flex flex-col">
-        {open && (
-          <p className="text-[10px] font-semibold text-slate-300 uppercase tracking-widest px-3 mb-2">
-            メニュー
-          </p>
-        )}
-        <div className="space-y-1">
-          {NAV_ITEMS.map((item) => {
-            const active = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
-            const Icon = iconMap[item.icon];
+      <nav className="flex-1 py-3 px-3 overflow-y-auto flex flex-col">
+        {NAV_GROUPS.map((group) => {
+          const items = NAV_ITEMS.filter((item) => group.ids.includes(item.id));
+          return (
+            <div key={group.label} className="mb-2">
+              {open && (
+                <p className="text-[10px] font-semibold text-slate-300 uppercase tracking-widest px-3 mb-1 mt-1">
+                  {group.label}
+                </p>
+              )}
+              {!open && <div className="my-2 mx-1 h-px bg-slate-100" />}
+              <div className="space-y-0.5">
+                {items.map((item) => {
+                  const active = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
+                  const Icon = iconMap[item.icon];
 
-            return (
-              <Link
-                key={item.id}
-                href={item.href}
-                className={cn(
-                  "flex items-center gap-3 w-full rounded-xl transition-all duration-200",
-                  open ? "px-3 py-2.5" : "p-2.5 justify-center",
-                  active
-                    ? "bg-indigo-50 text-indigo-700"
-                    : "text-slate-500 hover:bg-slate-50 hover:text-slate-700"
-                )}
-              >
-                <div className="relative">
-                  {Icon && <Icon size={20} className={active ? "text-indigo-600" : ""} />}
-                  {item.badge && item.badge > 0 && (
-                    <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
-                      {item.badge}
-                    </span>
-                  )}
-                </div>
-                {open && <span className="text-sm font-medium truncate">{item.label}</span>}
-              </Link>
-            );
-          })}
-        </div>
+                  return (
+                    <Link
+                      key={item.id}
+                      href={item.href}
+                      className={cn(
+                        "flex items-center gap-3 w-full rounded-xl transition-all duration-200",
+                        open ? "px-3 py-2.5" : "p-2.5 justify-center",
+                        active
+                          ? "bg-indigo-50 text-indigo-700"
+                          : "text-slate-500 hover:bg-slate-50 hover:text-slate-700"
+                      )}
+                    >
+                      <div className="relative shrink-0">
+                        {Icon && <Icon size={20} className={active ? "text-indigo-600" : ""} />}
+                        {item.badge && item.badge > 0 && (
+                          <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
+                            {item.badge}
+                          </span>
+                        )}
+                      </div>
+                      {open && <span className="text-sm font-medium truncate">{item.label}</span>}
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
+
+        {/* 設定リンク（縮小時はアイコンのみ） */}
+        {open && (
+          <div className="mt-auto pt-2 border-t border-slate-100">
+            <Link
+              href="/settings"
+              className={cn(
+                "flex items-center gap-3 w-full px-3 py-2.5 rounded-xl transition-all duration-200 text-xs font-medium",
+                pathname === "/settings"
+                  ? "bg-indigo-50 text-indigo-700"
+                  : "text-slate-400 hover:text-slate-600 hover:bg-slate-50"
+              )}
+            >
+              <ChevronRight size={14} />
+              設定
+            </Link>
+          </div>
+        )}
       </nav>
 
       {/* User Profile */}

@@ -126,6 +126,16 @@ export interface Platform {
   accent: string;
 }
 
+export interface ListItem {
+  id: string;
+  label: string;
+  flag: string;
+  type: "all" | "shared" | "private";
+  members: number;
+  color: string;
+  desc: string;
+}
+
 export interface LP {
   id: string;
   name: string;

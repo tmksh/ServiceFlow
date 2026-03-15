@@ -1,0 +1,22 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="512" height="512" rx="96" fill="#0F0F1A"/>
+  <defs>
+    <linearGradient id="sg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#818CF8"/>
+      <stop offset="100%" stop-color="#6366F1"/>
+    </linearGradient>
+  </defs>
+  <!-- 3x3 grid dots -->
+  <circle cx="128" cy="128" r="38" fill="#6B7FA3" opacity="0.85"/>
+  <circle cx="256" cy="128" r="38" fill="#6B7FA3" opacity="0.85"/>
+  <!-- star top-right -->
+  <polygon points="384,58 401,108 454,108 412,140 428,192 384,162 340,192 356,140 314,108 367,108" fill="url(#sg)"/>
+  <!-- row 1 -->
+  <circle cx="128" cy="256" r="38" fill="#6B7FA3" opacity="0.85"/>
+  <circle cx="256" cy="256" r="38" fill="#6B7FA3" opacity="0.85"/>
+  <circle cx="384" cy="256" r="38" fill="#6B7FA3" opacity="0.85"/>
+  <!-- row 2 -->
+  <circle cx="128" cy="384" r="38" fill="#6B7FA3" opacity="0.85"/>
+  <circle cx="256" cy="384" r="38" fill="#6B7FA3" opacity="0.85"/>
+  <circle cx="384" cy="384" r="38" fill="#6B7FA3" opacity="0.85"/>
+</svg>

@@ -1,0 +1,42 @@
+{
+  "name": "スマカレ — 自動顧客管理プラットフォーム",
+  "short_name": "スマカレ",
+  "description": "生活サービス業に特化した案件管理・スケジュール・売上分析を一元化するSaaS",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#6366f1",
+  "orientation": "portrait-primary",
+  "categories": ["business", "productivity"],
+  "lang": "ja",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "新規案件登録",
+      "short_name": "新規案件",
+      "description": "新しい案件を登録する",
+      "url": "/cases",
+      "icons": [{ "src": "/icons/icon-96.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "カレンダー",
+      "short_name": "カレンダー",
+      "description": "スケジュールを確認する",
+      "url": "/calendar",
+      "icons": [{ "src": "/icons/icon-96.png", "sizes": "96x96" }]
+    }
+  ]
+}

@@ -26,7 +26,8 @@ export function Header({ onToggleSidebar }: HeaderProps) {
   const pageTitle = pathname === "/" ? "ホーム"
     : pathname === "/line" ? "LINE受信"
     : pathname === "/cases" ? "案件管理"
-    : pathname === "/calendar" ? "スケジュール"
+    : pathname === "/calendar" ? "カレンダー"
+    : pathname === "/docs" ? "書類管理"
     : pathname === "/settlement" ? "日報・精算"
     : pathname === "/analytics" ? "売上分析"
     : pathname === "/ads" ? "広告・LP管理"
@@ -36,7 +37,7 @@ export function Header({ onToggleSidebar }: HeaderProps) {
   // Mobile full-screen search mode
   if (mobileSearchOpen) {
     return (
-      <header className="flex items-center h-14 px-3 bg-white border-b border-slate-200/60 shrink-0 lg:hidden animate-fade-in">
+      <header className="flex items-center h-14 px-3 bg-white/70 backdrop-blur-2xl border-b border-white/60 shrink-0 lg:hidden animate-fade-in shadow-[0_1px_0_rgba(255,255,255,0.6)_inset]">
         <button
           onClick={() => { setMobileSearchOpen(false); setSearch(""); }}
           className="p-2 rounded-xl active:bg-slate-100 shrink-0"
@@ -62,7 +63,7 @@ export function Header({ onToggleSidebar }: HeaderProps) {
   }
 
   return (
-    <header className="flex items-center justify-between h-14 lg:h-16 px-4 lg:px-6 bg-white/80 backdrop-blur-md border-b border-slate-200/60 shrink-0">
+    <header className="flex items-center justify-between h-14 lg:h-16 px-4 lg:px-6 bg-white/65 backdrop-blur-2xl border-b border-white/60 shrink-0 shadow-[0_1px_0_rgba(255,255,255,0.7)_inset]">
       <div className="flex items-center gap-3">
         {/* Mobile: page title or logo on home */}
         <div className="flex items-center gap-3 lg:hidden">
@@ -136,7 +137,7 @@ export function Header({ onToggleSidebar }: HeaderProps) {
             <>
               <div className="fixed inset-0 z-40" onClick={() => setNotOpen(false)} />
               {/* Desktop: dropdown */}
-              <div className="hidden lg:block absolute right-0 top-full mt-2 w-80 bg-white rounded-2xl shadow-xl border border-slate-200 z-50 animate-slide-up">
+              <div className="hidden lg:block absolute right-0 top-full mt-2 w-80 liquid-glass rounded-2xl shadow-xl z-50 animate-slide-up">
                 <div className="p-4 border-b border-slate-100">
                   <h3 className="font-bold text-sm text-slate-800">通知</h3>
                 </div>
@@ -163,7 +164,7 @@ export function Header({ onToggleSidebar }: HeaderProps) {
               </div>
 
               {/* Mobile: bottom sheet style notifications */}
-              <div className="lg:hidden fixed inset-x-0 bottom-0 z-50 bg-white rounded-t-3xl shadow-xl animate-sheet-up pb-safe-bottom" style={{ maxHeight: "70vh" }}>
+              <div className="lg:hidden fixed inset-x-0 bottom-0 z-50 bg-white/75 backdrop-blur-2xl border-t border-white/60 rounded-t-3xl shadow-xl animate-sheet-up pb-safe-bottom" style={{ maxHeight: "70vh" }}>
                 <div className="flex justify-center pt-3 pb-1">
                   <div className="w-10 h-1 bg-slate-300 rounded-full" />
                 </div>

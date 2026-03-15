@@ -6,7 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import {
   LayoutGrid, Inbox, FileText, Calendar, MoreHorizontal,
-  Calculator, BarChart3, Globe, ClipboardList, Settings, X,
+  Calculator, BarChart3, Globe, ClipboardList, Settings, X, Folder,
 } from "lucide-react";
 
 const PRIMARY_TABS = [
@@ -18,6 +18,7 @@ const PRIMARY_TABS = [
 ];
 
 const MORE_ITEMS = [
+  { id: "docs", label: "書類管理", icon: Folder, href: "/docs", badge: 1 },
   { id: "settlement", label: "日報・精算", icon: Calculator, href: "/settlement" },
   { id: "analytics", label: "売上分析", icon: BarChart3, href: "/analytics" },
   { id: "ads", label: "広告・LP管理", icon: Globe, href: "/ads" },
