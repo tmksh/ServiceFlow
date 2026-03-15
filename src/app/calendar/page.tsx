@@ -11,8 +11,9 @@ import type { CalendarGroup } from "@/types";
 import {
   Plus, ChevronLeft, ChevronRight, MapPin, Bell,
   ChevronDown, Lock, Eye, Edit3, Crown,
-  Calendar, CalendarDays, Clock,
+  Calendar, CalendarDays, Clock, Map,
 } from "lucide-react";
+import { DayMapModal } from "@/components/ui/day-map-modal";
 import { CalendarGroupPickerModal } from "@/components/layout/list-picker-modal";
 import { QuickCaseModal } from "@/components/ui/quick-case-modal";
 import { useCalendarHeader } from "@/lib/calendar-header-context";
@@ -211,6 +212,7 @@ export default function CalendarPage() {
   const [calMode, setCalMode] = useState<CalMode>("month");
   const [groupPickerOpen, setGroupPickerOpen] = useState(false);
   const [selectedCase, setSelectedCase] = useState<Case | null>(null);
+  const [mapOpen, setMapOpen] = useState(false);
 
   const { setActiveGroup: setHeaderGroup } = useCalendarHeader();
 
@@ -458,7 +460,19 @@ export default function CalendarPage() {
                   <div className="border-t-[3px]" style={{ borderColor: accentColor }}>
                     <div className="flex items-center justify-between px-4 py-2.5 bg-white/50 backdrop-blur-sm border-b border-white/60">
                       <span className="text-sm font-bold text-slate-800">{m + 1}月{selDay}日の予定 <span className="text-xs font-normal text-slate-500">{selCases.length}件</span></span>
-                      {canEdit && <button className="w-8 h-8 rounded-full flex items-center justify-center shadow" style={{ backgroundColor: accentColor }}><Plus size={16} className="text-white" /></button>}
+                      <div className="flex items-center gap-2">
+                        {selCases.length > 0 && (
+                          <button
+                            onClick={() => setMapOpen(true)}
+                            className="flex items-center gap-1.5 h-8 px-2.5 rounded-full text-xs font-semibold border transition-all active:opacity-80"
+                            style={{ color: accentColor, borderColor: accentColor + "40", backgroundColor: accentColor + "12" }}
+                          >
+                            <Map size={13} />
+                            マップ
+                          </button>
+                        )}
+                        {canEdit && <button className="w-8 h-8 rounded-full flex items-center justify-center shadow" style={{ backgroundColor: accentColor }}><Plus size={16} className="text-white" /></button>}
+                      </div>
                     </div>
                     {selCases.length > 0 ? (
                       <div className="divide-y divide-slate-50">
@@ -556,14 +570,26 @@ export default function CalendarPage() {
                       <span className="ml-1.5 text-xs font-normal text-slate-500">{selCases.length}件</span>
                     )}
                   </span>
-                  {canEdit && (
-                    <button
-                      className="w-8 h-8 rounded-full flex items-center justify-center shadow active:opacity-80 transition-opacity"
-                      style={{ backgroundColor: accentColor }}
-                    >
-                      <Plus size={16} className="text-white" />
-                    </button>
-                  )}
+                  <div className="flex items-center gap-2">
+                    {selCases.length > 0 && (
+                      <button
+                        onClick={() => setMapOpen(true)}
+                        className="flex items-center gap-1.5 h-8 px-2.5 rounded-full text-xs font-semibold border transition-all active:opacity-80"
+                        style={{ color: accentColor, borderColor: accentColor + "40", backgroundColor: accentColor + "12" }}
+                      >
+                        <Map size={13} />
+                        マップ
+                      </button>
+                    )}
+                    {canEdit && (
+                      <button
+                        className="w-8 h-8 rounded-full flex items-center justify-center shadow active:opacity-80 transition-opacity"
+                        style={{ backgroundColor: accentColor }}
+                      >
+                        <Plus size={16} className="text-white" />
+                      </button>
+                    )}
+                  </div>
                 </div>
 
                 {selCases.length > 0 ? (
@@ -798,6 +824,21 @@ export default function CalendarPage() {
       {/* 案件詳細モーダル */}
       {selectedCase && (
         <QuickCaseModal c={selectedCase} onClose={() => setSelectedCase(null)} />
+      )}
+
+      {/* 日付マップモーダル */}
+      {mapOpen && (
+        <DayMapModal
+          date={selDateStr}
+          displayDate={`${m + 1}月${selDay}日（${dn[getDow(selDay)]}）`}
+          cases={selCases}
+          accentColor={accentColor}
+          onClose={() => setMapOpen(false)}
+          onSelectCase={(c) => {
+            setSelectedCase(c);
+            setMapOpen(false);
+          }}
+        />
       )}
     </>
   );
