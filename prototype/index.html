@@ -118,17 +118,26 @@ const ic = {
    SECTION 2: SVG CHART COMPONENTS
    ═══════════════════════════════════════════════════════ */
 const BarSVG = ({ data, dk, w = 500, h = 220, color = "#6366f1" }) => {
+  const ref = React.useRef(null);
+  const [cw, setCw] = React.useState(500);
+  React.useEffect(() => {
+    if (!ref.current) return;
+    const ro = new ResizeObserver(([e]) => setCw(e.contentRect.width));
+    ro.observe(ref.current);
+    return () => ro.disconnect();
+  }, []);
+  const fs = cw < 360 ? 13 : cw < 500 ? 11 : 10;
   const max = Math.max(...data.map(d => d[dk]));
   const bw = Math.min(28, (w - 60) / data.length - 4);
   const sx = 50;
   return (
-    <svg viewBox={`0 0 ${w} ${h}`} className="w-full h-full" preserveAspectRatio="xMidYMid meet">
+    <svg ref={ref} viewBox={`0 0 ${w} ${h}`} className="w-full h-full" preserveAspectRatio="xMidYMid meet">
       {[0, .25, .5, .75, 1].map(f => {
         const y = h - 30 - (h - 50) * f;
         return (
           <g key={f}>
             <line x1={sx} y1={y} x2={w} y2={y} stroke="#f1f5f9" strokeWidth="1"/>
-            <text x={sx - 5} y={y + 4} textAnchor="end" fill="#94a3b8" fontSize="10">
+            <text x={sx - 5} y={y + 4} textAnchor="end" fill="#94a3b8" fontSize={fs}>
               {Math.round(max * f).toLocaleString()}
             </text>
           </g>
@@ -144,7 +153,7 @@ const BarSVG = ({ data, dk, w = 500, h = 220, color = "#6366f1" }) => {
               className="bar-grow" style={{ animationDelay: `${i * 50}ms` }} opacity=".85">
               <title>{d[dk].toLocaleString()}</title>
             </rect>
-            <text x={x + bw / 2} y={h - 12} textAnchor="middle" fill="#94a3b8" fontSize="10">
+            <text x={x + bw / 2} y={h - 12} textAnchor="middle" fill="#94a3b8" fontSize={fs}>
               {d.label || ""}
             </text>
           </g>
@@ -155,6 +164,15 @@ const BarSVG = ({ data, dk, w = 500, h = 220, color = "#6366f1" }) => {
 };
 
 const AreaSVG = ({ data, dk, w = 500, h = 220, color = "#6366f1", gid = "ag" }) => {
+  const ref = React.useRef(null);
+  const [cw, setCw] = React.useState(500);
+  React.useEffect(() => {
+    if (!ref.current) return;
+    const ro = new ResizeObserver(([e]) => setCw(e.contentRect.width));
+    ro.observe(ref.current);
+    return () => ro.disconnect();
+  }, []);
+  const fs = cw < 360 ? 13 : cw < 500 ? 11 : 10;
   const max = Math.max(...data.map(d => d[dk])) * 1.15;
   const pts = data.map((d, i) => ({
     x: 50 + i * ((w - 60) / (data.length - 1)),
@@ -163,7 +181,7 @@ const AreaSVG = ({ data, dk, w = 500, h = 220, color = "#6366f1", gid = "ag" }) 
   const pathD = pts.map((p, i) => `${i === 0 ? "M" : "L"}${p.x},${p.y}`).join(" ");
   const areaD = pathD + ` L${pts[pts.length - 1].x},${h - 30} L${pts[0].x},${h - 30} Z`;
   return (
-    <svg viewBox={`0 0 ${w} ${h}`} className="w-full h-full" preserveAspectRatio="xMidYMid meet">
+    <svg ref={ref} viewBox={`0 0 ${w} ${h}`} className="w-full h-full" preserveAspectRatio="xMidYMid meet">
       <defs>
         <linearGradient id={gid} x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stopColor={color} stopOpacity=".15"/>
@@ -175,7 +193,7 @@ const AreaSVG = ({ data, dk, w = 500, h = 220, color = "#6366f1", gid = "ag" }) 
         return (
           <g key={f}>
             <line x1="50" y1={y} x2={w} y2={y} stroke="#f1f5f9" strokeWidth="1"/>
-            <text x="45" y={y + 4} textAnchor="end" fill="#94a3b8" fontSize="10">
+            <text x="45" y={y + 4} textAnchor="end" fill="#94a3b8" fontSize={fs}>
               {Math.round(max * f).toLocaleString()}
             </text>
           </g>
@@ -187,7 +205,7 @@ const AreaSVG = ({ data, dk, w = 500, h = 220, color = "#6366f1", gid = "ag" }) 
         <circle key={i} cx={p.x} cy={p.y} r="4" fill={color} stroke="white" strokeWidth="2"/>
       ))}
       {data.map((d, i) => (
-        <text key={i} x={pts[i].x} y={h - 12} textAnchor="middle" fill="#94a3b8" fontSize="10">
+        <text key={i} x={pts[i].x} y={h - 12} textAnchor="middle" fill="#94a3b8" fontSize={fs}>
           {d.label || ""}
         </text>
       ))}
@@ -429,11 +447,16 @@ const Dashboard = ({ onNav }) => {
   return (
     <div className="space-y-6 fade-in">
       <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
-        <div>
+        <div className="sm:block">
           <h1 className="text-2xl font-bold text-slate-900">ホーム</h1>
-          <p className="text-sm text-slate-500 mt-0.5">2026年2月13日（金）の概況</p>
+          <div className="flex items-center justify-between mt-0.5">
+            <p className="text-sm text-slate-500">2026年2月13日（金）の概況</p>
+            <button className="flex sm:hidden items-center gap-2 px-3 py-1.5 bg-indigo-600 text-white rounded-xl text-xs font-medium hover:bg-indigo-700 shadow-md shadow-indigo-200">
+              <ic.Download size={14}/> レポート出力
+            </button>
+          </div>
         </div>
-        <button className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700 shadow-lg shadow-indigo-200 self-start">
+        <button className="hidden sm:flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700 shadow-lg shadow-indigo-200 self-start">
           <ic.Download size={16}/> レポート出力
         </button>
       </div>
@@ -453,16 +476,17 @@ const Dashboard = ({ onNav }) => {
           </div>
           <div className="space-y-2">
             {urgent.map(c => (
-              <div key={c.id} className="flex items-center justify-between bg-white/80 rounded-xl px-4 py-2.5 border border-amber-100">
+              <div key={c.id} onClick={() => onNav("cases")}
+                className="flex items-center justify-between bg-white/80 rounded-xl px-4 py-2.5 border border-amber-100 cursor-pointer hover:bg-white hover:shadow-sm transition-all">
                 <div className="flex items-center gap-3 flex-wrap">
                   <span className="text-xs font-mono text-amber-600 bg-amber-100 px-2 py-0.5 rounded">{c.id}</span>
                   <span className="text-sm font-medium text-slate-800">{c.customer}</span>
                   <Badge className="bg-amber-100 text-amber-700 border border-amber-200"><c.category.Ic size={12}/> {c.category.label}</Badge>
                 </div>
-                <div className="flex items-center gap-3 text-sm">
+                <div className="flex items-center gap-3 text-sm shrink-0">
                   <span className="text-slate-500 hidden sm:flex items-center gap-1"><ic.MapPin size={14}/>{c.pref}</span>
                   <span className="text-slate-500 flex items-center gap-1"><ic.Clock size={14}/>{c.time}</span>
-                  <button className="px-3 py-1 bg-amber-500 text-white text-xs rounded-lg hover:bg-amber-600 font-medium">対応する</button>
+                  <ic.ChevR size={16} className="text-amber-400 shrink-0"/>
                 </div>
               </div>
             ))}
@@ -510,13 +534,13 @@ const Dashboard = ({ onNav }) => {
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-medium text-slate-800 truncate">{c.customer}</span>
-                      <span className="text-xs text-slate-400 font-mono">{c.id}</span>
-                      {c.urgent && <span className="w-2 h-2 bg-amber-500 rounded-full anim-pulse"/>}
+                      <span className="text-xs text-slate-400 font-mono shrink-0">{c.id}</span>
+                      {c.urgent && <span className="w-2 h-2 bg-amber-500 rounded-full anim-pulse shrink-0"/>}
                     </div>
-                    <p className="text-xs text-slate-400">{c.date} {c.time} · {c.pref}</p>
+                    <p className="text-xs text-slate-400 truncate">{c.date} {c.time} · {c.pref}</p>
                   </div>
                 </div>
-                <Badge className={ST[c.status].bg}>{ST[c.status].l}</Badge>
+                <Badge className={cn(ST[c.status].bg, "shrink-0 whitespace-nowrap ml-2")}>{ST[c.status].l}</Badge>
               </div>
             ))}
           </div>
