@@ -224,8 +224,8 @@ export default function LinePage() {
                 { icon: RefreshCw,v: "98.2%", l: "自動認識精度",   color: "text-blue-600",    bg: "bg-blue-50"    },
                 { icon: Clock,    v: "~3秒",  l: "平均処理時間",   color: "text-violet-600",   bg: "bg-violet-50"  },
               ].map((s, i) => (
-                <div key={i} className="flex items-center gap-2.5 px-3 py-2.5 bg-white border border-slate-200/60 rounded-xl shadow-sm">
-                  <div className={cn("w-7 h-7 rounded-lg flex items-center justify-center shrink-0", s.bg)}>
+                <div key={i} className="relative overflow-hidden rounded-2xl liquid-glass liquid-glass-shimmer flex items-center gap-2.5 px-3 py-2.5">
+                  <div className={cn("w-7 h-7 rounded-lg items-center justify-center shrink-0 liquid-glass-icon hidden lg:flex", s.bg)}>
                     <s.icon size={14} className={s.color} />
                   </div>
                   <div><p className={cn("text-sm font-bold", s.color)}>{s.v}</p><p className="text-[10px] text-slate-400">{s.l}</p></div>
@@ -235,16 +235,16 @@ export default function LinePage() {
 
             {/* Desktop: Two column layout */}
             <div className="hidden lg:grid grid-cols-5 gap-4" style={{ minHeight: 480 }}>
-              <Card glass={false} className="col-span-2 flex flex-col overflow-hidden">
-                <div className="p-4 border-b border-slate-100">
+              <Card className="col-span-2 flex flex-col overflow-hidden">
+                <div className="p-4 border-b border-white/60">
                   <h3 className="font-bold text-slate-800 text-sm">受信メッセージ</h3>
                   <p className="text-xs text-slate-400">{pending}件 未処理</p>
                 </div>
                 <div className="flex-1 overflow-y-auto">
                   {LINE_MSGS.map((m) => (
                     <div key={m.id} onClick={() => setSel(m)}
-                      className={cn("flex items-start gap-3 p-4 border-b border-slate-50 cursor-pointer transition-colors",
-                        sel?.id === m.id ? "bg-indigo-50" : "hover:bg-slate-50")}>
+                      className={cn("flex items-start gap-3 p-4 border-b border-white/40 cursor-pointer transition-colors",
+                        sel?.id === m.id ? "bg-indigo-50/60" : "hover:bg-white/40")}>
                       <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-xs shrink-0" style={{ background: "#06C755" }}>{m.center}</div>
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center justify-between"><span className="text-sm font-medium text-slate-800">{m.group}</span><span className="text-xs text-slate-400">{m.time}</span></div>
@@ -259,7 +259,7 @@ export default function LinePage() {
                   ))}
                 </div>
               </Card>
-              <Card glass={false} className="col-span-3 flex flex-col overflow-hidden">
+              <Card className="col-span-3 flex flex-col overflow-hidden">
                 {sel ? <ParsedPreview msg={sel} /> : (
                   <div className="flex-1 flex items-center justify-center text-slate-400 text-sm">メッセージを選択してください</div>
                 )}
@@ -273,7 +273,7 @@ export default function LinePage() {
                 <span className="text-xs text-slate-400">{pending}件 未処理</span>
               </div>
               {LINE_MSGS.map((m) => (
-                <Card key={m.id} className="p-3 active:bg-slate-50 transition-colors" onClick={() => setSel(m)}>
+                <div key={m.id} className="relative overflow-hidden rounded-2xl liquid-glass liquid-glass-shimmer p-3 active:scale-[0.99] transition-transform cursor-pointer" onClick={() => setSel(m)}>
                   <div className="flex items-start gap-3">
                     <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-xs shrink-0" style={{ background: "#06C755" }}>{m.center}</div>
                     <div className="min-w-0 flex-1">
@@ -282,7 +282,7 @@ export default function LinePage() {
                       <p className="text-xs text-slate-400 mt-1">{m.time}</p>
                     </div>
                   </div>
-                </Card>
+                </div>
               ))}
             </div>
 
@@ -332,7 +332,7 @@ function ParsedPreview({ msg }: { msg: LineMessage }) {
               { icon: FileText, l: "備考", v: msg.parsed.note || "なし" },
             ].map(({ icon: II, l, v }) => (
               <div key={l} className={cn("flex items-start gap-2.5 p-3 rounded-xl border",
-                v.includes("未記載") || v.includes("不明") || v.includes("⚠") ? "bg-red-50 border-red-200" : "bg-slate-50 border-slate-100")}>
+                v.includes("未記載") || v.includes("不明") || v.includes("⚠") ? "bg-red-50 border-red-200" : "liquid-glass border-white/60")}>
                 <II size={14} className="text-slate-400 mt-0.5 shrink-0" />
                 <div><p className="text-[10px] text-slate-400">{l}</p><p className="text-sm font-medium text-slate-700">{v}</p></div>
               </div>

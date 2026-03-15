@@ -18,13 +18,13 @@ export default function ReportsPage() {
 
   return (
     <div className="animate-fade-in">
-      <div className="flex gap-1 bg-white rounded-2xl p-1.5 mb-6 border border-slate-200/60 shadow-sm w-fit">
+      <div className="grid grid-cols-3 lg:flex gap-1 bg-white rounded-2xl p-1.5 mb-6 border border-slate-200/60 shadow-sm lg:w-fit">
         {REPORT_TABS.map((t) => (
           <button key={t.id} onClick={() => setRtab(t.id)} className={cn(
-            "flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium transition-all",
+            "flex items-center justify-center gap-1.5 lg:gap-2 px-2 lg:px-5 py-2.5 rounded-xl text-xs lg:text-sm font-medium transition-all",
             rtab === t.id ? "bg-indigo-50 text-indigo-700 shadow-sm" : "text-slate-400 hover:text-slate-600 hover:bg-slate-50"
           )}>
-            <t.Icon size={16} /> {t.l}
+            <t.Icon size={14} className="shrink-0" /> <span className="truncate">{t.l}</span>
           </button>
         ))}
       </div>

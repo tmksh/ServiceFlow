@@ -668,10 +668,7 @@ export default function DocsPage() {
         {FLOW.map((f, i) => (
           <div key={f.id} className="lg:flex lg:items-center lg:gap-2 contents lg:block">
             {/* モバイル */}
-            <button onClick={() => setTab(f.id)} className={cn("lg:hidden flex flex-col items-center gap-1.5 py-3 px-2 rounded-2xl border-2 transition-all w-full", tab === f.id ? `${f.bg} ${f.border} shadow-sm` : "bg-white border-slate-100")}>
-              <div className={cn("w-9 h-9 rounded-xl flex items-center justify-center", tab === f.id ? f.bg : "bg-slate-100")}>
-                <f.icon size={18} className={tab === f.id ? f.color : "text-slate-400"} />
-              </div>
+            <button onClick={() => setTab(f.id)} className={cn("lg:hidden flex items-center justify-center py-2.5 px-2 rounded-2xl border-2 transition-all w-full", tab === f.id ? `${f.bg} ${f.border} shadow-sm` : "bg-white border-slate-100")}>
               <p className={cn("text-xs font-bold", tab === f.id ? f.color : "text-slate-600")}>{f.l}</p>
             </button>
             {/* デスクトップ */}

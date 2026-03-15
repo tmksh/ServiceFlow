@@ -342,7 +342,7 @@ function CaseDetailModal({ c, onClose }: { c: Case; onClose: () => void }) {
                   { icon: Building2,  l: "センター",     v: `${c.center}（${c.channel}）` },
                   { icon: Package,    l: "品目",         v: c.items.join("、") },
                 ] as { icon: React.ElementType; l: string; v: string }[]).map(({ icon: Icon, l, v }) => (
-                  <div key={l} className="flex items-start gap-2.5 p-3 rounded-xl bg-slate-50">
+                  <div key={l} className="flex items-start gap-2.5 p-3 rounded-xl liquid-glass">
                     <Icon size={14} className="text-slate-400 mt-0.5 shrink-0" />
                     <div className="min-w-0">
                       <p className="text-[10px] text-slate-400">{l}</p>
@@ -582,9 +582,9 @@ export default function CasesPage() {
             {/* モバイル: カードリスト */}
             <div className="lg:hidden space-y-2">
               {pagedCases.map((c) => (
-                <Card key={c.id} className="p-4 active:bg-slate-50 cursor-pointer" onClick={() => setSel(c)}>
+                <div key={c.id} className="relative overflow-hidden rounded-2xl liquid-glass liquid-glass-shimmer p-4 active:scale-[0.99] cursor-pointer transition-transform duration-150" onClick={() => setSel(c)}>
                   <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white text-sm font-bold shrink-0"
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white text-sm font-bold shrink-0 shadow-sm"
                       style={{ background: c.category.color }}>
                       {c.category.label[0]}
                     </div>
@@ -610,7 +610,7 @@ export default function CasesPage() {
                       </div>
                     </div>
                   </div>
-                </Card>
+                </div>
               ))}
               {filtered.length > PAGE_SIZE && (
                 <div className="flex gap-1 justify-center pt-1">
@@ -625,7 +625,7 @@ export default function CasesPage() {
             </div>
 
             {/* デスクトップ: テーブル */}
-            <Card glass={false} className="overflow-hidden hidden lg:block">
+            <Card className="overflow-hidden hidden lg:block">
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
@@ -756,7 +756,7 @@ export default function CasesPage() {
             {/* モバイル */}
             <div className="lg:hidden space-y-2">
               {custFiltered.slice(0, 30).map((c, i) => (
-                <Card key={c.name} className="p-4">
+                <div key={c.name} className="relative overflow-hidden rounded-2xl liquid-glass liquid-glass-shimmer p-4">
                   <div className="flex items-center gap-3">
                     <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center text-white text-sm font-bold shrink-0", CUST_COLORS[i % 6])}>
                       {c.name.slice(0, 2)}
@@ -773,12 +773,12 @@ export default function CasesPage() {
                       <div className="text-xs text-slate-400">{c.cases.length}件</div>
                     </div>
                   </div>
-                </Card>
+                </div>
               ))}
             </div>
 
             {/* デスクトップ */}
-            <Card glass={false} className="overflow-hidden hidden lg:block">
+            <Card className="overflow-hidden hidden lg:block">
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>

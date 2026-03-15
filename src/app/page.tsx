@@ -13,136 +13,92 @@ import { cn } from "@/lib/utils";
 import type { Case } from "@/types";
 import {
   Zap, MapPin, Clock,
-  ChevronRight, Download, TrendingUp,
-  X, Phone, Activity, Check, User, Calendar, CreditCard,
-  Package, Building2, FileText, MessageSquare, Image, Plus, Send,
+  ChevronRight, Download, ChevronDown,
 } from "lucide-react";
 import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, PieChart, Pie, Cell,
 } from "recharts";
+import { QuickCaseModal } from "@/components/ui/quick-case-modal";
 
-// ─── ミニ案件詳細モーダル（ダッシュボード用） ────────────────────────────────
-function QuickCaseModal({ c, onClose }: { c: Case; onClose: () => void }) {
-  const [status, setStatus] = useState(c.status);
-  const [statusMenuOpen, setStatusMenuOpen] = useState(false);
+type PeriodKey = "today" | "week" | "month" | "lastMonth";
 
-  return (
-    <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50 flex flex-col justify-end lg:justify-center lg:items-center p-0 lg:p-4" onClick={onClose}>
-      <div
-        className="relative w-full lg:w-[520px] bg-white lg:rounded-3xl rounded-t-3xl shadow-2xl flex flex-col max-h-[88vh] lg:max-h-[80vh]"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex justify-center pt-3 pb-1 lg:hidden">
-          <div className="w-10 h-1 bg-slate-200 rounded-full" />
-        </div>
+const PERIODS: { id: PeriodKey; label: string; short: string }[] = [
+  { id: "today",     label: "今日",   short: "今日" },
+  { id: "week",      label: "今週",   short: "今週" },
+  { id: "month",     label: "今月",   short: "今月" },
+  { id: "lastMonth", label: "先月",   short: "先月" },
+];
 
-        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-sm shrink-0"
-              style={{ background: c.category.color }}>
-              {c.category.label[0]}
-            </div>
-            <div className="min-w-0">
-              <div className="flex items-center gap-2 flex-wrap">
-                <h2 className="text-sm font-bold text-slate-900 truncate">{c.id} — {c.customer}</h2>
-                <Badge className={STATUS_MAP[status].className}>{STATUS_MAP[status].label}</Badge>
-                {c.urgent && <Badge className="bg-amber-100 text-amber-700 border border-amber-200 text-xs"><Zap size={9} />緊急</Badge>}
-              </div>
-              <p className="text-xs text-slate-500 mt-0.5">{c.category.label} · {c.date} {c.time}</p>
-            </div>
-          </div>
-          <button onClick={onClose} className="p-2 rounded-lg hover:bg-slate-100 shrink-0 ml-2">
-            <X size={18} className="text-slate-500" />
-          </button>
-        </div>
+const NOW = new Date(2026, 1, 13); // モックの"今日"
 
-        <div className="flex-1 overflow-y-auto p-5 space-y-4">
-          <div className="grid grid-cols-2 gap-2.5">
-            {([
-              { icon: User,      l: "顧客名",       v: c.customer },
-              { icon: Phone,     l: "電話番号",     v: c.phone },
-              { icon: MapPin,    l: "住所",         v: c.addr },
-              { icon: Calendar,  l: "日時",         v: `${c.date} ${c.time}` },
-              { icon: Activity,  l: "金額",         v: c.amount > 0 ? fmt(c.amount) : "未確定" },
-              { icon: User,      l: "担当",         v: c.staff },
-            ] as { icon: React.ElementType; l: string; v: string }[]).map(({ icon: Icon, l, v }) => (
-              <div key={l} className="flex items-start gap-2.5 p-3 rounded-xl bg-slate-50">
-                <Icon size={14} className="text-slate-400 mt-0.5 shrink-0" />
-                <div className="min-w-0">
-                  <p className="text-[10px] text-slate-400">{l}</p>
-                  <p className="text-sm font-medium text-slate-700 break-all">{v}</p>
-                </div>
-              </div>
-            ))}
-          </div>
+function getPeriodFilter(period: PeriodKey): (dateStr: string) => boolean {
+  const y = NOW.getFullYear(), m = NOW.getMonth(), d = NOW.getDate();
+  if (period === "today") {
+    const today = `${y}-${String(m + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+    return (ds) => ds === today;
+  }
+  if (period === "week") {
+    const dow = (NOW.getDay() + 6) % 7; // 月曜=0
+    const weekStart = new Date(y, m, d - dow);
+    const weekEnd = new Date(y, m, d);
+    return (ds) => {
+      const dt = new Date(ds);
+      return dt >= weekStart && dt <= weekEnd;
+    };
+  }
+  if (period === "month") {
+    const prefix = `${y}-${String(m + 1).padStart(2, "0")}`;
+    return (ds) => ds.startsWith(prefix);
+  }
+  // lastMonth
+  const lm = m === 0 ? 11 : m - 1;
+  const ly = m === 0 ? y - 1 : y;
+  const prefix = `${ly}-${String(lm + 1).padStart(2, "0")}`;
+  return (ds) => ds.startsWith(prefix);
+}
 
-          <div className="flex gap-2">
-            <div className="relative flex-1">
-              <button
-                onClick={() => setStatusMenuOpen((v) => !v)}
-                className={cn("w-full py-2.5 rounded-xl text-sm font-medium transition-colors flex items-center justify-center gap-2", STATUS_MAP[status].className)}
-              >
-                <Activity size={15} /> {STATUS_MAP[status].label} ▾
-              </button>
-              {statusMenuOpen && (
-                <>
-                  <div className="fixed inset-0 z-40" onClick={() => setStatusMenuOpen(false)} />
-                  <div className="absolute left-0 top-full mt-1 w-full bg-white rounded-xl border border-slate-200 shadow-xl z-50 overflow-hidden">
-                    {(Object.keys(STATUS_MAP) as Array<keyof typeof STATUS_MAP>).map((s) => (
-                      <button key={s} onClick={() => { setStatus(s); setStatusMenuOpen(false); }}
-                        className={cn("w-full flex items-center gap-2 px-4 py-2.5 text-sm text-left transition-colors hover:bg-slate-50", s === status ? "font-semibold" : "text-slate-600")}>
-                        {STATUS_MAP[s].label}
-                        {s === status && <Check size={13} className="ml-auto text-indigo-500" />}
-                      </button>
-                    ))}
-                  </div>
-                </>
-              )}
-            </div>
-            <a href={`tel:${c.phone}`}
-              className="flex-1 py-2.5 border border-slate-200 text-slate-700 rounded-xl text-sm font-medium hover:bg-slate-50 transition-colors flex items-center justify-center gap-2">
-              <Phone size={15} /> 電話
-            </a>
-          </div>
-          <a
-            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(c.addr)}`}
-            target="_blank" rel="noopener noreferrer"
-            className="w-full py-2.5 border border-slate-200 text-slate-600 rounded-xl text-sm font-medium hover:bg-slate-50 transition-colors flex items-center justify-center gap-2"
-          >
-            <MapPin size={15} className="text-indigo-500" /> Google マップで確認
-          </a>
-          <Link href="/cases" onClick={onClose}
-            className="w-full py-2.5 bg-slate-50 text-indigo-600 rounded-xl text-sm font-semibold hover:bg-indigo-50 transition-colors flex items-center justify-center gap-2">
-            <FileText size={15} /> 案件詳細ページへ <ChevronRight size={14} />
-          </Link>
-        </div>
-      </div>
-    </div>
-  );
+function getPeriodLabel(period: PeriodKey): string {
+  const y = NOW.getFullYear(), m = NOW.getMonth(), d = NOW.getDate();
+  if (period === "today") return `${m + 1}月${d}日（${["日","月","火","水","木","金","土"][NOW.getDay()]}）の概況`;
+  if (period === "week") {
+    const dow = (NOW.getDay() + 6) % 7;
+    const ws = new Date(y, m, d - dow);
+    return `${ws.getMonth() + 1}/${ws.getDate()} 〜 ${m + 1}/${d} の概況`;
+  }
+  if (period === "month") return `${y}年${m + 1}月の概況`;
+  const lm = m === 0 ? 11 : m - 1;
+  const ly = m === 0 ? y - 1 : y;
+  return `${ly}年${lm + 1}月の概況`;
 }
 
 export default function DashboardPage() {
   const [selectedCase, setSelectedCase] = useState<Case | null>(null);
+  const [period, setPeriod] = useState<PeriodKey>("month");
+  const [periodMenuOpen, setPeriodMenuOpen] = useState(false);
 
   const stats = useMemo(() => {
-    const thisMonth = CASES.filter((c) => c.date.startsWith("2026-02"));
-    const completed = CASES.filter((c) => c.status === "completed");
-    const revenue = thisMonth
-      .filter((c) => c.status === "completed")
-      .reduce((s, c) => s + c.amount, 0);
-    const cancelRate = ((CASES.filter((c) => c.status === "cancelled").length / CASES.length) * 100).toFixed(1);
+    const filter = getPeriodFilter(period);
+    const inPeriod = CASES.filter((c) => filter(c.date));
+    const completed = inPeriod.filter((c) => c.status === "completed");
+    const cancelled = inPeriod.filter((c) => c.status === "cancelled");
+    const revenue = completed.reduce((s, c) => s + c.amount, 0);
+    const cancelRate = inPeriod.length
+      ? ((cancelled.length / inPeriod.length) * 100).toFixed(1)
+      : "0.0";
     const avg = completed.length
       ? Math.floor(completed.reduce((s, c) => s + c.amount, 0) / completed.length)
       : 0;
-    return { revenue, count: thisMonth.length, cancelRate, avg, completed: completed.length };
-  }, []);
+    return { revenue, count: inPeriod.length, cancelRate, avg, completed: completed.length };
+  }, [period]);
 
   const urgent = CASES.filter(
     (c) => c.urgent && c.status !== "completed" && c.status !== "cancelled"
   ).slice(0, 4);
 
   const recent = CASES.slice(0, 7);
+
+  const periodLabel = getPeriodLabel(period);
 
   return (
     <>
@@ -152,20 +108,73 @@ export default function DashboardPage() {
         <div className="hidden lg:flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
           <div>
             <h1 className="text-2xl font-bold text-slate-900">ホーム</h1>
-            <p className="text-sm text-slate-500 mt-0.5">2026年2月13日（木）の概況</p>
+            <p className="text-sm text-slate-500 mt-0.5">{periodLabel}</p>
           </div>
-          <button className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700 shadow-lg shadow-indigo-200 self-start transition-colors">
-            <Download size={16} /> レポート出力
-          </button>
+          <div className="flex items-center gap-2 self-start">
+            {/* 期間セレクター（PC） */}
+            <div className="relative">
+              <button
+                onClick={() => setPeriodMenuOpen((v) => !v)}
+                className="flex items-center gap-1.5 px-3 py-2 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors shadow-sm"
+              >
+                {PERIODS.find((p) => p.id === period)?.label}
+                <ChevronDown size={14} className="text-slate-400" />
+              </button>
+              {periodMenuOpen && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setPeriodMenuOpen(false)} />
+                  <div className="absolute right-0 top-full mt-1 w-28 bg-white rounded-xl border border-slate-200 shadow-xl z-50 overflow-hidden">
+                    {PERIODS.map((p) => (
+                      <button key={p.id} onClick={() => { setPeriod(p.id); setPeriodMenuOpen(false); }}
+                        className={cn("w-full text-left px-4 py-2.5 text-sm transition-colors hover:bg-slate-50",
+                          period === p.id ? "font-semibold text-indigo-600 bg-indigo-50/50" : "text-slate-700"
+                        )}>
+                        {p.label}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+            <button className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700 shadow-lg shadow-indigo-200 transition-colors">
+              <Download size={16} /> レポート出力
+            </button>
+          </div>
         </div>
 
-        {/* Mobile: date subtitle */}
-        <p className="text-xs text-slate-400 lg:hidden">2026年2月13日（木）の概況</p>
+        {/* Mobile: 期間セレクター + サブタイトル */}
+        <div className="flex items-center justify-between lg:hidden">
+          <p className="text-xs text-slate-400">{periodLabel}</p>
+          <div className="relative">
+            <button
+              onClick={() => setPeriodMenuOpen((v) => !v)}
+              className="flex items-center gap-1 px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-medium text-slate-600 active:bg-slate-50 shadow-sm"
+            >
+              {PERIODS.find((p) => p.id === period)?.short}
+              <ChevronDown size={12} className="text-slate-400" />
+            </button>
+            {periodMenuOpen && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setPeriodMenuOpen(false)} />
+                <div className="absolute right-0 top-full mt-1 w-24 bg-white rounded-xl border border-slate-200 shadow-xl z-50 overflow-hidden">
+                  {PERIODS.map((p) => (
+                    <button key={p.id} onClick={() => { setPeriod(p.id); setPeriodMenuOpen(false); }}
+                      className={cn("w-full text-left px-3 py-2.5 text-sm transition-colors active:bg-slate-50",
+                        period === p.id ? "font-semibold text-indigo-600 bg-indigo-50/50" : "text-slate-700"
+                      )}>
+                      {p.label}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+        </div>
 
         {/* KPI Cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
           <StatCard
-            label="今月の売上"
+            label={`${PERIODS.find((p) => p.id === period)?.short}の売上`}
             value={fmt(stats.revenue)}
             change="+12.5%"
             up
@@ -174,7 +183,7 @@ export default function DashboardPage() {
             gradientTo="#818cf8"
           />
           <StatCard
-            label="今月の案件数"
+            label={`${PERIODS.find((p) => p.id === period)?.short}の案件数`}
             value={stats.count.toLocaleString()}
             change="+8件"
             up
@@ -204,43 +213,46 @@ export default function DashboardPage() {
 
         {/* Urgent Cases */}
         {urgent.length > 0 && (
-          <Card className="p-3 lg:p-4 border-amber-200 bg-gradient-to-r from-amber-50 to-orange-50">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="p-2 bg-amber-500 rounded-xl">
-                <Zap size={16} className="text-white" />
-              </div>
-              <div>
-                <h3 className="font-bold text-amber-900 text-sm lg:text-base">緊急・当日案件</h3>
-                <p className="text-xs text-amber-600">{urgent.length}件の対応待ち</p>
-              </div>
-            </div>
-            <div className="space-y-2">
-              {urgent.map((c) => (
-                <div key={c.id} className="flex items-center justify-between bg-white/80 rounded-xl px-3 lg:px-4 py-2.5 border border-amber-100">
-                  <div className="flex items-center gap-2 lg:gap-3 flex-wrap min-w-0">
-                    <span className="text-xs font-mono text-amber-600 bg-amber-100 px-2 py-0.5 rounded">{c.id}</span>
-                    <span className="text-sm font-medium text-slate-800 truncate">{c.customer}</span>
-                    <Badge className="bg-amber-100 text-amber-700 border border-amber-200 hidden sm:inline-flex">
-                      {c.category.label}
-                    </Badge>
-                  </div>
-                  <div className="flex items-center gap-2 lg:gap-3 text-sm shrink-0">
-                    <span className="text-slate-500 hidden sm:flex items-center gap-1">
-                      <MapPin size={14} />{c.pref}
-                    </span>
-                    <span className="text-slate-500 flex items-center gap-1 text-xs">
-                      <Clock size={12} />{c.time}
-                    </span>
-                    <button
-                      onClick={() => setSelectedCase(c)}
-                      className="px-3 py-1.5 bg-amber-500 text-white text-xs rounded-lg active:bg-amber-600 font-medium transition-colors">
-                      対応
-                    </button>
-                  </div>
+          <div className="relative overflow-hidden rounded-2xl liquid-glass liquid-glass-shimmer border border-amber-200/60"
+            style={{ background: "linear-gradient(135deg, rgba(255,251,235,0.85) 0%, rgba(255,237,213,0.75) 100%)" }}>
+            <div className="p-3 lg:p-4">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="p-2 bg-amber-500 rounded-xl shadow-sm shadow-amber-200">
+                  <Zap size={16} className="text-white" />
                 </div>
-              ))}
+                <div>
+                  <h3 className="font-bold text-amber-900 text-sm lg:text-base">緊急・当日案件</h3>
+                  <p className="text-xs text-amber-600">{urgent.length}件の対応待ち</p>
+                </div>
+              </div>
+              <div className="space-y-2">
+                {urgent.map((c) => (
+                  <div key={c.id} className="flex items-center justify-between bg-white/70 backdrop-blur-sm rounded-xl px-3 lg:px-4 py-2.5 border border-amber-100/80">
+                    <div className="flex items-center gap-2 lg:gap-3 flex-wrap min-w-0">
+                      <span className="text-xs font-mono text-amber-600 bg-amber-100 px-2 py-0.5 rounded">{c.id}</span>
+                      <span className="text-sm font-medium text-slate-800 truncate">{c.customer}</span>
+                      <Badge className="bg-amber-100 text-amber-700 border border-amber-200 hidden sm:inline-flex">
+                        {c.category.label}
+                      </Badge>
+                    </div>
+                    <div className="flex items-center gap-2 lg:gap-3 text-sm shrink-0">
+                      <span className="text-slate-500 hidden sm:flex items-center gap-1">
+                        <MapPin size={14} />{c.pref}
+                      </span>
+                      <span className="text-slate-500 flex items-center gap-1 text-xs">
+                        <Clock size={12} />{c.time}
+                      </span>
+                      <button
+                        onClick={() => setSelectedCase(c)}
+                        className="px-3 py-1.5 bg-amber-500 text-white text-xs rounded-lg active:bg-amber-600 font-medium transition-colors shadow-sm">
+                        対応
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
-          </Card>
+          </div>
         )}
 
         {/* Charts Row */}

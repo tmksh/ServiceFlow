@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { PullToRefresh } from "@/components/ui/pull-to-refresh";
@@ -14,6 +14,9 @@ import {
   Calendar, CalendarDays, Clock,
 } from "lucide-react";
 import { CalendarGroupPickerModal } from "@/components/layout/list-picker-modal";
+import { QuickCaseModal } from "@/components/ui/quick-case-modal";
+import { useCalendarHeader } from "@/lib/calendar-header-context";
+import type { Case } from "@/types";
 
 type CalMode = "month" | "week" | "day";
 
@@ -60,10 +63,10 @@ function WeekView({
   const toHour = (timeStr: string) => parseInt(timeStr.split(":")[0] ?? "9", 10);
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+    <div className="overflow-hidden rounded-2xl border border-white/60 liquid-glass">
       {/* ナビ */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
-        <button onClick={() => setCur(new Date(y, m, d - 7))} className="p-2 rounded-xl hover:bg-slate-100 transition-colors">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-white/60">
+        <button onClick={() => setCur(new Date(y, m, d - 7))} className="p-2 rounded-xl hover:bg-white/50 transition-colors">
           <ChevronLeft size={18} className="text-slate-500" />
         </button>
         <div className="text-center">
@@ -71,7 +74,7 @@ function WeekView({
             {weekDays[0].getMonth() + 1}月{weekDays[0].getDate()}日 〜 {weekDays[6].getMonth() + 1}月{weekDays[6].getDate()}日
           </span>
         </div>
-        <button onClick={() => setCur(new Date(y, m, d + 7))} className="p-2 rounded-xl hover:bg-slate-100 transition-colors">
+        <button onClick={() => setCur(new Date(y, m, d + 7))} className="p-2 rounded-xl hover:bg-white/50 transition-colors">
           <ChevronRight size={18} className="text-slate-500" />
         </button>
       </div>
@@ -80,11 +83,11 @@ function WeekView({
       <div className="overflow-x-auto">
         <div style={{ minWidth: 640 }}>
           {/* 曜日ヘッダー */}
-          <div className="grid grid-cols-[48px_repeat(7,1fr)] border-b border-slate-100">
-            <div className="border-r border-slate-100" />
+          <div className="grid grid-cols-[48px_repeat(7,1fr)] border-b border-white/60">
+            <div className="border-r border-white/40" />
             {weekDays.map((dt, i) => (
-              <div key={i} className={cn("py-2 text-center border-r border-slate-100 last:border-0",
-                isToday(dt) && "bg-indigo-50")}>
+              <div key={i} className={cn("py-2 text-center border-r border-white/40 last:border-0",
+                isToday(dt) && "bg-indigo-50/50")}>
                 <div className={cn("text-[10px] font-semibold", i === 5 ? "text-blue-500" : i === 6 ? "text-red-500" : "text-slate-400")}>
                   {dn[i]}
                 </div>
@@ -101,12 +104,12 @@ function WeekView({
           <div className="relative" style={{ height: TIME_SLOTS.length * 56 }}>
             {TIME_SLOTS.map((h) => (
               <div key={h} className="grid grid-cols-[48px_repeat(7,1fr)] absolute w-full" style={{ top: (h - 7) * 56, height: 56 }}>
-                <div className="border-r border-b border-slate-100 flex items-start justify-end pr-2 pt-1">
+                <div className="border-r border-b border-white/40 flex items-start justify-end pr-2 pt-1">
                   <span className="text-[10px] text-slate-400">{h}:00</span>
                 </div>
                 {weekDays.map((dt, di) => (
-                  <div key={di} className={cn("border-r border-b border-slate-100 last:border-r-0 relative",
-                    isToday(dt) && "bg-indigo-50/30")}>
+                  <div key={di} className={cn("border-r border-b border-white/40 last:border-r-0 relative",
+                    isToday(dt) && "bg-indigo-50/20")}>
                     {(cByDate[dateStr(dt)] ?? []).filter((c) => toHour(c.time) === h).map((c, ci) => (
                       <div key={c.id}
                         className="absolute left-0.5 right-0.5 rounded-md px-1.5 py-1 text-[9px] font-semibold overflow-hidden cursor-pointer hover:brightness-95 transition-all z-10"
@@ -140,9 +143,9 @@ function DayView({
   const isToday = y === 2026 && m === 1 && d === 13;
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
-      <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
-        <button onClick={() => setCur(new Date(y, m, d - 1))} className="p-2 rounded-xl hover:bg-slate-100 transition-colors">
+    <div className="overflow-hidden rounded-2xl border border-white/60 liquid-glass">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-white/60">
+        <button onClick={() => setCur(new Date(y, m, d - 1))} className="p-2 rounded-xl hover:bg-white/50 transition-colors">
           <ChevronLeft size={18} className="text-slate-500" />
         </button>
         <div className="flex items-center gap-3">
@@ -157,7 +160,7 @@ function DayView({
             <p className="text-xs text-slate-400">{dayCases.length}件の予定</p>
           </div>
         </div>
-        <button onClick={() => setCur(new Date(y, m, d + 1))} className="p-2 rounded-xl hover:bg-slate-100 transition-colors">
+        <button onClick={() => setCur(new Date(y, m, d + 1))} className="p-2 rounded-xl hover:bg-white/50 transition-colors">
           <ChevronRight size={18} className="text-slate-500" />
         </button>
       </div>
@@ -166,11 +169,11 @@ function DayView({
         {TIME_SLOTS.map((h) => {
           const slotCases = dayCases.filter((c) => parseInt(c.time.split(":")[0] ?? "9", 10) === h);
           return (
-            <div key={h} className="flex border-b border-slate-50" style={{ minHeight: 60 }}>
+            <div key={h} className="flex border-b border-white/40" style={{ minHeight: 60 }}>
               <div className="w-14 flex items-start justify-end pr-3 pt-2 shrink-0">
                 <span className="text-xs text-slate-400">{h}:00</span>
               </div>
-              <div className="flex-1 py-1 pr-2 space-y-1 border-l border-slate-100">
+              <div className="flex-1 py-1 pr-2 space-y-1 border-l border-white/40">
                 {slotCases.map((c) => (
                   <div key={c.id}
                     className="flex items-start gap-3 p-3 rounded-xl cursor-pointer hover:brightness-95 transition-all"
@@ -207,6 +210,15 @@ export default function CalendarPage() {
   const [selDay, setSelDay] = useState(13);
   const [calMode, setCalMode] = useState<CalMode>("month");
   const [groupPickerOpen, setGroupPickerOpen] = useState(false);
+  const [selectedCase, setSelectedCase] = useState<Case | null>(null);
+
+  const { setActiveGroup: setHeaderGroup } = useCalendarHeader();
+
+  // ヘッダーにアクティブグループを同期
+  useEffect(() => {
+    setHeaderGroup(activeGroup);
+    return () => setHeaderGroup(null);
+  }, [activeGroup, setHeaderGroup]);
 
   const y = cur.getFullYear(), m = cur.getMonth();
   const dim = new Date(y, m + 1, 0).getDate();
@@ -269,57 +281,42 @@ export default function CalendarPage() {
         {/* カレンダー画面 */}
         <>
             {/* ── アプリヘッダー ── */}
-            <div className="text-white px-4 py-2 flex items-center justify-between shrink-0" style={{ backgroundColor: accentColor }}>
-              <div className="flex items-center gap-2 min-w-0">
-              <div className="relative">
-                  <button
-                    onClick={() => setGroupPickerOpen(true)}
-                    className="flex items-center gap-1 bg-white/20 rounded-xl px-2 py-1 active:bg-white/30"
-                  >
-                    <span className="text-base leading-none">{activeGroup?.coverEmoji}</span>
-                    <ChevronDown size={12} className="opacity-80" />
-                  </button>
-                </div>
+            <div className="text-white px-4 py-3.5 flex items-center justify-between shrink-0" style={{ backgroundColor: accentColor }}>
+              <div className="flex items-center gap-2.5 min-w-0">
                 <div className="min-w-0">
-                  <div className="flex items-center gap-1 leading-none">
-                    <span className="text-[14px] font-bold truncate max-w-[160px]">{activeGroup?.name}</span>
+                  <div className="flex items-center gap-1.5 leading-none">
+                    <span className="text-[15px] font-bold truncate max-w-[240px]">{activeGroup?.name}</span>
+                    <button
+                      onClick={() => setGroupPickerOpen(true)}
+                      className="flex items-center gap-0.5 bg-white/20 rounded-lg px-1.5 py-0.5 active:bg-white/30 shrink-0"
+                    >
+                      <ChevronDown size={12} className="opacity-90" />
+                    </button>
                   </div>
-                  <div className="flex items-center gap-1 text-[11px] opacity-70 leading-tight mt-0.5">
+                  <div className="flex items-center gap-1 text-[12px] opacity-75 leading-tight mt-1">
                     {activeGroup && ROLE_ICON[activeGroup.myRole]}
                     <span>{activeGroup?.area}エリア · {filteredCases.length}件</span>
                   </div>
                 </div>
               </div>
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-2">
                 {/* ビュー切り替え（モバイル） */}
                 <div className="flex gap-0.5 bg-white/20 rounded-lg p-0.5">
                   {([["month","月"],["week","週"],["day","日"]] as [CalMode,string][]).map(([k,l]) => (
                     <button key={k} onClick={() => setCalMode(k)}
-                      className={cn("px-2 py-1 rounded-md text-[10px] font-bold transition-all",
+                      className={cn("px-2.5 py-1.5 rounded-md text-[11px] font-bold transition-all",
                         calMode === k ? "bg-white text-indigo-700" : "text-white/80 hover:text-white"
                       )}>
                       {l}
                     </button>
                   ))}
                 </div>
-                {/* メンバーアバター（最大3人） */}
-                <div className="flex -space-x-1.5">
-                  {activeGroup?.members.slice(0, 3).map((mem) => (
-                    <div
-                      key={mem.id + mem.name}
-                      className="w-6 h-6 rounded-full border-2 border-white/60 flex items-center justify-center text-[8px] font-bold text-white"
-                      style={{ backgroundColor: mem.color }}
-                    >
-                      {mem.avatar}
-                    </div>
-                  ))}
-                </div>
               </div>
             </div>
 
             {/* ── 月ナビ + 曜日ヘッダー（固定） ── */}
-            <div className="bg-white shrink-0">
-              <div className="flex items-center justify-between px-3 py-1.5 border-b border-slate-100">
+            <div className="bg-white/70 backdrop-blur-xl shrink-0">
+              <div className="flex items-center justify-between px-3 py-1.5 border-b border-white/60">
                 <button onClick={() => {
                   if (calMode === "month") setCur(new Date(y, m - 1, 1));
                   else if (calMode === "week") setCur(new Date(cur.getTime() - 7 * 86400000));
@@ -353,7 +350,7 @@ export default function CalendarPage() {
             </div>
 
             {/* ── カレンダーグリッド + 予定リスト（スクロール） ── */}
-            <div className="flex-1 overflow-y-auto bg-white">
+            <div className="flex-1 overflow-y-auto bg-white/60 backdrop-blur-sm">
               {/* 月ビュー */}
               {calMode === "month" && (
               <div className="grid grid-cols-7" style={{ gridTemplateRows: `repeat(${weeks}, 1fr)`, height: `${weeks * 72}px` }}>
@@ -459,7 +456,7 @@ export default function CalendarPage() {
                   </div>
                   {/* 選択日の予定 */}
                   <div className="border-t-[3px]" style={{ borderColor: accentColor }}>
-                    <div className="flex items-center justify-between px-4 py-2.5 bg-slate-50 border-b border-slate-100">
+                    <div className="flex items-center justify-between px-4 py-2.5 bg-white/50 backdrop-blur-sm border-b border-white/60">
                       <span className="text-sm font-bold text-slate-800">{m + 1}月{selDay}日の予定 <span className="text-xs font-normal text-slate-500">{selCases.length}件</span></span>
                       {canEdit && <button className="w-8 h-8 rounded-full flex items-center justify-center shadow" style={{ backgroundColor: accentColor }}><Plus size={16} className="text-white" /></button>}
                     </div>
@@ -468,7 +465,8 @@ export default function CalendarPage() {
                         {selCases.map((c) => {
                           const s = ST[c.status];
                           return (
-                            <div key={c.id} className="flex items-center gap-3 px-4 py-3.5 active:bg-slate-50"
+                            <div key={c.id} className="flex items-center gap-3 px-4 py-3.5 active:bg-slate-50 cursor-pointer"
+                              onClick={() => setSelectedCase(c)}
                               style={{ borderLeft: `3px solid ${s.bg}` }}>
                               <div className="w-10 text-center shrink-0"><p className="text-xs font-bold" style={{ color: s.bg }}>{c.time || "--"}</p></div>
                               <div className="flex-1 min-w-0">
@@ -527,6 +525,7 @@ export default function CalendarPage() {
                       const s = ST[c.status];
                       return (
                         <div key={c.id} className="flex items-center gap-3 p-3.5 rounded-2xl active:scale-[0.98] transition-transform cursor-pointer"
+                          onClick={() => setSelectedCase(c)}
                           style={{ background: s.bg + "10", border: `1px solid ${s.bg}25` }}>
                           <div className="text-center shrink-0 w-12">
                             <div className="text-sm font-bold" style={{ color: s.bg }}>{c.time || "--"}</div>
@@ -550,7 +549,7 @@ export default function CalendarPage() {
               {/* 月ビュー時の選択日予定リスト */}
               {calMode === "month" && (
                 <div className="border-t-[3px]" style={{ borderColor: accentColor }}>
-                <div className="flex items-center justify-between px-4 py-2.5 bg-slate-50 border-b border-slate-100">
+                <div className="flex items-center justify-between px-4 py-2.5 bg-white/50 backdrop-blur-sm border-b border-white/60">
                   <span className="text-sm font-bold text-slate-800">
                     {m + 1}月{selDay}日の予定
                     {selCases.length > 0 && (
@@ -572,7 +571,7 @@ export default function CalendarPage() {
                     {selCases.map((c) => {
                       const s = ST[c.status];
                       return (
-                        <div key={c.id} className="flex items-stretch active:bg-slate-50">
+                        <div key={c.id} className="flex items-stretch active:bg-slate-50 cursor-pointer" onClick={() => setSelectedCase(c)}>
                           <div className="w-[3px] shrink-0" style={{ backgroundColor: s.bg }} />
                           <div className="flex items-center gap-2.5 px-3 py-2.5 flex-1 min-w-0">
                             <div className="min-w-[40px] text-center shrink-0">
@@ -657,7 +656,7 @@ export default function CalendarPage() {
             </div>
             <div className="flex items-center gap-2">
               {/* ビュー切替 */}
-              <div className="flex gap-1 bg-white rounded-xl p-1 border border-slate-200/60 shadow-sm">
+              <div className="flex gap-1 liquid-glass rounded-xl p-1 border border-white/60 shadow-sm">
                 {([
                   ["month", "月", Calendar],
                   ["week",  "週", CalendarDays],
@@ -701,7 +700,7 @@ export default function CalendarPage() {
                       i === 0 ? "text-red-400" : i === 6 ? "text-blue-400" : "text-slate-400")}>{d}</div>
                   ))}
                 </div>
-                <div className="grid grid-cols-7 gap-px bg-slate-200 rounded-xl overflow-hidden border border-slate-200">
+                <div className="grid grid-cols-7 gap-px bg-white/40 rounded-xl overflow-hidden border border-white/60">
                   {(() => {
                     const ddays: (number | null)[] = [];
                     for (let i = 0; i < fd; i++) ddays.push(null);
@@ -712,7 +711,7 @@ export default function CalendarPage() {
                       const dow = i % 7;
                       return (
                         <div key={i}
-                          className={cn("min-h-[90px] bg-white p-1.5 hover:bg-slate-50 cursor-pointer", !d && "bg-slate-50/50")}
+                          className={cn("min-h-[90px] bg-white/60 backdrop-blur-sm p-1.5 hover:bg-white/80 cursor-pointer transition-colors", !d && "bg-white/20")}
                           onClick={() => d && setSelDay(d)}>
                           {d && (
                             <>
@@ -748,7 +747,7 @@ export default function CalendarPage() {
                 {selCases.length > 0 ? (
                   <div className="space-y-2">
                     {selCases.map((c) => (
-                      <div key={c.id} className="flex items-center gap-4 p-3 rounded-xl hover:bg-slate-50 border border-slate-100">
+                      <div key={c.id} className="flex items-center gap-4 p-3 rounded-xl liquid-glass hover:shadow-sm transition-shadow border border-white/60">
                         <div className="min-w-[44px] text-center">
                           <div className="text-sm font-bold text-slate-800">{c.time}</div>
                         </div>
@@ -795,6 +794,11 @@ export default function CalendarPage() {
         currentGroupId={activeGroup?.id ?? null}
         onSelect={(g) => setActiveGroup(g)}
       />
+
+      {/* 案件詳細モーダル */}
+      {selectedCase && (
+        <QuickCaseModal c={selectedCase} onClose={() => setSelectedCase(null)} />
+      )}
     </>
   );
 }

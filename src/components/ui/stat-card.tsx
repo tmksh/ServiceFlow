@@ -58,30 +58,32 @@ export function StatCard({
         </div>
       )}
 
-      {/* 変化率バッジ */}
-      {change && (
-        <div className="relative z-10 flex justify-end mb-1 lg:mb-2">
+      {/* ラベル */}
+      <p className="relative z-10 text-[11px] lg:text-sm text-slate-500 font-medium mb-1 lg:mb-1.5">{label}</p>
+
+      {/* 数値 + 変化率バッジ（横並び） */}
+      <div className="relative z-10 flex items-end justify-between gap-1">
+        <p
+          className="text-xl lg:text-2xl font-bold tracking-tight leading-none"
+          style={{ color: from }}
+        >
+          {value}
+        </p>
+        {change && (
           <div
             className={cn(
-              "liquid-glass-badge flex items-center gap-0.5 text-[10px] lg:text-xs font-semibold px-1.5 lg:px-2 py-0.5 lg:py-1 rounded-lg",
+              "liquid-glass-badge flex items-center gap-0.5 text-[10px] lg:text-xs font-semibold px-1.5 py-0.5 rounded-lg shrink-0 mb-0.5",
               up ? "text-emerald-700" : "text-red-600"
             )}
           >
-            {up ? <TrendingUp size={11} /> : <TrendingDown size={11} />}
+            {up ? <TrendingUp size={10} /> : <TrendingDown size={10} />}
             {change}
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
-      <p
-        className="relative z-10 text-xl lg:text-2xl font-bold tracking-tight"
-        style={{ color: from }}
-      >
-        {value}
-      </p>
-      <p className="relative z-10 text-xs lg:text-sm text-slate-600 mt-0.5 lg:mt-1 font-medium">{label}</p>
       {sub && (
-        <p className="relative z-10 text-[10px] lg:text-xs text-slate-400 mt-0.5 hidden sm:block">{sub}</p>
+        <p className="relative z-10 text-[10px] lg:text-xs text-slate-400 mt-1">{sub}</p>
       )}
     </div>
   );

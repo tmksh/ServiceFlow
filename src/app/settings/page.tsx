@@ -186,11 +186,11 @@ function LabelsTab() {
       </div>
       <div className="space-y-2 mb-5">
         {labels.map((label) => (
-          <div key={label.id} className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl group">
+          <div key={label.id} className="flex items-center gap-3 p-3 liquid-glass rounded-xl group">
             <div className="w-6 h-6 rounded-lg shrink-0" style={{ backgroundColor: label.color }} />
             <span className="text-sm font-medium text-slate-800 flex-1">{label.name}</span>
             <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-              <button className="p-1.5 rounded-lg hover:bg-white transition-colors">
+              <button className="p-1.5 rounded-lg hover:bg-white/60 transition-colors">
                 <Pencil size={13} className="text-slate-400" />
               </button>
               <button onClick={() => setLabels((p) => p.filter((l) => l.id !== label.id))}
@@ -334,8 +334,8 @@ function StaffTab() {
   const [inviteEmail, setInviteEmail] = useState("");
 
   return (
-    <Card glass={false} className="overflow-hidden">
-      <div className="flex items-center gap-3 p-5 border-b border-slate-100">
+    <Card className="overflow-hidden">
+      <div className="flex items-center gap-3 p-5 border-b border-white/60">
         <div className="p-2.5 bg-slate-100 rounded-xl"><Users size={18} className="text-slate-600" /></div>
         <div>
           <h3 className="font-bold text-slate-800">従業員管理</h3>
@@ -414,8 +414,8 @@ function RolesTab({ currentRole, onRoleChange }: { currentRole: RoleKey; onRoleC
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {(Object.entries(ROLES) as [RoleKey, typeof ROLES[RoleKey]][]).map(([key, r]) => (
           <button key={key} onClick={() => onRoleChange(key)}
-            className={cn("bg-white rounded-2xl border-2 p-4 text-left transition-all hover:shadow-sm",
-              currentRole === key ? "border-indigo-400 shadow-sm shadow-indigo-100" : "border-slate-100 hover:border-slate-200"
+            className={cn("relative overflow-hidden rounded-2xl border-2 p-4 text-left transition-all liquid-glass liquid-glass-shimmer",
+              currentRole === key ? "border-indigo-400 shadow-sm shadow-indigo-100" : "border-white/60 hover:border-indigo-200"
             )}>
             <div className="flex items-start justify-between mb-3">
               <span className={cn("px-2.5 py-1 rounded-full text-xs font-bold", r.color)}>{r.l}</span>
@@ -440,7 +440,7 @@ function RolesTab({ currentRole, onRoleChange }: { currentRole: RoleKey; onRoleC
       </div>
 
       {/* 権限マトリクス */}
-      <Card glass={false} className="overflow-hidden">
+      <Card className="overflow-hidden">
         <div className="p-4 border-b border-slate-100 flex items-center gap-3">
           <div className="p-2 bg-slate-100 rounded-xl"><Shield size={15} className="text-slate-600" /></div>
           <div>
@@ -641,7 +641,7 @@ export default function SettingsPage() {
       </div>
 
       {/* サブナビ */}
-      <div className="flex gap-1 flex-wrap bg-white rounded-2xl p-1.5 border border-slate-200/60 shadow-sm">
+      <div className="flex gap-1 flex-wrap liquid-glass rounded-2xl p-1.5 border border-white/60 shadow-sm">
         {SETTINGS_NAV.map((n) => (
           <button key={n.id} onClick={() => setTab(n.id)}
             className={cn(

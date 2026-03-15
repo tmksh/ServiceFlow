@@ -87,19 +87,19 @@ export default function AnalyticsPage() {
           { l: "広告費合計", v: fmt(totalAdCost),   change: "-3.2%",  up: false, icon: Target,       color: "text-amber-600",   bg: "from-amber-400 to-orange-500"   },
           { l: "平均ROAS",   v: `${avgRoas}%`,      change: "+15.8%", up: true,  icon: Star,         color: "text-violet-600",  bg: "from-violet-500 to-purple-600"  },
         ].map((k) => (
-          <Card key={k.l} className="p-4 lg:p-5 overflow-hidden">
+          <div key={k.l} className="relative overflow-hidden rounded-2xl liquid-glass liquid-glass-shimmer p-4 lg:p-5">
             <div className="flex items-start justify-between mb-3">
-              <div className={cn("p-2.5 rounded-xl bg-gradient-to-br", k.bg)}>
+              <div className={cn("p-2.5 rounded-xl bg-gradient-to-br shadow-sm", k.bg)}>
                 <k.icon size={18} className="text-white" />
               </div>
-              <div className={cn("flex items-center gap-0.5 text-xs font-semibold px-2 py-1 rounded-lg", k.up ? "text-emerald-700 bg-emerald-50" : "text-red-600 bg-red-50")}>
+              <div className={cn("flex items-center gap-0.5 text-xs font-semibold px-2 py-1 rounded-lg liquid-glass-badge", k.up ? "text-emerald-700" : "text-red-600")}>
                 {k.up ? <TrendingUp size={11} /> : <TrendingDown size={11} />}
                 {k.change}
               </div>
             </div>
             <p className="text-xl lg:text-2xl font-black text-slate-900">{k.v}</p>
             <p className="text-xs text-slate-500 mt-0.5">{k.l}</p>
-          </Card>
+          </div>
         ))}
       </div>
 
@@ -160,7 +160,7 @@ export default function AnalyticsPage() {
           </div>
         </Card>
 
-        <Card glass={false} className="p-5 lg:col-span-2 overflow-hidden">
+        <Card className="p-5 lg:col-span-2 overflow-hidden">
           <div className="flex items-center justify-between flex-wrap gap-3 mb-4">
             <h3 className="font-bold text-slate-800">担当者別パフォーマンス（ROAS）</h3>
             <div className="flex gap-1.5 flex-wrap">
@@ -232,7 +232,7 @@ export default function AnalyticsPage() {
       </div>
 
       {/* 広告媒体別ROI */}
-      <Card glass={false} className="overflow-hidden">
+      <Card className="overflow-hidden">
         <div className="p-5 border-b border-slate-100 flex items-center justify-between">
           <h3 className="font-bold text-slate-800">広告媒体別ROI</h3>
         </div>

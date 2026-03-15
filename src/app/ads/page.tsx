@@ -43,13 +43,13 @@ export default function AdsPage() {
 
   return (
     <div className="space-y-5 animate-fade-in">
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">広告・LP管理</h1>
-          <p className="text-xs text-slate-400 mt-1">LP別の売上・広告パフォーマンスを一元分析</p>
+      <div className="flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="text-xl lg:text-2xl font-bold text-slate-900 truncate">広告・LP管理</h1>
+          <p className="text-xs text-slate-400 mt-0.5 lg:mt-1 truncate">LP別の売上・広告パフォーマンスを一元分析</p>
         </div>
-        <button className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700 shadow-lg shadow-indigo-200">
-          <Plus size={16} /> LP新規登録
+        <button className="flex items-center gap-2 px-3 lg:px-4 py-2 lg:py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-medium active:bg-indigo-700 hover:bg-indigo-700 shadow-lg shadow-indigo-200 shrink-0">
+          <Plus size={15} /> <span className="hidden sm:inline">LP</span>新規登録
         </button>
       </div>
 

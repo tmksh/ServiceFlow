@@ -13,7 +13,7 @@ const PRIMARY_TABS = [
   { id: "dashboard", label: "ホーム", icon: LayoutGrid, href: "/" },
   { id: "line", label: "LINE", icon: Inbox, href: "/line", badge: 3 },
   { id: "cases", label: "案件", icon: FileText, href: "/cases" },
-  { id: "calendar", label: "予定", icon: Calendar, href: "/calendar" },
+  { id: "calendar", label: "カレンダー", icon: Calendar, href: "/calendar" },
   { id: "more", label: "その他", icon: MoreHorizontal, href: "" },
 ];
 

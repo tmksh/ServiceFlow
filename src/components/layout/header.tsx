@@ -6,11 +6,12 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { NOTIFICATIONS } from "@/lib/mock-data";
 import { SearchInput } from "@/components/ui/search-input";
+import { useCalendarHeader } from "@/lib/calendar-header-context";
 import {
   Menu, Settings, Bell, Monitor, Zap, XCircle, CheckCircle,
   Search, X, ArrowLeft,
 } from "lucide-react";
-import { LogoIcon } from "@/components/ui/logo";
+import { Logo } from "@/components/ui/logo";
 
 interface HeaderProps {
   onToggleSidebar: () => void;
@@ -21,6 +22,8 @@ export function Header({ onToggleSidebar }: HeaderProps) {
   const [notOpen, setNotOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+  const { activeGroup } = useCalendarHeader();
+  const isCalendar = pathname === "/calendar";
 
   // Page title mapping for mobile
   const pageTitle = pathname === "/" ? "ホーム"
@@ -65,12 +68,33 @@ export function Header({ onToggleSidebar }: HeaderProps) {
   return (
     <header className="flex items-center justify-between h-14 lg:h-16 px-4 lg:px-6 bg-white/65 backdrop-blur-2xl border-b border-white/60 shrink-0 shadow-[0_1px_0_rgba(255,255,255,0.7)_inset]">
       <div className="flex items-center gap-3">
-        {/* Mobile: page title or logo on home */}
-        <div className="flex items-center gap-3 lg:hidden">
+        {/* Mobile: logo on home / page title on other pages */}
+        <div className="flex items-center gap-2.5 lg:hidden">
           {pathname === "/" ? (
-            <LogoIcon size={28} />
-          ) : null}
-          <h1 className="text-base font-bold text-slate-800">{pageTitle}</h1>
+            <Logo size="sm" />
+          ) : (
+            <h1 className="text-base font-bold text-slate-800">{pageTitle}</h1>
+          )}
+          {/* カレンダーページのみ：アクティブグループのメンバーアバター */}
+          {isCalendar && activeGroup && (
+            <div className="flex -space-x-1.5">
+              {activeGroup.members.slice(0, 4).map((mem) => (
+                <div
+                  key={mem.id}
+                  className="w-6 h-6 rounded-full border-2 border-white flex items-center justify-center text-[8px] font-bold text-white shadow-sm"
+                  style={{ backgroundColor: mem.color }}
+                  title={mem.name}
+                >
+                  {mem.avatar}
+                </div>
+              ))}
+              {activeGroup.members.length > 4 && (
+                <div className="w-6 h-6 rounded-full border-2 border-white bg-slate-200 flex items-center justify-center text-[8px] font-bold text-slate-500 shadow-sm">
+                  +{activeGroup.members.length - 4}
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Desktop: sidebar toggle + search */}
