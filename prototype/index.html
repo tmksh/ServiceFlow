@@ -5040,9 +5040,8 @@ function App() {
       <div className="flex-1 flex flex-col min-w-0">
         <header className="flex items-center justify-between h-16 px-4 lg:px-6 bg-white/80 backdrop-blur-md border-b border-slate-200/60 shrink-0">
           <div className="flex items-center gap-3">
-            <button onClick={() => setMob(!mob)} className="p-2 rounded-lg hover:bg-slate-100 lg:hidden"><ic.Menu size={20}/></button>
             <button onClick={() => setSb(!sbOpen)} className="p-2 rounded-lg hover:bg-slate-100 hidden lg:block"><ic.Menu size={20} stroke="#64748b"/></button>
-            {/* モバイルのみロゴ表示 */}
+            {/* モバイルのみ: ロゴ + リスト切替ボタン */}
             <div className="flex items-center gap-2 lg:hidden">
               <svg width="26" height="26" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="スマカレ">
                 <defs>
@@ -5063,6 +5062,29 @@ function App() {
               </svg>
               <span className="text-sm font-bold text-indigo-600">スマカレ</span>
             </div>
+            {/* モバイルのみ: リスト切替ドロップダウン */}
+            <div className="relative lg:hidden">
+              <button
+                onClick={() => setAreaMenuOpen(!areaMenuOpen)}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-700 hover:bg-slate-100 transition-colors"
+              >
+                <span>{areaInfo.flag}</span>
+                <span>{areaInfo.l}</span>
+                <ic.ChevD size={12} className="text-slate-400"/>
+              </button>
+              {areaMenuOpen && (
+                <div className="absolute left-0 top-full mt-1 w-44 bg-white rounded-xl border border-slate-200 shadow-lg z-50 overflow-hidden slide-up">
+                  {areas.map(a => (
+                    <button key={a.id} onClick={() => { setCurrentArea(a.id); setAreaMenuOpen(false); }}
+                      className={cn("w-full flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-slate-50 transition-colors text-left",
+                        currentArea === a.id ? "bg-indigo-50 text-indigo-700 font-medium" : "text-slate-700")}>
+                      <span>{a.flag}</span><span>{a.l}</span>
+                      {currentArea === a.id && <ic.Check size={14} className="ml-auto"/>}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
             <div className="hidden sm:block w-72"><SearchInput value="" onChange={() => {}} placeholder="案件ID、顧客名で検索..."/></div>
           </div>
           <div className="flex items-center gap-1.5">
@@ -5071,12 +5093,14 @@ function App() {
               <span className="text-sm">{areaInfo.flag}</span>
               <span className="text-xs text-slate-600 font-medium">{areaInfo.l}</span>
             </div>
-            <button onClick={() => nav("settings")} className={cn(
+            <button onClick={() => nav("settings/company")} className={cn(
               "p-2.5 rounded-xl transition-all",
-              page === "settings" ? "bg-indigo-50 text-indigo-600" : "hover:bg-slate-100 text-slate-500"
+              page.startsWith("settings/") ? "bg-indigo-50 text-indigo-600" : "hover:bg-slate-100 text-slate-500"
             )} title="設定">
-              <ic.Gear size={20} stroke={page === "settings" ? "#4f46e5" : "#64748b"}/>
+              <ic.Gear size={20} stroke={page.startsWith("settings/") ? "#4f46e5" : "#64748b"}/>
             </button>
+            {/* モバイル専用ハンバーガー（右側） */}
+            <button onClick={() => setMob(!mob)} className="hidden p-2 rounded-lg hover:bg-slate-100"><ic.Menu size={20} stroke="#64748b"/></button>
             <div className="relative">
               <button onClick={() => setNot(!notOpen)} className="relative p-2.5 rounded-xl hover:bg-slate-100">
                 <ic.Bell size={20} stroke="#64748b"/>
@@ -5117,14 +5141,13 @@ function App() {
       <nav className="fixed bottom-0 left-0 right-0 z-40 lg:hidden bg-white/95 backdrop-blur-md border-t border-slate-200/60 safe-area-pb">
         <div className="flex items-center justify-around h-16 px-1">
           {[
-            { id: "dashboard",        l: "ホーム",     I: ic.Grid },
-            { id: "cases",            l: "案件",       I: ic.FileText },
-            { id: "docs",             l: "書類",       I: ic.Folder, badge: INVOICES.filter(i => i.status === "overdue").length },
-            { id: "calendar",         l: "カレンダー", I: ic.Calendar },
-            { id: "line",             l: "LINE",       I: ic.Inbox, badge: LINE_MSGS.filter(m => m.status === "pending").length },
-            { id: "settings/company", l: "設定",       I: ic.Gear },
+            { id: "dashboard", l: "ホーム",     I: ic.Grid },
+            { id: "cases",     l: "案件",       I: ic.FileText },
+            { id: "docs",      l: "書類",       I: ic.Folder,   badge: INVOICES.filter(i => i.status === "overdue").length },
+            { id: "calendar",  l: "カレンダー", I: ic.Calendar },
+            { id: "line",      l: "LINE",       I: ic.Inbox,    badge: LINE_MSGS.filter(m => m.status === "pending").length },
           ].map(item => {
-            const active = page === item.id || (item.id === "settings/company" && page.startsWith("settings/"));
+            const active = page === item.id;
             return (
               <button key={item.id} onClick={() => nav(item.id)}
                 className="flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-xl transition-all relative">
