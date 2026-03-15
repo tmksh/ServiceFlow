@@ -1526,10 +1526,22 @@ const CaseMgmt = () => {
         <div className="flex flex-col lg:flex-row gap-3">
           <div className="flex-1"><SearchInput value={search} onChange={setSearch} placeholder="案件ID、顧客名、電話番号で検索..."/></div>
         </div>
-        <div className="flex gap-2 mt-3 flex-wrap">
-          <Tab active={sf === "all"} onClick={() => setSf("all")} count={counts.all}>すべて</Tab>
+        <div className="flex gap-1.5 mt-3 overflow-x-auto pb-1 scrollbar-hide lg:flex-wrap lg:overflow-visible lg:pb-0">
+          <button onClick={() => setSf("all")} className={cn(
+            "shrink-0 px-3 py-1.5 text-xs font-medium rounded-lg transition-all flex items-center gap-1.5 lg:px-4 lg:py-2 lg:text-sm",
+            sf === "all" ? "bg-indigo-600 text-white shadow-md shadow-indigo-200" : "text-slate-500 hover:text-slate-800 hover:bg-slate-100 bg-white border border-slate-100"
+          )}>
+            すべて
+            <span className={cn("text-[10px] px-1.5 rounded-full lg:text-xs", sf === "all" ? "bg-white/20" : "bg-slate-200")}>{counts.all}</span>
+          </button>
           {Object.entries(ST).map(([k, v]) => (
-            <Tab key={k} active={sf === k} onClick={() => setSf(k)} count={counts[k]}>{v.l}</Tab>
+            <button key={k} onClick={() => setSf(k)} className={cn(
+              "shrink-0 px-3 py-1.5 text-xs font-medium rounded-lg transition-all flex items-center gap-1.5 lg:px-4 lg:py-2 lg:text-sm",
+              sf === k ? "bg-indigo-600 text-white shadow-md shadow-indigo-200" : "text-slate-500 hover:text-slate-800 hover:bg-slate-100 bg-white border border-slate-100"
+            )}>
+              {v.l}
+              <span className={cn("text-[10px] px-1.5 rounded-full lg:text-xs", sf === k ? "bg-white/20" : "bg-slate-200")}>{counts[k]}</span>
+            </button>
           ))}
         </div>
       </Card>
@@ -1851,9 +1863,12 @@ const CalView = () => {
 
   /* ─── 月ビュー ─── */
   const MonthView = () => {
+    const weeks = Math.ceil((fd + dim) / 7);
     const days = [];
     for (let i = 0; i < fd; i++) days.push(null);
     for (let i = 1; i <= dim; i++) days.push(i);
+    // セル高さ: 画面高さからヘッダー等を引いた領域を週数で均等分割
+    const cellH = Math.max(64, Math.floor((window.innerHeight - 260) / weeks));
     return (
       <div>
         {/* 曜日ヘッダー */}
@@ -1871,28 +1886,28 @@ const CalView = () => {
             const isSel = d === selDay;
             return (
               <div key={i} onClick={() => d && setSelDay(d)}
-                className={cn("border-r border-b border-slate-100 cursor-pointer group transition-colors",
-                  "min-h-[90px] lg:min-h-[110px] p-1",
+                className={cn("border-r border-b border-slate-100 cursor-pointer group transition-colors overflow-hidden p-1",
                   !d ? "bg-slate-50/40" : isSel ? "bg-indigo-50/60" : "hover:bg-slate-50/80"
-                )}>
+                )}
+                style={{ height: cellH }}>
                 {d && (
                   <>
-                    <div className={cn("w-7 h-7 flex items-center justify-center rounded-full text-xs font-semibold mb-1 mx-auto",
+                    <div className={cn("w-6 h-6 flex items-center justify-center rounded-full text-xs font-semibold mb-0.5 mx-auto",
                       isToday(d) ? "bg-indigo-600 text-white shadow-sm shadow-indigo-300" :
                       isSel ? "bg-indigo-100 text-indigo-700" :
                       dow === 0 ? "text-rose-500" : dow === 6 ? "text-blue-500" : "text-slate-700"
                     )}>{d}</div>
                     <div className="space-y-0.5">
-                      {dc.slice(0, 3).map(c => (
+                      {dc.slice(0, cellH > 80 ? 3 : 1).map(c => (
                         <div key={c.id} onClick={e => { e.stopPropagation(); setSelCase(c); }}
-                          className="flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] truncate cursor-pointer hover:opacity-75"
+                          className="flex items-center gap-1 px-1 py-0.5 rounded-md text-[9px] truncate cursor-pointer hover:opacity-75"
                           style={{ background: c.category.color + "18", color: c.category.color }}>
-                          {c.urgent && <ic.Zap size={9}/>}
+                          {c.urgent && <ic.Zap size={8}/>}
                           <span className="truncate font-medium leading-tight">{c.time} {c.customer}</span>
                         </div>
                       ))}
-                      {dc.length > 3 && (
-                        <div className="text-[10px] text-slate-400 pl-1 font-medium">+{dc.length - 3}件</div>
+                      {dc.length > (cellH > 80 ? 3 : 1) && (
+                        <div className="text-[9px] text-slate-400 pl-1 font-medium">+{dc.length - (cellH > 80 ? 3 : 1)}件</div>
                       )}
                     </div>
                   </>
@@ -1981,8 +1996,10 @@ const CalView = () => {
   );
 
   /* ─── 日ビュー タイムライン ─── */
-  const DayView = () => (
-    <div className="overflow-y-auto" style={{ maxHeight: 560 }}>
+  const DayView = () => {
+    const maxH = Math.max(400, window.innerHeight - 300);
+    return (
+    <div className="overflow-y-auto" style={{ maxHeight: maxH }}>
       {TIME_SLOTS.map(hour => {
         const slotCases = selCases.filter(c => c.time && parseInt(c.time.split(":")[0],10) === hour);
         return (
@@ -2014,7 +2031,8 @@ const CalView = () => {
         );
       })}
     </div>
-  );
+    );
+  };
 
   /* ─── マップビュー（時間帯別カラーピン） ─── */
   const MapView = () => {
@@ -2127,30 +2145,53 @@ const CalView = () => {
   };
 
   /* ─── モバイル専用: コンパクト週セレクター + 日タイムライン ─── */
-  const MobileView = () => (
-    <div>
-      {/* 横スクロール週ピル */}
-      <div className="flex gap-1.5 overflow-x-auto pb-2 scrollbar-hide">
-        {weekDays.map((wd, i) => {
-          const dayCases = weekCaseMap[wd.dateStr] || [];
-          const isSel = wd.date === selDay && wd.month === m;
-          const isT   = wd.date === 13 && wd.month === 1 && wd.year === 2026;
-          return (
-            <div key={i} onClick={() => { if(wd.month === m) setSelDay(wd.date); }}
-              className={cn("flex flex-col items-center rounded-2xl px-2.5 py-2 cursor-pointer transition-colors shrink-0 min-w-[44px]",
-                isSel ? "bg-indigo-600" : isT ? "bg-indigo-100" : "bg-white border border-slate-100"
-              )}>
-              <span className={cn("text-[10px] font-medium",
-                isSel ? "text-indigo-200" : i === 0 ? "text-rose-400" : i === 6 ? "text-blue-400" : "text-slate-400")}>{dn[i]}</span>
-              <span className={cn("text-base font-bold mt-0.5",
-                isSel ? "text-white" : isT ? "text-indigo-700" : i === 0 ? "text-rose-500" : i === 6 ? "text-blue-500" : "text-slate-700")}>{wd.date}</span>
-              <div className="flex gap-0.5 mt-1">
-                {dayCases.slice(0,3).map((c,j) => <div key={j} className={cn("w-1 h-1 rounded-full", isSel ? "bg-indigo-200" : "")} style={isSel ? {} : { background: c.category.color }}/>)}
+  const MobileView = () => {
+    const scrollRef = React.useRef(null);
+    /* 選択日が変わったら自動スクロール */
+    React.useEffect(() => {
+      if (!scrollRef.current) return;
+      const el = scrollRef.current.querySelector(`[data-day="${selDay}"]`);
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+    }, [selDay]);
+
+    /* 月全体の日付 */
+    const monthDays = Array.from({ length: dim }, (_, i) => {
+      const d = i + 1;
+      const dateStr = `${ms}-${String(d).padStart(2,"0")}`;
+      const dow = new Date(y, m, d).getDay();
+      return { date: d, dateStr, dow };
+    });
+
+    return (
+      <div>
+        {/* 1ヶ月横スクロール日付ピル */}
+        <div ref={scrollRef} className="flex gap-1.5 overflow-x-auto pb-2 scrollbar-hide">
+          {monthDays.map(({ date, dateStr, dow }) => {
+            const dayCases = cByDate[dateStr] || [];
+            const isSel = date === selDay;
+            const isT   = date === 13 && m === 1 && y === 2026;
+            return (
+              <div key={date} data-day={date} onClick={() => setSelDay(date)}
+                className={cn("flex flex-col items-center rounded-2xl px-2.5 py-2 cursor-pointer transition-colors shrink-0 min-w-[44px]",
+                  isSel ? "bg-indigo-600" : isT ? "bg-indigo-100" : "bg-white border border-slate-100"
+                )}>
+                <span className={cn("text-[10px] font-medium",
+                  isSel ? "text-indigo-200" : dow === 0 ? "text-rose-400" : dow === 6 ? "text-blue-400" : "text-slate-400")}>
+                  {dn[dow]}
+                </span>
+                <span className={cn("text-base font-bold mt-0.5",
+                  isSel ? "text-white" : isT ? "text-indigo-700" : dow === 0 ? "text-rose-500" : dow === 6 ? "text-blue-500" : "text-slate-700")}>
+                  {date}
+                </span>
+                <div className="flex gap-0.5 mt-1 h-1">
+                  {dayCases.slice(0, 3).map((c, j) => (
+                    <div key={j} className="w-1 h-1 rounded-full" style={isSel ? { background: "rgba(255,255,255,0.6)" } : { background: c.category.color }}/>
+                  ))}
+                </div>
               </div>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
       {/* 選択日のタイムライン */}
       <div className="mt-3 space-y-1">
         {selCases.length === 0 ? (
@@ -2178,42 +2219,45 @@ const CalView = () => {
         ))}
       </div>
     </div>
-  );
+    );
+  };
 
   return (
     <div className="space-y-4 fade-in">
       {/* ─── ヘッダー ─── */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div>
+        <div className="flex items-center justify-between sm:block">
           <h1 className="text-2xl font-bold text-slate-900">スケジュール管理</h1>
-          
+          <button className="flex sm:hidden items-center gap-2 px-3 py-1.5 bg-indigo-600 text-white rounded-xl text-xs font-medium hover:bg-indigo-700 shadow-sm shadow-indigo-200">
+            <ic.Plus size={14}/> 予定追加
+          </button>
         </div>
-        <button className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700 shadow-sm shadow-indigo-200 self-start sm:self-auto">
+        <button className="hidden sm:flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700 shadow-sm shadow-indigo-200">
           <ic.Plus size={16}/> 予定追加
         </button>
       </div>
 
       {/* ─── ビュー切り替え + ナビゲーション ─── */}
-      <Card className="p-3">
-        <div className="flex items-center justify-between gap-2 flex-wrap">
+      <Card className="p-2 lg:p-3">
+        <div className="flex items-center justify-between gap-2">
           {/* ナビゲーション */}
-          <div className="flex items-center gap-2">
-            <button onClick={navPrev} className="p-2 rounded-xl hover:bg-slate-100 active:bg-slate-200 transition-colors">
-              <ic.ChevL size={18}/>
+          <div className="flex items-center gap-1 lg:gap-2">
+            <button onClick={navPrev} className="p-1.5 lg:p-2 rounded-xl hover:bg-slate-100 active:bg-slate-200 transition-colors">
+              <ic.ChevL size={16}/>
             </button>
-            <button onClick={() => setSelDay(13)} className="px-3 py-1.5 text-xs font-semibold text-indigo-600 bg-indigo-50 rounded-xl hover:bg-indigo-100 transition-colors">
+            <button onClick={() => setSelDay(13)} className="px-2.5 py-1 lg:px-3 lg:py-1.5 text-xs font-semibold text-indigo-600 bg-indigo-50 rounded-xl hover:bg-indigo-100 transition-colors">
               今日
             </button>
-            <button onClick={navNext} className="p-2 rounded-xl hover:bg-slate-100 active:bg-slate-200 transition-colors">
-              <ic.ChevR size={18}/>
+            <button onClick={navNext} className="p-1.5 lg:p-2 rounded-xl hover:bg-slate-100 active:bg-slate-200 transition-colors">
+              <ic.ChevR size={16}/>
             </button>
-            <span className="text-sm font-bold text-slate-700 ml-1">{headerLabel()}</span>
+            <span className="text-xs lg:text-sm font-bold text-slate-700 ml-0.5">{headerLabel()}</span>
           </div>
           {/* ビュー切り替えタブ */}
-          <div className="flex gap-1 bg-slate-100 rounded-xl p-1">
+          <div className="flex gap-0.5 lg:gap-1 bg-slate-100 rounded-xl p-0.5 lg:p-1">
             {[["month","月"],["week","週"],["day","日"],["map","マップ"]].map(([k,l]) => (
               <button key={k} onClick={() => setCalMode(k)}
-                className={cn("px-3 py-1.5 rounded-lg text-xs font-semibold transition-all",
+                className={cn("px-2.5 py-1 lg:px-3 lg:py-1.5 rounded-lg text-xs font-semibold transition-all",
                   calMode === k ? "bg-white text-indigo-700 shadow-sm" : "text-slate-500 hover:text-slate-700"
                 )}>{l}</button>
             ))}
@@ -2243,7 +2287,18 @@ const CalView = () => {
         </div>
         {/* モバイルビュー */}
         <div className="mobile-card-list p-4">
-          {calMode === "map" ? <MapView/> : <MobileView/>}
+          {calMode === "map" ? <MapView/> : calMode === "month" ? <MonthView/> : calMode === "day" ? (
+            <div>
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center text-white font-bold shadow shadow-indigo-300 shrink-0">{selDay}</div>
+                <div>
+                  <div className="text-sm font-bold text-slate-800">{mn[m].replace("月","")}月{selDay}日（{dn[new Date(y,m,selDay).getDay()]}）</div>
+                  <div className="text-xs text-slate-400">{selCases.length}件の予定</div>
+                </div>
+              </div>
+              <DayView/>
+            </div>
+          ) : <MobileView/>}
         </div>
       </Card>
 
@@ -5103,6 +5158,146 @@ const AREAS_DEFAULT = [
   { id: "okinawa",   l: "沖縄",       flag: "🌺" },
 ];
 
+/* リストモックデータ（TimeTreeライク） */
+const LIST_DATA = [
+  { id: "all",      l: "すべて",                      flag: "🗂️", type: "all",     members: 12, color: "#6366f1", desc: "全リストを一括表示" },
+  { id: "kanto",    l: "不用品回収 チーム関東",           flag: "🗼", type: "shared",  members: 16, color: "#8b5cf6", desc: "関東エリア担当チーム" },
+  { id: "kanagawa", l: "Susanoo 関東 シフト",            flag: "⛵", type: "shared",  members: 8,  color: "#06b6d4", desc: "神奈川・横浜エリア" },
+  { id: "cleaning", l: "Susanoo ハウスクリーニング",      flag: "🧹", type: "shared",  members: 7,  color: "#10b981", desc: "ハウスクリーニング専任" },
+  { id: "kansai",   l: "関西スマコレ~片付けじゃけえ~",   flag: "🌸", type: "private", members: 3,  color: "#f59e0b", desc: "関西エリア" },
+  { id: "fukuoka",  l: "不用品回収 チーム福岡",           flag: "🍜", type: "shared",  members: 10, color: "#ef4444", desc: "福岡・九州エリア" },
+  { id: "okinawa",  l: "ネコ わん",                     flag: "🐱", type: "private", members: 2,  color: "#ec4899", desc: "コールセンター専用" },
+];
+const LIST_MEMBER_COLORS = ["#6366f1","#8b5cf6","#06b6d4","#10b981","#f59e0b","#ef4444","#ec4899","#0ea5e9","#84cc16"];
+
+/* ═══════════════════════════════════════════════════════
+   リストピッカーモーダル（TimeTreeライク）
+   ═══════════════════════════════════════════════════════ */
+const ListPickerModal = ({ open, onClose, areas, currentArea, onAreaChange }) => {
+  const [tab, setTab] = useState("all");
+  const [newListName, setNewListName] = useState("");
+  const [showNew, setShowNew] = useState(false);
+
+  React.useEffect(() => { if (open) { setShowNew(false); setNewListName(""); } }, [open]);
+
+  if (!open) return null;
+
+  const TABS = [
+    { id: "all",     l: "すべて" },
+    { id: "shared",  l: "共有" },
+    { id: "private", l: "非公開" },
+  ];
+  const filtered = tab === "all" ? LIST_DATA : LIST_DATA.filter(d => d.type === tab || d.id === "all");
+
+  return (
+    <div className="fixed inset-0 z-50 flex flex-col justify-end sm:justify-center sm:items-center">
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose}/>
+      <div className="relative w-full sm:w-96 bg-white sm:rounded-3xl rounded-t-3xl shadow-2xl flex flex-col max-h-[88vh] sm:max-h-[80vh]">
+
+        {/* ドラッグハンドル（モバイル） */}
+        <div className="flex justify-center pt-3 pb-1 sm:hidden">
+          <div className="w-10 h-1 bg-slate-200 rounded-full"/>
+        </div>
+
+        {/* ヘッダー */}
+        <div className="flex items-center justify-between px-5 pt-4 pb-3">
+          <h2 className="text-lg font-bold text-slate-900">カレンダーリスト</h2>
+          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 hover:bg-slate-200 transition-colors">
+            <ic.X size={16} stroke="#64748b"/>
+          </button>
+        </div>
+
+        {/* タブ */}
+        <div className="flex border-b border-slate-100 px-5">
+          {TABS.map(t => (
+            <button key={t.id} onClick={() => setTab(t.id)}
+              className={cn("px-4 py-2.5 text-sm font-semibold border-b-2 transition-all -mb-px",
+                tab === t.id ? "border-indigo-500 text-indigo-600" : "border-transparent text-slate-400 hover:text-slate-600"
+              )}>{t.l}</button>
+          ))}
+        </div>
+
+        {/* コンテンツ */}
+        <div className="flex-1 overflow-y-auto py-2">
+
+          {/* 新規リスト作成行 */}
+          {showNew ? (
+            <div className="mx-4 mb-2 p-3 bg-indigo-50 rounded-2xl border border-indigo-100">
+              <p className="text-xs font-semibold text-indigo-700 mb-2">新規リスト名</p>
+              <div className="flex gap-2">
+                <input autoFocus value={newListName} onChange={e => setNewListName(e.target.value)}
+                  placeholder="例: 東北エリア"
+                  className="flex-1 px-3 py-2 text-sm bg-white border border-indigo-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400"/>
+                <button onClick={() => setShowNew(false)}
+                  className="px-3 py-2 bg-indigo-600 text-white text-sm font-medium rounded-xl hover:bg-indigo-700 transition-colors">作成</button>
+              </div>
+            </div>
+          ) : (
+            <button onClick={() => setShowNew(true)}
+              className="w-full flex items-center gap-3 px-5 py-3 hover:bg-slate-50 transition-colors text-left">
+              <div className="w-12 h-12 rounded-2xl bg-indigo-50 border-2 border-dashed border-indigo-200 flex items-center justify-center shrink-0">
+                <ic.Plus size={20} stroke="#6366f1"/>
+              </div>
+              <span className="text-sm font-medium text-indigo-600">新規リストを作成</span>
+            </button>
+          )}
+
+          <div className="px-5 pb-1">
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest">リスト（{filtered.length}）</p>
+          </div>
+
+          {filtered.map(item => {
+            const isActive = currentArea === item.id;
+            return (
+              <button key={item.id} onClick={() => { onAreaChange(item.id); onClose(); }}
+                className={cn("w-full flex items-center gap-3.5 px-5 py-3 hover:bg-slate-50 transition-colors text-left",
+                  isActive && "bg-indigo-50/50"
+                )}>
+                {/* アイコン */}
+                <div className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 text-2xl shadow-sm"
+                  style={{ background: item.color + "20", border: `1.5px solid ${item.color}35` }}>
+                  {item.flag}
+                </div>
+                {/* テキスト */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <p className={cn("text-sm font-semibold truncate", isActive ? "text-indigo-700" : "text-slate-800")}>{item.l}</p>
+                    {isActive && (
+                      <span className="shrink-0 w-5 h-5 rounded-full bg-indigo-500 flex items-center justify-center">
+                        <ic.Check size={10} stroke="white"/>
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-slate-400 truncate mt-0.5">{item.desc}</p>
+                  {/* メンバーアバター */}
+                  {item.members > 0 && (
+                    <div className="flex items-center gap-1.5 mt-1.5">
+                      <div className="flex -space-x-1.5">
+                        {Array.from({ length: Math.min(item.members, 5) }).map((_, j) => (
+                          <div key={j} className="w-5 h-5 rounded-full border-2 border-white flex items-center justify-center text-[8px] font-bold text-white"
+                            style={{ background: LIST_MEMBER_COLORS[j % LIST_MEMBER_COLORS.length] }}>
+                            {STAFF[j % STAFF.length][0]}
+                          </div>
+                        ))}
+                      </div>
+                      {item.members > 5 && (
+                        <span className="text-[10px] text-slate-400 font-medium">+{item.members - 5}</span>
+                      )}
+                    </div>
+                  )}
+                </div>
+                <ic.ChevR size={16} stroke="#cbd5e1" className="shrink-0"/>
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="h-safe shrink-0 pb-4"/>
+      </div>
+    </div>
+  );
+};
+
 /* ユーザー Context */
 const UserCtx = React.createContext({ name: "加藤", role: "owner", area: "all" });
 
@@ -5116,6 +5311,7 @@ function App() {
   const [currentArea, setCurrentArea] = useState("all");
   const [appNewCaseOpen, setAppNewCaseOpen] = useState(false);
   const [areaMenuOpen, setAreaMenuOpen] = useState(false);
+  const [listPickerOpen, setListPickerOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const nav = useCallback(p => { setPage(p); setMob(false); }, []);
 
@@ -5150,6 +5346,15 @@ function App() {
       {mob && <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40 lg:hidden" onClick={() => setMob(false)}/>}
       {/* エリアメニュー・プロフィールメニューを閉じるオーバーレイ */}
       {(areaMenuOpen || profileOpen) && <div className="fixed inset-0 z-30" onClick={() => { setAreaMenuOpen(false); setProfileOpen(false); }}/>}
+
+      {/* リストピッカーモーダル */}
+      <ListPickerModal
+        open={listPickerOpen}
+        onClose={() => setListPickerOpen(false)}
+        areas={areas}
+        currentArea={currentArea}
+        onAreaChange={setCurrentArea}
+      />
 
       {/* Sidebar */}
       <aside className={cn(
@@ -5187,27 +5392,15 @@ function App() {
 
         {/* エリアセレクター */}
         {sbOpen && (
-          <div className="px-3 pt-3 pb-1 relative">
+          <div className="px-3 pt-3 pb-1">
             <button
-              onClick={() => setAreaMenuOpen(!areaMenuOpen)}
+              onClick={() => setListPickerOpen(true)}
               className="w-full flex items-center gap-2 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm hover:bg-slate-100 transition-colors"
             >
               <span className="text-base">{areaInfo.flag}</span>
               <span className="flex-1 text-left text-xs font-medium text-slate-700">{areaInfo.l}</span>
               <ic.ChevD size={14} className="text-slate-400"/>
             </button>
-            {areaMenuOpen && (
-              <div className="absolute left-3 right-3 top-full mt-1 bg-white rounded-xl border border-slate-200 shadow-lg z-50 overflow-hidden slide-up">
-                {areas.map(a => (
-                  <button key={a.id} onClick={() => { setCurrentArea(a.id); setAreaMenuOpen(false); }}
-                    className={cn("w-full flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-slate-50 transition-colors text-left",
-                      currentArea === a.id ? "bg-indigo-50 text-indigo-700 font-medium" : "text-slate-700")}>
-                    <span>{a.flag}</span><span>{a.l}</span>
-                    {currentArea === a.id && <ic.Check size={14} className="ml-auto"/>}
-                  </button>
-                ))}
-              </div>
-            )}
           </div>
         )}
 
@@ -5354,34 +5547,23 @@ function App() {
             {/* モバイルのみ: リスト切替ドロップダウン */}
             <div className="relative lg:hidden">
               <button
-                onClick={() => setAreaMenuOpen(!areaMenuOpen)}
+                onClick={() => setListPickerOpen(true)}
                 className="flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-700 hover:bg-slate-100 transition-colors"
               >
                 <span>{areaInfo.flag}</span>
                 <span>{areaInfo.l}</span>
                 <ic.ChevD size={12} className="text-slate-400"/>
               </button>
-              {areaMenuOpen && (
-                <div className="absolute left-0 top-full mt-1 w-44 bg-white rounded-xl border border-slate-200 shadow-lg z-50 overflow-hidden slide-up">
-                  {areas.map(a => (
-                    <button key={a.id} onClick={() => { setCurrentArea(a.id); setAreaMenuOpen(false); }}
-                      className={cn("w-full flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-slate-50 transition-colors text-left",
-                        currentArea === a.id ? "bg-indigo-50 text-indigo-700 font-medium" : "text-slate-700")}>
-                      <span>{a.flag}</span><span>{a.l}</span>
-                      {currentArea === a.id && <ic.Check size={14} className="ml-auto"/>}
-                    </button>
-                  ))}
-                </div>
-              )}
             </div>
             <div className="hidden sm:block w-72"><SearchInput value="" onChange={() => {}} placeholder="案件ID、顧客名で検索..."/></div>
           </div>
           <div className="flex items-center gap-1.5">
             {/* エリア表示 (ヘッダー) */}
-            <div className="hidden md:flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 rounded-lg border border-slate-200">
+            <button onClick={() => setListPickerOpen(true)} className="hidden md:flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 rounded-lg border border-slate-200 hover:bg-slate-100 transition-colors">
               <span className="text-sm">{areaInfo.flag}</span>
               <span className="text-xs text-slate-600 font-medium">{areaInfo.l}</span>
-            </div>
+              <ic.ChevD size={11} className="text-slate-400"/>
+            </button>
             <button onClick={() => nav("settings/company")} className={cn(
               "p-2.5 rounded-xl transition-all",
               page.startsWith("settings/") ? "bg-indigo-50 text-indigo-600" : "hover:bg-slate-100 text-slate-500"
@@ -5430,7 +5612,7 @@ function App() {
       <nav className="fixed bottom-0 left-0 right-0 z-40 lg:hidden bg-white/95 backdrop-blur-md border-t border-slate-200/60 safe-area-pb">
         {/* 案件ページのみ: 右上にフローティング新規案件ボタン */}
         {page === "cases" && (
-          <button onClick={() => setAppNewCaseOpen(true)} className="absolute -top-14 right-4 w-12 h-12 bg-indigo-600 text-white rounded-full flex items-center justify-center shadow-lg shadow-indigo-300 hover:bg-indigo-700 transition-colors">
+          <button onClick={() => setAppNewCaseOpen(true)} className="absolute -top-14 right-4 w-12 h-12 bg-indigo-600 text-white rounded-full flex items-center justify-center hover:bg-indigo-700 transition-colors">
             <ic.Plus size={22}/>
           </button>
         )}
