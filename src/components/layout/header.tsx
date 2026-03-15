@@ -10,6 +10,7 @@ import {
   Menu, Settings, Bell, Monitor, Zap, XCircle, CheckCircle,
   Search, X, ArrowLeft,
 } from "lucide-react";
+import { LogoIcon } from "@/components/ui/logo";
 
 interface HeaderProps {
   onToggleSidebar: () => void;
@@ -63,8 +64,11 @@ export function Header({ onToggleSidebar }: HeaderProps) {
   return (
     <header className="flex items-center justify-between h-14 lg:h-16 px-4 lg:px-6 bg-white/80 backdrop-blur-md border-b border-slate-200/60 shrink-0">
       <div className="flex items-center gap-3">
-        {/* Mobile: page title */}
+        {/* Mobile: page title or logo on home */}
         <div className="flex items-center gap-3 lg:hidden">
+          {pathname === "/" ? (
+            <LogoIcon size={28} />
+          ) : null}
           <h1 className="text-base font-bold text-slate-800">{pageTitle}</h1>
         </div>
 
@@ -85,6 +89,20 @@ export function Header({ onToggleSidebar }: HeaderProps) {
         >
           <Search size={20} className="text-slate-500" />
         </button>
+
+        {/* Mobile settings button */}
+        <Link
+          href="/settings"
+          className={cn(
+            "p-2.5 rounded-xl transition-all lg:hidden",
+            pathname === "/settings"
+              ? "bg-indigo-50 text-indigo-600"
+              : "active:bg-slate-100 text-slate-500"
+          )}
+          title="設定"
+        >
+          <Settings size={20} />
+        </Link>
 
         <div className="hidden md:flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 rounded-lg">
           <Monitor size={14} className="text-indigo-500" />

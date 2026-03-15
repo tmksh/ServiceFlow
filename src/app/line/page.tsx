@@ -37,14 +37,14 @@ export default function LinePage() {
           </div>
           <div className="flex items-center gap-2 px-4 py-2 bg-emerald-50 border border-emerald-200 rounded-xl">
             <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse-dot" />
-            <span className="text-sm font-medium text-emerald-700">Webhook接続中</span>
+            <span className="text-sm font-medium text-emerald-700">LINE連携中</span>
           </div>
         </div>
 
         {/* Mobile: connection status */}
         <div className="flex items-center gap-2 px-3 py-2 bg-emerald-50 border border-emerald-200 rounded-xl lg:hidden">
           <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse-dot" />
-          <span className="text-xs font-medium text-emerald-700">Webhook接続中</span>
+          <span className="text-xs font-medium text-emerald-700">LINE連携中</span>
         </div>
 
         {/* Stats */}

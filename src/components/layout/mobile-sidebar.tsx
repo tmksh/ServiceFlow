@@ -4,9 +4,10 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { NAV_ITEMS } from "@/lib/constants";
+import { Logo } from "@/components/ui/logo";
 import {
   LayoutGrid, Inbox, FileText, Calendar, Calculator, BarChart3,
-  Globe, ClipboardList, Layers, X,
+  Globe, ClipboardList, X, Settings,
 } from "lucide-react";
 
 const iconMap: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
@@ -30,15 +31,7 @@ export function MobileSidebar({ open, onClose }: MobileSidebarProps) {
       <aside className="fixed left-0 top-0 z-50 flex flex-col bg-white border-r border-slate-200/60 h-full w-64 lg:hidden animate-slide-in">
         {/* Logo */}
         <div className="flex items-center justify-between h-16 px-5 border-b border-slate-100 shrink-0">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 bg-gradient-to-br from-indigo-500 to-violet-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-200">
-              <Layers size={20} className="text-white" />
-            </div>
-            <div>
-              <h1 className="font-bold text-sm text-slate-800">スマカレ</h1>
-              <p className="text-[10px] text-slate-400">顧客管理プラットフォーム</p>
-            </div>
-          </div>
+          <Logo variant="full" theme="auto" size="sm" />
           <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-slate-100">
             <X size={18} className="text-slate-400" />
           </button>
@@ -80,6 +73,23 @@ export function MobileSidebar({ open, onClose }: MobileSidebarProps) {
             })}
           </div>
         </nav>
+
+        {/* Settings link */}
+        <div className="border-t border-slate-100 p-3 shrink-0">
+          <Link
+            href="/settings"
+            onClick={onClose}
+            className={cn(
+              "flex items-center gap-3 w-full px-3 py-2.5 rounded-xl transition-all duration-200",
+              pathname === "/settings"
+                ? "bg-indigo-50 text-indigo-700"
+                : "text-slate-500 hover:bg-slate-50 hover:text-slate-700"
+            )}
+          >
+            <Settings size={20} className={pathname === "/settings" ? "text-indigo-600" : ""} />
+            <span className="text-sm font-medium">設定</span>
+          </Link>
+        </div>
       </aside>
     </>
   );

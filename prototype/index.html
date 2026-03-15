@@ -107,6 +107,10 @@ const ic = {
   TrendUp:  p => <Sv {...p}><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></Sv>,
   Pause:    p => <Sv {...p}><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></Sv>,
   Play:     p => <Sv {...p}><polygon points="5 3 19 12 5 21 5 3"/></Sv>,
+  BookOpen: p => <Sv {...p}><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/></Sv>,
+  Receipt:  p => <Sv {...p}><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1z"/><line x1="8" y1="9" x2="16" y2="9"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="12" y2="17"/></Sv>,
+  FilePlus: p => <Sv {...p}><path d="M14.5 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></Sv>,
+  Folder:   p => <Sv {...p}><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></Sv>,
   MousePtr: p => <Sv {...p}><path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z"/><path d="M13 13l6 6"/></Sv>,
 };
 
@@ -541,7 +545,7 @@ const LineInbox = () => {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">LINE受信</h1>
-          <SubLabel icon={ic.Zap} text="LINE自動取込"/>
+          
         </div>
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2 px-4 py-2 bg-emerald-50 border border-emerald-200 rounded-xl">
@@ -559,23 +563,14 @@ const LineInbox = () => {
         </div>
       </div>
 
-      {/* コールセンター専用フォーム案内カード */}
-      <div className="flex items-center gap-4 p-4 bg-indigo-50 border border-indigo-200 rounded-2xl">
-        <div className="w-10 h-10 rounded-xl bg-indigo-100 flex items-center justify-center shrink-0">
-          <ic.Phone size={18} stroke="#4f46e5"/>
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-indigo-900">コールセンター受電入力は専用フォームで</p>
-          <p className="text-xs text-indigo-600 mt-0.5">
-            オペレーター専用URL:&nbsp;
-            <code className="bg-indigo-100 px-1.5 py-0.5 rounded text-indigo-700 font-mono text-[11px]">callcenter-form.html</code>
-            &nbsp;をコールセンタースタッフに共有してください
-          </p>
-        </div>
-        <a href="callcenter-form.html" target="_blank" rel="noopener noreferrer"
-          className="shrink-0 px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-semibold hover:bg-indigo-700 transition-colors whitespace-nowrap">
-          フォームを開く
-        </a>
+      {/* コールセンター専用フォーム案内 */}
+      <div className="flex items-center gap-3 px-3 py-2.5 bg-indigo-50 border border-indigo-100 rounded-xl">
+        <ic.Phone size={14} stroke="#6366f1" className="shrink-0"/>
+        <p className="text-xs text-indigo-600">
+          コールセンター専用URL:&nbsp;
+          <code className="bg-indigo-100 px-1 py-0.5 rounded text-indigo-700 font-mono">callcenter-form.html</code>
+          &nbsp;をスタッフに共有してください
+        </p>
       </div>
 
       {/* タブ（LINE取込のみ） */}
@@ -1045,7 +1040,7 @@ const CaseMgmt = () => {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">案件管理</h1>
-          <SubLabel icon={ic.Calendar} text="TimeTree のスケジュール管理を代替"/>
+          
         </div>
         <button className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700 shadow-lg shadow-indigo-200 self-start">
           <ic.Plus size={16}/> 新規案件
@@ -1285,173 +1280,540 @@ const CaseMgmt = () => {
 /* ═══════════════════════════════════════════════════════
    SECTION 8: CALENDAR
    ═══════════════════════════════════════════════════════ */
-const CalView = () => {
-  const [cur, setCur] = useState(new Date(2026, 1, 1));
-  const [selCase, setSelCase] = useState(null);
-  const [selDay, setSelDay] = useState(null);
-  const y = cur.getFullYear(), m = cur.getMonth();
-  const dim = new Date(y, m + 1, 0).getDate(), fd = new Date(y, m, 1).getDay();
-  const ms = `${y}-${String(m + 1).padStart(2, "0")}`;
+/* ─── TimeTree ライク タイムラインカレンダー ─── */
+const TIME_SLOTS = Array.from({ length: 13 }, (_, i) => i + 7); // 7〜19時
 
+/* 時間帯 → ピンカラー（マップビュー用）*/
+const timeBandColor = (timeStr) => {
+  if (!timeStr) return "#94a3b8";
+  const h = parseInt(timeStr.split(":")[0], 10);
+  if (h < 12)  return "#6366f1"; // 午前: indigo
+  if (h < 15)  return "#f59e0b"; // 12〜15時: amber
+  if (h < 17)  return "#10b981"; // 15〜17時: emerald
+  return "#ef4444";              // 17時以降: red
+};
+const timeBandLabel = (timeStr) => {
+  if (!timeStr) return "時間未定";
+  const h = parseInt(timeStr.split(":")[0], 10);
+  if (h < 12)  return "午前";
+  if (h < 15)  return "12〜15時";
+  if (h < 17)  return "15〜17時";
+  return "17時以降";
+};
+
+/* モック訪問先座標（デモ用、相対座標 0〜100） */
+const PIN_COORDS = [
+  { x: 38, y: 30 }, { x: 55, y: 42 }, { x: 62, y: 28 }, { x: 44, y: 55 },
+  { x: 30, y: 48 }, { x: 70, y: 35 }, { x: 50, y: 60 }, { x: 25, y: 35 },
+  { x: 65, y: 58 }, { x: 42, y: 22 }, { x: 58, y: 68 }, { x: 35, y: 65 },
+];
+
+const CalView = () => {
+  const [calMode, setCalMode] = useState("week"); // "month" | "week" | "day" | "map"
+  const [cur, setCur] = useState(new Date(2026, 1, 13)); // 2026/02/13
+  const [selCase, setSelCase] = useState(null);
+  const [selDay, setSelDay] = useState(13);
+  const [mapTooltip, setMapTooltip] = useState(null);
+
+  const y = cur.getFullYear(), m = cur.getMonth();
+  const mn = ["1月","2月","3月","4月","5月","6月","7月","8月","9月","10月","11月","12月"];
+  const dn = ["日","月","火","水","木","金","土"];
+
+  /* 月の日数・週初め */
+  const dim = new Date(y, m + 1, 0).getDate();
+  const fd  = new Date(y, m, 1).getDay();
+  const ms  = `${y}-${String(m + 1).padStart(2, "0")}`;
+  const isToday = d => d === 13 && m === 1 && y === 2026;
+
+  /* 日付→案件マップ */
   const cByDate = useMemo(() => {
     const map = {};
     CASES.forEach(c => { if (!map[c.date]) map[c.date] = []; map[c.date].push(c); });
     return map;
   }, []);
 
-  const days = [];
-  for (let i = 0; i < fd; i++) days.push(null);
-  for (let i = 1; i <= dim; i++) days.push(i);
-  const mn = ["1月","2月","3月","4月","5月","6月","7月","8月","9月","10月","11月","12月"];
-  const dn = ["日","月","火","水","木","金","土"];
-  const isToday = d => d === 13 && m === 1 && y === 2026;
+  /* 選択日の案件 */
+  const selDateStr = `${ms}-${String(selDay).padStart(2, "0")}`;
+  const selCases = cByDate[selDateStr] || CASES.slice(0, 6);
 
-  const selectedDayCases = selDay
-    ? (cByDate[`${ms}-${String(selDay).padStart(2, "0")}`] || [])
-    : (cByDate["2026-02-13"] || CASES.slice(0, 5));
+  /* 週表示: 選択日の週7日 */
+  const weekDays = useMemo(() => {
+    const d = new Date(y, m, selDay);
+    const dow = d.getDay();
+    return Array.from({ length: 7 }, (_, i) => {
+      const dd = new Date(y, m, selDay - dow + i);
+      return { date: dd.getDate(), month: dd.getMonth(), year: dd.getFullYear(), dow: i,
+        dateStr: `${dd.getFullYear()}-${String(dd.getMonth()+1).padStart(2,"0")}-${String(dd.getDate()).padStart(2,"0")}` };
+    });
+  }, [selDay, y, m]);
+
+  /* 週の全案件をスロット配置 */
+  const weekCaseMap = useMemo(() => {
+    const map = {};
+    weekDays.forEach(wd => {
+      map[wd.dateStr] = (cByDate[wd.dateStr] || []).sort((a, b) => (a.time || "99").localeCompare(b.time || "99"));
+    });
+    return map;
+  }, [weekDays, cByDate]);
+
+  /* ─── ビューヘッダー ─── */
+  const navPrev = () => {
+    if (calMode === "month") setCur(new Date(y, m - 1, 1));
+    else if (calMode === "week") setSelDay(d => Math.max(1, d - 7));
+    else setSelDay(d => Math.max(1, d - 1));
+  };
+  const navNext = () => {
+    if (calMode === "month") setCur(new Date(y, m + 1, 1));
+    else if (calMode === "week") setSelDay(d => Math.min(dim, d + 7));
+    else setSelDay(d => Math.min(dim, d + 1));
+  };
+  const headerLabel = () => {
+    if (calMode === "month") return `${y}年 ${mn[m]}`;
+    if (calMode === "day")   return `${y}年${mn[m].replace("月","")}月${selDay}日（${dn[new Date(y,m,selDay).getDay()]}）`;
+    const w0 = weekDays[0], w6 = weekDays[6];
+    return `${mn[w0.month]}${w0.date}日 〜 ${mn[w6.month]}${w6.date}日`;
+  };
+
+  /* ─── 月ビュー ─── */
+  const MonthView = () => {
+    const days = [];
+    for (let i = 0; i < fd; i++) days.push(null);
+    for (let i = 1; i <= dim; i++) days.push(i);
+    return (
+      <div>
+        {/* 曜日ヘッダー */}
+        <div className="grid grid-cols-7">
+          {dn.map((d, i) => (
+            <div key={d} className={cn("py-2 text-center text-xs font-semibold border-b border-slate-100",
+              i === 0 ? "text-rose-400" : i === 6 ? "text-blue-400" : "text-slate-400")}>{d}</div>
+          ))}
+        </div>
+        <div className="grid grid-cols-7 border-l border-t border-slate-100">
+          {days.map((d, i) => {
+            const ds = d ? `${ms}-${String(d).padStart(2,"0")}` : null;
+            const dc = ds ? (cByDate[ds] || []) : [];
+            const dow = i % 7;
+            const isSel = d === selDay;
+            return (
+              <div key={i} onClick={() => d && setSelDay(d)}
+                className={cn("border-r border-b border-slate-100 cursor-pointer group transition-colors",
+                  "min-h-[90px] lg:min-h-[110px] p-1",
+                  !d ? "bg-slate-50/40" : isSel ? "bg-indigo-50/60" : "hover:bg-slate-50/80"
+                )}>
+                {d && (
+                  <>
+                    <div className={cn("w-7 h-7 flex items-center justify-center rounded-full text-xs font-semibold mb-1 mx-auto",
+                      isToday(d) ? "bg-indigo-600 text-white shadow-sm shadow-indigo-300" :
+                      isSel ? "bg-indigo-100 text-indigo-700" :
+                      dow === 0 ? "text-rose-500" : dow === 6 ? "text-blue-500" : "text-slate-700"
+                    )}>{d}</div>
+                    <div className="space-y-0.5">
+                      {dc.slice(0, 3).map(c => (
+                        <div key={c.id} onClick={e => { e.stopPropagation(); setSelCase(c); }}
+                          className="flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] truncate cursor-pointer hover:opacity-75"
+                          style={{ background: c.category.color + "18", color: c.category.color }}>
+                          {c.urgent && <ic.Zap size={9}/>}
+                          <span className="truncate font-medium leading-tight">{c.time} {c.customer}</span>
+                        </div>
+                      ))}
+                      {dc.length > 3 && (
+                        <div className="text-[10px] text-slate-400 pl-1 font-medium">+{dc.length - 3}件</div>
+                      )}
+                    </div>
+                  </>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
+
+  /* ─── 週ビュー タイムライン（TimeTreeライク） ─── */
+  const WeekView = () => (
+    <div className="overflow-x-auto">
+      <div style={{ minWidth: 640 }}>
+        {/* 日付ヘッダー行 */}
+        <div className="flex border-b border-slate-100 sticky top-0 bg-white z-10">
+          <div className="w-14 shrink-0 border-r border-slate-100"/>
+          {weekDays.map((wd, i) => {
+            const isSel = wd.date === selDay && wd.month === m;
+            const isT   = wd.date === 13 && wd.month === 1 && wd.year === 2026;
+            return (
+              <div key={i} onClick={() => { if(wd.month === m) setSelDay(wd.date); }}
+                className={cn("flex-1 text-center py-2.5 cursor-pointer select-none transition-colors",
+                  isSel ? "bg-indigo-50" : "hover:bg-slate-50"
+                )}>
+                <div className={cn("text-[11px] font-medium mb-1",
+                  i === 0 ? "text-rose-400" : i === 6 ? "text-blue-400" : "text-slate-400")}>{dn[i]}</div>
+                <div className={cn("w-8 h-8 flex items-center justify-center rounded-full text-sm font-bold mx-auto",
+                  isT ? "bg-indigo-600 text-white shadow shadow-indigo-300" :
+                  isSel ? "bg-indigo-100 text-indigo-700" :
+                  i === 0 ? "text-rose-500" : i === 6 ? "text-blue-500" : "text-slate-700"
+                )}>{wd.date}</div>
+                {/* 案件数ドット */}
+                {(weekCaseMap[wd.dateStr] || []).length > 0 && (
+                  <div className="flex justify-center gap-0.5 mt-1">
+                    {(weekCaseMap[wd.dateStr] || []).slice(0,3).map((c, j) => (
+                      <div key={j} className="w-1.5 h-1.5 rounded-full" style={{ background: c.category.color }}/>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* タイムスロット */}
+        <div className="overflow-y-auto" style={{ maxHeight: 480 }}>
+          {TIME_SLOTS.map(hour => (
+            <div key={hour} className="flex border-b border-slate-50 group min-h-[56px]">
+              {/* 時刻ラベル */}
+              <div className="w-14 shrink-0 border-r border-slate-100 text-[11px] text-slate-400 text-right pr-2 pt-1 font-medium select-none">
+                {hour}:00
+              </div>
+              {/* 各日のセル */}
+              {weekDays.map((wd, di) => {
+                const dayCases = (weekCaseMap[wd.dateStr] || []).filter(c => {
+                  if (!c.time) return false;
+                  const h = parseInt(c.time.split(":")[0], 10);
+                  return h === hour;
+                });
+                const isSel = wd.date === selDay && wd.month === m;
+                return (
+                  <div key={di} className={cn("flex-1 border-r border-slate-50 p-0.5 relative",
+                    isSel ? "bg-indigo-50/30" : "hover:bg-slate-50/60"
+                  )}>
+                    {dayCases.map(c => (
+                      <div key={c.id} onClick={() => setSelCase(c)}
+                        className="mb-0.5 rounded-lg px-2 py-1 cursor-pointer hover:opacity-80 transition-opacity text-white text-[11px] leading-tight shadow-sm"
+                        style={{ background: c.category.color }}>
+                        <div className="font-semibold truncate flex items-center gap-1">
+                          {c.urgent && <ic.Zap size={9}/>}{c.time}
+                        </div>
+                        <div className="truncate opacity-90">{c.customer}</div>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+
+  /* ─── 日ビュー タイムライン ─── */
+  const DayView = () => (
+    <div className="overflow-y-auto" style={{ maxHeight: 560 }}>
+      {TIME_SLOTS.map(hour => {
+        const slotCases = selCases.filter(c => c.time && parseInt(c.time.split(":")[0],10) === hour);
+        return (
+          <div key={hour} className={cn("flex border-b border-slate-50 min-h-[60px]",
+            slotCases.length > 0 ? "" : "hover:bg-slate-50/40")}>
+            <div className="w-16 shrink-0 text-[12px] text-slate-400 text-right pr-3 pt-2 font-medium select-none border-r border-slate-100">
+              {hour}:00
+            </div>
+            <div className="flex-1 px-2 py-1 space-y-1">
+              {slotCases.map(c => (
+                <div key={c.id} onClick={() => setSelCase(c)}
+                  className="flex items-center gap-3 p-2.5 rounded-xl cursor-pointer hover:shadow-sm transition-all border border-transparent hover:border-slate-100"
+                  style={{ background: c.category.color + "12" }}>
+                  <div className="w-1.5 h-10 rounded-full shrink-0" style={{ background: c.category.color }}/>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-sm font-semibold text-slate-800">{c.time}</span>
+                      <span className="text-sm text-slate-700">{c.customer}</span>
+                      {c.urgent && <Badge className="bg-amber-100 text-amber-700"><ic.Zap size={10}/>緊急</Badge>}
+                    </div>
+                    <div className="text-xs text-slate-400 mt-0.5">{c.category.label} · {c.addr} · {c.staff}</div>
+                  </div>
+                  <div className="text-sm font-semibold text-slate-600 shrink-0">{c.amount > 0 ? fmt(c.amount) : ""}</div>
+                </div>
+              ))}
+              {slotCases.length === 0 && <div className="h-4"/>}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+
+  /* ─── マップビュー（時間帯別カラーピン） ─── */
+  const MapView = () => {
+    const pinCases = selCases.filter(c => c.addr).slice(0, 12);
+    const bands = [
+      { label: "午前（〜12時）",    color: "#6366f1" },
+      { label: "12〜15時",         color: "#f59e0b" },
+      { label: "15〜17時",         color: "#10b981" },
+      { label: "17時以降",         color: "#ef4444" },
+    ];
+    return (
+      <div className="space-y-4">
+        {/* 凡例 */}
+        <div className="flex flex-wrap gap-3 px-1">
+          {bands.map(b => (
+            <div key={b.label} className="flex items-center gap-1.5">
+              <div className="w-3 h-3 rounded-full" style={{ background: b.color }}/>
+              <span className="text-xs text-slate-500">{b.label}</span>
+            </div>
+          ))}
+        </div>
+
+        {/* 地図エリア（SVGモックマップ） */}
+        <div className="relative bg-gradient-to-br from-slate-100 to-slate-200 rounded-2xl overflow-hidden border border-slate-200" style={{ height: 380 }}>
+          {/* 背景グリッド（道路風） */}
+          <svg width="100%" height="100%" className="absolute inset-0 opacity-30" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <pattern id="roadGrid" width="60" height="60" patternUnits="userSpaceOnUse">
+                <line x1="0" y1="30" x2="60" y2="30" stroke="#94a3b8" strokeWidth="1.5"/>
+                <line x1="30" y1="0" x2="30" y2="60" stroke="#94a3b8" strokeWidth="1"/>
+              </pattern>
+              <pattern id="majorRoad" width="180" height="180" patternUnits="userSpaceOnUse">
+                <line x1="0" y1="90" x2="180" y2="90" stroke="#64748b" strokeWidth="3"/>
+                <line x1="90" y1="0" x2="90" y2="180" stroke="#64748b" strokeWidth="2"/>
+              </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#roadGrid)"/>
+            <rect width="100%" height="100%" fill="url(#majorRoad)"/>
+          </svg>
+          {/* 地名ラベル（デモ） */}
+          {["渋谷区","新宿区","港区","品川区","目黒区"].map((t, i) => (
+            <div key={t} className="absolute text-[11px] font-medium text-slate-400 select-none pointer-events-none"
+              style={{ left: `${15 + i * 17}%`, top: `${20 + (i%3)*25}%` }}>{t}</div>
+          ))}
+
+          {/* ピン */}
+          {pinCases.map((c, i) => {
+            const pos = PIN_COORDS[i % PIN_COORDS.length];
+            const color = timeBandColor(c.time);
+            const isHovered = mapTooltip?.id === c.id;
+            return (
+              <div key={c.id}
+                onMouseEnter={() => setMapTooltip(c)}
+                onMouseLeave={() => setMapTooltip(null)}
+                onClick={() => setSelCase(c)}
+                className="absolute cursor-pointer transition-transform hover:scale-125"
+                style={{ left: `${pos.x}%`, top: `${pos.y}%`, transform: "translate(-50%,-100%)" }}>
+                {/* ピン本体 */}
+                <svg width="28" height="36" viewBox="0 0 28 36" fill="none" xmlns="http://www.w3.org/2000/svg"
+                  style={{ filter: isHovered ? `drop-shadow(0 4px 8px ${color}88)` : `drop-shadow(0 2px 4px ${color}44)` }}>
+                  <path d="M14 0C6.27 0 0 6.27 0 14c0 10.5 14 22 14 22S28 24.5 28 14C28 6.27 21.73 0 14 0z"
+                    fill={color}/>
+                  <circle cx="14" cy="14" r="6" fill="white" opacity="0.9"/>
+                  <text x="14" y="18" textAnchor="middle" fontSize="9" fontWeight="700" fill={color}>{i+1}</text>
+                </svg>
+                {/* ツールチップ */}
+                {isHovered && (
+                  <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 bg-slate-900 text-white rounded-xl px-3 py-2 text-xs whitespace-nowrap z-50 shadow-xl slide-up pointer-events-none"
+                    style={{ minWidth: 160 }}>
+                    <div className="font-bold">{c.customer}</div>
+                    <div className="text-slate-300 mt-0.5">{c.time} · {c.category.label}</div>
+                    <div className="text-slate-400 mt-0.5 truncate" style={{ maxWidth: 180 }}>{c.addr}</div>
+                    <div className="absolute top-full left-1/2 -translate-x-1/2 w-2 h-2 bg-slate-900 rotate-45 -mt-1"/>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+
+          {/* 日付表示 */}
+          <div className="absolute top-3 right-3 bg-white/90 backdrop-blur rounded-xl px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm border border-slate-200">
+            {mn[m].replace("月","")}月{selDay}日 · {selCases.length}件
+          </div>
+        </div>
+
+        {/* ピン一覧リスト */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          {pinCases.map((c, i) => (
+            <div key={c.id} onClick={() => setSelCase(c)}
+              className="flex items-center gap-3 p-3 rounded-xl border border-slate-100 hover:border-slate-200 bg-white cursor-pointer hover:shadow-sm transition-all">
+              <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0"
+                style={{ background: timeBandColor(c.time) }}>
+                {i+1}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium text-slate-800">{c.customer}</span>
+                  <span className="text-xs px-1.5 py-0.5 rounded-full font-medium" style={{ background: timeBandColor(c.time)+"18", color: timeBandColor(c.time) }}>
+                    {timeBandLabel(c.time)}
+                  </span>
+                </div>
+                <div className="text-xs text-slate-400 truncate mt-0.5">{c.addr}</div>
+              </div>
+              <div className="text-xs text-slate-500 shrink-0">{c.time}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  /* ─── モバイル専用: コンパクト週セレクター + 日タイムライン ─── */
+  const MobileView = () => (
+    <div>
+      {/* 横スクロール週ピル */}
+      <div className="flex gap-1.5 overflow-x-auto pb-2 scrollbar-hide">
+        {weekDays.map((wd, i) => {
+          const dayCases = weekCaseMap[wd.dateStr] || [];
+          const isSel = wd.date === selDay && wd.month === m;
+          const isT   = wd.date === 13 && wd.month === 1 && wd.year === 2026;
+          return (
+            <div key={i} onClick={() => { if(wd.month === m) setSelDay(wd.date); }}
+              className={cn("flex flex-col items-center rounded-2xl px-2.5 py-2 cursor-pointer transition-colors shrink-0 min-w-[44px]",
+                isSel ? "bg-indigo-600" : isT ? "bg-indigo-100" : "bg-white border border-slate-100"
+              )}>
+              <span className={cn("text-[10px] font-medium",
+                isSel ? "text-indigo-200" : i === 0 ? "text-rose-400" : i === 6 ? "text-blue-400" : "text-slate-400")}>{dn[i]}</span>
+              <span className={cn("text-base font-bold mt-0.5",
+                isSel ? "text-white" : isT ? "text-indigo-700" : i === 0 ? "text-rose-500" : i === 6 ? "text-blue-500" : "text-slate-700")}>{wd.date}</span>
+              <div className="flex gap-0.5 mt-1">
+                {dayCases.slice(0,3).map((c,j) => <div key={j} className={cn("w-1 h-1 rounded-full", isSel ? "bg-indigo-200" : "")} style={isSel ? {} : { background: c.category.color }}/>)}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      {/* 選択日のタイムライン */}
+      <div className="mt-3 space-y-1">
+        {selCases.length === 0 ? (
+          <div className="text-center py-12 text-slate-300">
+            <ic.Calendar size={40} className="mx-auto mb-3 opacity-40"/>
+            <p className="text-sm">この日の予定はありません</p>
+          </div>
+        ) : selCases.map(c => (
+          <div key={c.id} onClick={() => setSelCase(c)}
+            className="flex items-center gap-3 p-3.5 rounded-2xl active:scale-[0.98] transition-transform cursor-pointer"
+            style={{ background: c.category.color + "10", border: `1px solid ${c.category.color}25` }}>
+            <div className="text-center shrink-0 w-12">
+              <div className="text-sm font-bold" style={{ color: c.category.color }}>{c.time || "--"}</div>
+            </div>
+            <div className="w-0.5 h-10 rounded-full shrink-0" style={{ background: c.category.color }}/>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span className="text-sm font-semibold text-slate-800">{c.customer}</span>
+                {c.urgent && <Badge className="bg-amber-100 text-amber-700 text-[10px]"><ic.Zap size={9}/>緊急</Badge>}
+              </div>
+              <p className="text-xs text-slate-400 truncate mt-0.5">{c.category.label} · {c.staff}</p>
+            </div>
+            <ic.ChevR size={16} className="text-slate-300 shrink-0"/>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 
   return (
-    <div className="space-y-5 fade-in">
-      <div className="flex items-center justify-between">
+    <div className="space-y-4 fade-in">
+      {/* ─── ヘッダー ─── */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">スケジュール管理</h1>
-          <SubLabel icon={ic.Calendar} text="TimeTree のカレンダーを完全代替"/>
+          
         </div>
-        <button className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700">
+        <button className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700 shadow-sm shadow-indigo-200 self-start sm:self-auto">
           <ic.Plus size={16}/> 予定追加
         </button>
       </div>
 
-      <Card className="p-4 lg:p-5">
-        <div className="flex items-center justify-between mb-4 lg:mb-5">
-          <button onClick={() => setCur(new Date(y, m - 1, 1))} className="p-2 rounded-lg hover:bg-slate-100"><ic.ChevL size={20}/></button>
-          <h2 className="text-lg font-bold text-slate-800">{y}年 {mn[m]}</h2>
-          <button onClick={() => setCur(new Date(y, m + 1, 1))} className="p-2 rounded-lg hover:bg-slate-100"><ic.ChevR size={20}/></button>
-        </div>
-
-        {/* ── デスクトップ: 月表示カレンダー ── */}
-        <div className="desktop-table">
-          <div className="grid grid-cols-7 gap-px bg-slate-200 rounded-xl overflow-hidden border border-slate-200">
-            {dn.map((d, i) => (
-              <div key={d} className={cn("py-2.5 text-center text-xs font-semibold bg-slate-50",
-                i === 0 ? "text-red-400" : i === 6 ? "text-blue-400" : "text-slate-400")}>{d}</div>
-            ))}
-            {days.map((d, i) => {
-              const ds = d ? `${ms}-${String(d).padStart(2, "0")}` : null;
-              const dc = ds ? (cByDate[ds] || []) : [];
-              const dow = i % 7;
-              const isSelected = d === selDay;
-              return (
-                <div key={i}
-                  onClick={() => d && setSelDay(d === selDay ? null : d)}
-                  className={cn("min-h-[100px] p-1.5 transition-colors",
-                    !d && "bg-slate-50/50",
-                    d && isSelected ? "bg-indigo-50 cursor-pointer" : d && "bg-white hover:bg-slate-50 cursor-pointer"
-                  )}>
-                  {d && (
-                    <>
-                      <div className={cn("w-7 h-7 flex items-center justify-center rounded-lg text-sm font-medium mb-1",
-                        isToday(d) ? "bg-indigo-600 text-white" :
-                        isSelected ? "bg-indigo-100 text-indigo-700" :
-                        dow === 0 ? "text-red-500" : dow === 6 ? "text-blue-500" : "text-slate-700")}>
-                        {d}
-                      </div>
-                      <div className="space-y-0.5">
-                        {dc.slice(0, 3).map(c => (
-                          <div key={c.id}
-                            onClick={e => { e.stopPropagation(); setSelCase(c); }}
-                            className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] truncate hover:opacity-80 cursor-pointer"
-                            style={{ background: c.category.color + "15", color: c.category.color }}>
-                            {c.urgent && <ic.Zap size={10}/>}
-                            <span className="truncate font-medium">{c.time} {c.customer}</span>
-                          </div>
-                        ))}
-                        {dc.length > 3 && <div className="text-[10px] text-slate-400 pl-1.5">+{dc.length - 3}件</div>}
-                      </div>
-                    </>
-                  )}
-                </div>
-              );
-            })}
+      {/* ─── ビュー切り替え + ナビゲーション ─── */}
+      <Card className="p-3">
+        <div className="flex items-center justify-between gap-2 flex-wrap">
+          {/* ナビゲーション */}
+          <div className="flex items-center gap-2">
+            <button onClick={navPrev} className="p-2 rounded-xl hover:bg-slate-100 active:bg-slate-200 transition-colors">
+              <ic.ChevL size={18}/>
+            </button>
+            <button onClick={() => setSelDay(13)} className="px-3 py-1.5 text-xs font-semibold text-indigo-600 bg-indigo-50 rounded-xl hover:bg-indigo-100 transition-colors">
+              今日
+            </button>
+            <button onClick={navNext} className="p-2 rounded-xl hover:bg-slate-100 active:bg-slate-200 transition-colors">
+              <ic.ChevR size={18}/>
+            </button>
+            <span className="text-sm font-bold text-slate-700 ml-1">{headerLabel()}</span>
           </div>
-        </div>
-
-        {/* ── モバイル: コンパクトカレンダー ── */}
-        <div className="mobile-card-list">
-          <div className="grid grid-cols-7 mb-1">
-            {dn.map((d, i) => (
-              <div key={d} className={cn("py-1.5 text-center text-[11px] font-semibold",
-                i === 0 ? "text-red-400" : i === 6 ? "text-blue-400" : "text-slate-400")}>{d}</div>
+          {/* ビュー切り替えタブ */}
+          <div className="flex gap-1 bg-slate-100 rounded-xl p-1">
+            {[["month","月"],["week","週"],["day","日"],["map","マップ"]].map(([k,l]) => (
+              <button key={k} onClick={() => setCalMode(k)}
+                className={cn("px-3 py-1.5 rounded-lg text-xs font-semibold transition-all",
+                  calMode === k ? "bg-white text-indigo-700 shadow-sm" : "text-slate-500 hover:text-slate-700"
+                )}>{l}</button>
             ))}
-          </div>
-          <div className="grid grid-cols-7 gap-1">
-            {days.map((d, i) => {
-              const ds = d ? `${ms}-${String(d).padStart(2, "0")}` : null;
-              const dc = ds ? (cByDate[ds] || []) : [];
-              const dow = i % 7;
-              const isSelected = d === selDay;
-              return (
-                <div key={i} onClick={() => d && setSelDay(d === selDay ? null : d)}
-                  className={cn("h-10 flex flex-col items-center justify-center rounded-lg relative cursor-pointer transition-colors",
-                    !d && "opacity-0 pointer-events-none",
-                    d && isSelected ? "bg-indigo-600" : d && isToday(d) ? "bg-indigo-100" : d && "hover:bg-slate-100"
-                  )}>
-                  {d && (
-                    <>
-                      <span className={cn("text-sm font-medium leading-none",
-                        isSelected ? "text-white" :
-                        isToday(d) ? "text-indigo-700" :
-                        dow === 0 ? "text-red-500" : dow === 6 ? "text-blue-500" : "text-slate-700"
-                      )}>{d}</span>
-                      {dc.length > 0 && (
-                        <span className={cn("w-1 h-1 rounded-full mt-0.5", isSelected ? "bg-white" : "bg-indigo-400")}/>
-                      )}
-                    </>
-                  )}
-                </div>
-              );
-            })}
           </div>
         </div>
       </Card>
 
-      <Card className="p-4 lg:p-5">
-        <h3 className="font-bold text-slate-800 mb-4">
-          {selDay ? `${mn[m].replace("月","")}月${selDay}日の予定` : "今日の予定 — 2月13日"}
-          <span className="ml-2 text-sm font-normal text-slate-400">{selectedDayCases.length}件</span>
-        </h3>
-        {selectedDayCases.length === 0 ? (
-          <div className="text-center py-10 text-slate-400">
-            <ic.Calendar size={36} className="mx-auto mb-3 opacity-30"/>
-            <p className="text-sm">この日の予定はありません</p>
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {selectedDayCases.slice(0, 5).map(c => (
-              <div key={c.id}
-                onClick={() => setSelCase(c)}
-                className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 border border-slate-100 cursor-pointer active:bg-slate-100">
-                <div className="text-center min-w-[42px]"><div className="text-sm font-bold text-slate-800">{c.time}</div></div>
-                <div className="w-1 h-10 rounded-full shrink-0" style={{ background: c.category.color }}/>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-sm font-medium text-slate-800">{c.customer}</span>
-                    <Badge className={ST[c.status].bg}>{ST[c.status].l}</Badge>
-                    {c.urgent && <Badge className="bg-amber-100 text-amber-700 border border-amber-200"><ic.Zap size={12}/>緊急</Badge>}
-                  </div>
-                  <p className="text-xs text-slate-400 mt-0.5 truncate">{c.category.label} · {c.pref} · {c.staff}</p>
-                </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  <span className="text-sm font-semibold text-slate-600 hidden sm:inline">{c.amount > 0 ? fmt(c.amount) : ""}</span>
-                  <ic.ChevR size={16} className="text-slate-300"/>
+      {/* ─── カレンダー本体 ─── */}
+      <Card className="overflow-hidden">
+        {/* デスクトップビュー */}
+        <div className="desktop-table">
+          {calMode === "month" && <MonthView/>}
+          {calMode === "week"  && <WeekView/>}
+          {calMode === "day"   && (
+            <div className="p-4">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center text-white font-bold shadow shadow-indigo-300 shrink-0">{selDay}</div>
+                <div>
+                  <div className="text-sm font-bold text-slate-800">{mn[m].replace("月","")}月{selDay}日（{dn[new Date(y,m,selDay).getDay()]}）</div>
+                  <div className="text-xs text-slate-400">{selCases.length}件の予定</div>
                 </div>
               </div>
-            ))}
-          </div>
-        )}
+              <DayView/>
+            </div>
+          )}
+          {calMode === "map" && <div className="p-4"><MapView/></div>}
+        </div>
+        {/* モバイルビュー */}
+        <div className="mobile-card-list p-4">
+          {calMode === "map" ? <MapView/> : <MobileView/>}
+        </div>
       </Card>
 
-      {/* カレンダーからの案件詳細モーダル */}
+      {/* ─── 月/週ビュー時: 選択日サマリーパネル ─── */}
+      {(calMode === "month" || calMode === "week") && (
+        <Card className="p-4 desktop-table">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="font-bold text-slate-800 text-sm">
+              {mn[m].replace("月","")}月{selDay}日の予定
+              <span className="ml-2 text-slate-400 font-normal">{selCases.length}件</span>
+            </h3>
+            <button onClick={() => setCalMode("day")} className="text-xs text-indigo-600 hover:text-indigo-700 font-medium">
+              詳細を見る →
+            </button>
+          </div>
+          {selCases.length === 0 ? (
+            <p className="text-sm text-slate-400 py-4 text-center">この日の予定はありません</p>
+          ) : (
+            <div className="space-y-1.5">
+              {selCases.slice(0, 4).map(c => (
+                <div key={c.id} onClick={() => setSelCase(c)}
+                  className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-slate-50 cursor-pointer group transition-colors border border-transparent hover:border-slate-100">
+                  <div className="text-xs font-bold text-slate-500 w-10 shrink-0">{c.time || "--"}</div>
+                  <div className="w-1.5 h-8 rounded-full shrink-0" style={{ background: c.category.color }}/>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium text-slate-800">{c.customer}</span>
+                      <Badge className={ST[c.status].bg}>{ST[c.status].l}</Badge>
+                      {c.urgent && <Badge className="bg-amber-100 text-amber-700"><ic.Zap size={10}/>緊急</Badge>}
+                    </div>
+                    <p className="text-xs text-slate-400 truncate">{c.category.label} · {c.staff}</p>
+                  </div>
+                  <span className="text-sm font-semibold text-slate-600 shrink-0">{c.amount > 0 ? fmt(c.amount) : ""}</span>
+                </div>
+              ))}
+              {selCases.length > 4 && (
+                <button onClick={() => setCalMode("day")} className="w-full text-center text-xs text-indigo-600 hover:text-indigo-700 font-medium py-2">
+                  +{selCases.length - 4}件を表示
+                </button>
+              )}
+            </div>
+          )}
+        </Card>
+      )}
+
       {selCase && <CaseDetailModal c={selCase} onClose={() => setSelCase(null)}/>}
     </div>
   );
@@ -1794,8 +2156,8 @@ const AddAreaForm = ({ areas, onAreasChange }) => {
   );
 };
 
-const SetPage = ({ currentRole, onRoleChange, areas = AREAS_DEFAULT, onAreasChange, currentArea, onAreaChange }) => {
-  const [stab, setStab] = useState("line");
+const SetPage = ({ tab = "company", onNav, currentRole, onRoleChange, areas = AREAS_DEFAULT, onAreasChange, currentArea, onAreaChange }) => {
+  const stab = tab;
   const [cats, setCats] = useState(CATS.map(c => ({ ...c, editable: false })));
   const [newCatName, setNewCatName] = useState("");
   const [newCatColor, setNewCatColor] = useState("#6366f1");
@@ -1814,63 +2176,148 @@ const SetPage = ({ currentRole, onRoleChange, areas = AREAS_DEFAULT, onAreasChan
   const removeCat = id => setCats(prev => prev.filter(c => c.id !== id));
   const toggleStaff = id => setStaffList(prev => prev.map(s => s.id === id ? { ...s, active: !s.active } : s));
 
-  const SETTINGS_TABS = [
-    { id: "line",    l: "LINE連携",   I: ic.Msg     },
-    { id: "labels",  l: "ラベル管理", I: ic.Layers  },
-    { id: "areas",   l: "リスト管理", I: ic.MapPin  },
-    { id: "staff",   l: "従業員管理", I: ic.Users   },
-    { id: "roles",   l: "権限管理",   I: ic.Shield  },
-    { id: "notify",  l: "通知設定",   I: ic.Bell    },
-    { id: "company", l: "会社情報",   I: ic.Building },
-  ];
+  const PAGE_META = {
+    labels:  { l: "ラベル管理",  I: ic.Layers,   desc: "スケジュール・案件の色分けラベルを管理" },
+    areas:   { l: "リスト管理",  I: ic.MapPin,   desc: "対応エリア・担当エリアのリストを管理" },
+    staff:   { l: "従業員管理",  I: ic.Users,    desc: "スタッフの招待・アクティブ状態を管理" },
+    roles:   { l: "権限管理",    I: ic.Shield,   desc: "ロール別のアクセス権限を設定" },
+    company: { l: "会社情報",    I: ic.Building, desc: "会社情報・通知設定・LINE連携を管理" },
+  };
+  const meta = PAGE_META[stab] || PAGE_META.company;
+  const MetaIcon = meta.I;
 
   return (
     <div className="space-y-5 fade-in">
-      <div><h1 className="text-2xl font-bold text-slate-900">設定</h1></div>
+      <div className="flex items-center gap-3">
+        <div className="w-10 h-10 rounded-2xl bg-indigo-50 flex items-center justify-center">
+          <MetaIcon size={20} stroke="#4f46e5"/>
+        </div>
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">{meta.l}</h1>
+          <p className="text-xs text-slate-400 mt-0.5">{meta.desc}</p>
+        </div>
+      </div>
 
-      {/* タブ切り替え */}
+      {/* 設定サブナビ */}
       <div className="flex gap-1 flex-wrap bg-white rounded-2xl p-1.5 border border-slate-200/60 shadow-sm">
-        {SETTINGS_TABS.map(t => (
-          <button key={t.id} onClick={() => setStab(t.id)} className={cn(
+        {NAV_SETTINGS.map(t => (
+          <button key={t.id} onClick={() => onNav && onNav(t.id)} className={cn(
             "flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium transition-all",
-            stab === t.id ? "bg-indigo-50 text-indigo-700 shadow-sm" : "text-slate-400 hover:text-slate-600 hover:bg-slate-50"
+            stab === t.id.replace("settings/", "") ? "bg-indigo-50 text-indigo-700 shadow-sm" : "text-slate-400 hover:text-slate-600 hover:bg-slate-50"
           )}><t.I size={14}/>{t.l}</button>
         ))}
       </div>
 
-      {/* ── LINE連携タブ ── */}
-      {stab === "line" && (
-        <Card className="p-5">
-          <div className="flex items-center gap-3 mb-5">
-            <div className="p-2.5 bg-slate-100 rounded-xl"><ic.Msg size={20} stroke="#475569"/></div>
-            <h3 className="font-bold text-slate-800">LINE連携設定</h3>
-          </div>
-          <div className="space-y-4">
-            {[
-              { l: "LINE Messaging APIトークン", v: "lk_*****...abc", tp: "secret" },
-              { l: "Webhook URL", v: "https://api.sumakare.jp/webhook/line", tp: "text" },
-              { l: "自動取込", v: "autoImport", tp: "toggle" },
-              { l: "緊急案件の自動振り分け", v: "urgentAuto", tp: "toggle" },
-            ].map(item => (
-              <div key={item.l} className="flex items-center justify-between py-2">
-                <span className="text-sm text-slate-600">{item.l}</span>
-                {item.tp === "toggle" ? (
-                  <button onClick={() => setToggles(t => ({ ...t, [item.v]: !t[item.v] }))}
-                    className={cn("relative w-11 h-6 rounded-full transition-colors", toggles[item.v] ? "bg-indigo-600" : "bg-slate-300")}>
-                    <div className={cn("absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform", toggles[item.v] ? "translate-x-5" : "translate-x-0.5")}/>
-                  </button>
-                ) : item.tp === "secret" ? (
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-slate-400 font-mono bg-slate-50 px-3 py-1.5 rounded-lg">{item.v}</span>
-                    <button className="p-1.5 rounded-lg hover:bg-slate-100"><ic.Eye size={16} stroke="#94a3b8"/></button>
-                  </div>
-                ) : (
-                  <span className="text-sm font-medium text-slate-800 bg-slate-50 px-3 py-1.5 rounded-lg">{item.v}</span>
-                )}
+      {/* ── LINE連携 + 通知設定 + 会社情報タブ ── */}
+      {stab === "company" && (
+        <div className="space-y-4">
+          {/* 会社情報 */}
+          <Card className="p-5">
+            <div className="flex items-center gap-3 mb-5">
+              <div className="p-2.5 bg-slate-100 rounded-xl"><ic.Building size={20} stroke="#475569"/></div>
+              <div>
+                <h3 className="font-bold text-slate-800">会社情報</h3>
+                <p className="text-xs text-slate-400">サービス全体に反映される基本情報</p>
               </div>
-            ))}
-          </div>
-        </Card>
+            </div>
+            <div className="space-y-3">
+              {[
+                { l: "会社名",       v: "株式会社サンプル",                    icon: ic.Building },
+                { l: "対応エリア",   v: "関東・東海・関西",                    icon: ic.MapPin   },
+                { l: "スタッフ数",   v: "12名",                                icon: ic.Users    },
+                { l: "ログイン方式", v: "Googleアカウント / メール&パスワード", icon: ic.Key      },
+              ].map(item => (
+                <div key={item.l} className="flex items-center justify-between py-2.5 border-b border-slate-50 last:border-0">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-7 h-7 rounded-lg bg-slate-100 flex items-center justify-center">
+                      <item.icon size={14} stroke="#64748b"/>
+                    </div>
+                    <span className="text-sm text-slate-600">{item.l}</span>
+                  </div>
+                  <span className="text-sm font-medium text-slate-800 bg-slate-50 px-3 py-1.5 rounded-lg">{item.v}</span>
+                </div>
+              ))}
+            </div>
+          </Card>
+
+          {/* 通知設定 */}
+          <Card className="p-5">
+            <div className="flex items-center gap-3 mb-5">
+              <div className="p-2.5 bg-amber-50 rounded-xl"><ic.Bell size={20} stroke="#d97706"/></div>
+              <div>
+                <h3 className="font-bold text-slate-800">通知設定</h3>
+                <p className="text-xs text-slate-400">プッシュ通知・メール通知の送信タイミングを管理</p>
+              </div>
+            </div>
+            <div className="space-y-1">
+              {[
+                { l: "新規案件通知",       k: "notifyNew",    desc: "LINEから案件が届いたとき" },
+                { l: "キャンセル通知",     k: "notifyCancel", desc: "顧客からキャンセル連絡があったとき" },
+                { l: "当日リマインダー",   k: "notifyRemind", desc: "作業当日の朝8時に担当者へ送信" },
+                { l: "日次レポート自動送信", k: "notifyReport", desc: "毎日21時に売上サマリーをメール送信" },
+              ].map(item => (
+                <div key={item.l} className="flex items-center justify-between py-3 border-b border-slate-50 last:border-0">
+                  <div className="flex-1 min-w-0 pr-4">
+                    <p className="text-sm font-medium text-slate-700">{item.l}</p>
+                    <p className="text-xs text-slate-400 mt-0.5">{item.desc}</p>
+                  </div>
+                  <button onClick={() => setToggles(t => ({ ...t, [item.k]: !t[item.k] }))}
+                    className={cn("relative w-11 h-6 rounded-full transition-colors shrink-0", toggles[item.k] ? "bg-indigo-600" : "bg-slate-300")}>
+                    <div className={cn("absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform", toggles[item.k] ? "translate-x-5" : "translate-x-0.5")}/>
+                  </button>
+                </div>
+              ))}
+            </div>
+          </Card>
+
+          {/* LINE連携 */}
+          <Card className="p-5">
+            <div className="flex items-center gap-3 mb-5">
+              <div className="p-2.5 rounded-xl" style={{ background: "#e8f7ee" }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="#06c755"><path d="M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.627-.63h2.386c.349 0 .63.285.63.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.27.173-.51.43-.595.06-.023.136-.033.194-.033.195 0 .375.104.495.254l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.627-.63.349 0 .631.285.631.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.281.629-.629.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.038 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.078 9.436-6.975C23.176 14.393 24 12.458 24 10.314"/></svg>
+              </div>
+              <div>
+                <h3 className="font-bold text-slate-800">LINE連携</h3>
+                <p className="text-xs text-slate-400">LINE Messaging APIを使った案件自動取込の設定</p>
+              </div>
+            </div>
+            <div className="space-y-1">
+              {[
+                { l: "LINE Messaging APIトークン", v: "lk_*****...abc", tp: "secret",  desc: "公式チャネルのアクセストークン" },
+                { l: "Webhook URL",               v: "https://api.sumakare.jp/webhook/line", tp: "copy", desc: "LINE Developersに登録するURL" },
+                { l: "メッセージ自動取込",         v: "autoImport",   tp: "toggle", desc: "受信メッセージを案件として自動登録" },
+                { l: "緊急案件の自動振り分け",     v: "urgentAuto",   tp: "toggle", desc: "「急ぎ」「今日」等のキーワードで優先度UP" },
+              ].map(item => (
+                <div key={item.l} className="flex items-center justify-between py-3 border-b border-slate-50 last:border-0">
+                  <div className="flex-1 min-w-0 pr-4">
+                    <p className="text-sm font-medium text-slate-700">{item.l}</p>
+                    <p className="text-xs text-slate-400 mt-0.5">{item.desc}</p>
+                  </div>
+                  {item.tp === "toggle" ? (
+                    <button onClick={() => setToggles(t => ({ ...t, [item.v]: !t[item.v] }))}
+                      className={cn("relative w-11 h-6 rounded-full transition-colors shrink-0", toggles[item.v] ? "bg-indigo-600" : "bg-slate-300")}>
+                      <div className={cn("absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform", toggles[item.v] ? "translate-x-5" : "translate-x-0.5")}/>
+                    </button>
+                  ) : item.tp === "secret" ? (
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className="text-xs text-slate-400 font-mono bg-slate-50 px-3 py-1.5 rounded-lg">{item.v}</span>
+                      <button className="p-1.5 rounded-lg hover:bg-slate-100"><ic.Eye size={14} stroke="#94a3b8"/></button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className="text-xs text-slate-500 font-mono bg-slate-50 px-3 py-1.5 rounded-lg max-w-[180px] truncate">{item.v}</span>
+                      <button className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600"><ic.Clipboard size={14}/></button>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+            <div className="mt-4 p-3 bg-green-50 border border-green-100 rounded-xl flex items-center gap-3">
+              <div className="w-2 h-2 rounded-full bg-green-500 shrink-0"/>
+              <p className="text-xs text-green-700 font-medium">LINE連携: 接続済み（最終確認: 2026/03/15 09:42）</p>
+            </div>
+          </Card>
+        </div>
       )}
 
       {/* ── ラベル（カテゴリ）管理タブ ── */}
@@ -2086,80 +2533,124 @@ const SetPage = ({ currentRole, onRoleChange, areas = AREAS_DEFAULT, onAreasChan
 
       {/* ── 権限管理タブ ── */}
       {stab === "roles" && (
-        <Card className="p-5">
-          <div className="flex items-center gap-3 mb-5">
-            <div className="p-2.5 bg-slate-100 rounded-xl"><ic.Shield size={20} stroke="#475569"/></div>
-            <h3 className="font-bold text-slate-800">権限管理</h3>
-          </div>
-          <div className="space-y-3">
+        <div className="space-y-4">
+          {/* ロール概要カード */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
             {Object.entries(ROLES).map(([key, r]) => (
-              <div key={key} className={cn("flex items-center justify-between p-4 rounded-xl border-2 transition-all cursor-pointer",
-                currentRole === key ? "border-indigo-300 bg-indigo-50" : "border-slate-100 hover:border-slate-200")}
-                onClick={() => onRoleChange && onRoleChange(key)}>
-                <div className="flex items-center gap-3">
-                  <span className={cn("px-2.5 py-1 rounded-full text-xs font-semibold", r.color)}>{r.l}</span>
-                  <div className="flex gap-3 text-xs text-slate-500">
-                    <span className={cn(r.canEdit ? "text-emerald-600" : "text-slate-300")}>編集: {r.canEdit ? "✓" : "✕"}</span>
-                    <span className={cn(r.canDelete ? "text-emerald-600" : "text-slate-300")}>削除: {r.canDelete ? "✓" : "✕"}</span>
-                    <span className={cn(r.canViewSales ? "text-emerald-600" : "text-slate-300")}>売上閲覧: {r.canViewSales ? "✓" : "✕"}</span>
+              <div key={key}
+                onClick={() => onRoleChange && onRoleChange(key)}
+                className={cn("bg-white rounded-2xl border-2 p-4 cursor-pointer transition-all hover:shadow-sm",
+                  currentRole === key ? "border-indigo-400 shadow-sm shadow-indigo-100" : "border-slate-100 hover:border-slate-200"
+                )}>
+                <div className="flex items-start justify-between mb-3">
+                  <span className={cn("px-2.5 py-1 rounded-full text-xs font-bold", r.color)}>{r.l}</span>
+                  {currentRole === key && (
+                    <div className="w-5 h-5 rounded-full bg-indigo-600 flex items-center justify-center">
+                      <ic.Check size={12} stroke="white"/>
+                    </div>
+                  )}
+                </div>
+                <div className="space-y-1.5 text-xs">
+                  <div className="flex items-center gap-1.5">
+                    <div className={cn("w-4 h-4 rounded flex items-center justify-center", r.canEdit ? "bg-emerald-100" : "bg-slate-100")}>
+                      {r.canEdit ? <ic.Check size={10} stroke="#10b981"/> : <ic.X size={10} stroke="#94a3b8"/>}
+                    </div>
+                    <span className={r.canEdit ? "text-slate-700" : "text-slate-400"}>案件編集</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <div className={cn("w-4 h-4 rounded flex items-center justify-center", r.canDelete ? "bg-emerald-100" : "bg-slate-100")}>
+                      {r.canDelete ? <ic.Check size={10} stroke="#10b981"/> : <ic.X size={10} stroke="#94a3b8"/>}
+                    </div>
+                    <span className={r.canDelete ? "text-slate-700" : "text-slate-400"}>削除操作</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <div className={cn("w-4 h-4 rounded flex items-center justify-center", r.canViewSales ? "bg-emerald-100" : "bg-slate-100")}>
+                      {r.canViewSales ? <ic.Check size={10} stroke="#10b981"/> : <ic.X size={10} stroke="#94a3b8"/>}
+                    </div>
+                    <span className={r.canViewSales ? "text-slate-700" : "text-slate-400"}>売上閲覧</span>
                   </div>
                 </div>
-                {currentRole === key && <ic.Check size={18} stroke="#4f46e5"/>}
               </div>
             ))}
           </div>
-          <p className="text-xs text-slate-400 mt-4">※ デモ用：ロールを切り替えると画面の権限が変わります</p>
-        </Card>
+
+          {/* 権限マトリクステーブル */}
+          <Card className="overflow-hidden">
+            <div className="p-4 border-b border-slate-100 flex items-center gap-3">
+              <div className="p-2 bg-slate-100 rounded-xl"><ic.Shield size={16} stroke="#475569"/></div>
+              <div>
+                <h3 className="font-bold text-slate-800 text-sm">権限マトリクス</h3>
+                <p className="text-xs text-slate-400">各ロールが利用できる機能の一覧</p>
+              </div>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[520px]">
+                <thead>
+                  <tr className="border-b border-slate-100 bg-slate-50">
+                    <th className="text-left px-5 py-3 text-xs font-semibold text-slate-500 w-48">機能</th>
+                    {Object.entries(ROLES).map(([key, r]) => (
+                      <th key={key} className="px-4 py-3 text-center">
+                        <span className={cn("px-2.5 py-1 rounded-full text-xs font-bold", r.color,
+                          currentRole === key ? "ring-2 ring-offset-1 ring-indigo-400" : ""
+                        )}>{r.l}</span>
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {[
+                    { label: "ダッシュボード閲覧", perms: { owner: true, admin: true, staff: true, viewer: true }},
+                    { label: "案件一覧・詳細閲覧", perms: { owner: true, admin: true, staff: true, viewer: true }},
+                    { label: "案件新規登録・編集", perms: { owner: true, admin: true, staff: true, viewer: false }},
+                    { label: "案件削除", perms: { owner: true, admin: false, staff: false, viewer: false }},
+                    { label: "スケジュール閲覧", perms: { owner: true, admin: true, staff: true, viewer: true }},
+                    { label: "LINE受信・取込", perms: { owner: true, admin: true, staff: false, viewer: false }},
+                    { label: "売上レポート閲覧", perms: { owner: true, admin: true, staff: false, viewer: false }},
+                    { label: "広告・LP管理", perms: { owner: true, admin: true, staff: false, viewer: false }},
+                    { label: "日報・精算管理", perms: { owner: true, admin: true, staff: true, viewer: false }},
+                    { label: "スタッフ管理", perms: { owner: true, admin: false, staff: false, viewer: false }},
+                    { label: "設定変更", perms: { owner: true, admin: false, staff: false, viewer: false }},
+                    { label: "コールセンターフォーム入力", perms: { owner: true, admin: true, staff: true, viewer: false }},
+                  ].map((row, i) => (
+                    <tr key={i} className={cn("border-b border-slate-50", i % 2 === 0 ? "bg-white" : "bg-slate-50/40")}>
+                      <td className="px-5 py-3 text-sm text-slate-700">{row.label}</td>
+                      {Object.keys(ROLES).map(key => (
+                        <td key={key} className="px-4 py-3 text-center">
+                          {row.perms[key] ? (
+                            <div className="w-6 h-6 rounded-full bg-emerald-100 flex items-center justify-center mx-auto">
+                              <ic.Check size={12} stroke="#10b981"/>
+                            </div>
+                          ) : (
+                            <div className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center mx-auto">
+                              <ic.X size={12} stroke="#cbd5e1"/>
+                            </div>
+                          )}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+
+          {/* コールセンター向け説明 */}
+          <div className="p-4 bg-amber-50 border border-amber-100 rounded-2xl flex items-start gap-3">
+            <div className="w-8 h-8 rounded-xl bg-amber-100 flex items-center justify-center shrink-0 mt-0.5">
+              <ic.Shield size={16} stroke="#d97706"/>
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-amber-900">外注コールセンターへの共有</p>
+              <p className="text-xs text-amber-700 mt-1">
+                外注コールセンターにはシステムアクセス不要です。受電入力フォームのURL（<code className="bg-amber-100 px-1 rounded text-amber-800 font-mono text-[11px]">callcenter-form.html</code>）のみを共有してください。フォーム入力後、自動でLINEグループへ通知が届きます。
+              </p>
+            </div>
+          </div>
+          <p className="text-xs text-slate-400 px-1">※ デモ用：上のカードをクリックするとロールを切り替えて権限プレビューができます</p>
+        </div>
       )}
 
       {/* ── 通知設定タブ ── */}
-      {stab === "notify" && (
-        <Card className="p-5">
-          <div className="flex items-center gap-3 mb-5">
-            <div className="p-2.5 bg-slate-100 rounded-xl"><ic.Bell size={20} stroke="#475569"/></div>
-            <h3 className="font-bold text-slate-800">通知設定</h3>
-          </div>
-          <div className="space-y-4">
-            {[
-              { l: "新規案件通知", k: "notifyNew" },
-              { l: "キャンセル通知", k: "notifyCancel" },
-              { l: "当日リマインダー", k: "notifyRemind" },
-              { l: "日次レポート自動送信", k: "notifyReport" },
-            ].map(item => (
-              <div key={item.l} className="flex items-center justify-between py-2">
-                <span className="text-sm text-slate-600">{item.l}</span>
-                <button onClick={() => setToggles(t => ({ ...t, [item.k]: !t[item.k] }))}
-                  className={cn("relative w-11 h-6 rounded-full transition-colors", toggles[item.k] ? "bg-indigo-600" : "bg-slate-300")}>
-                  <div className={cn("absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform", toggles[item.k] ? "translate-x-5" : "translate-x-0.5")}/>
-                </button>
-              </div>
-            ))}
-          </div>
-        </Card>
-      )}
-
-      {/* ── 会社情報タブ ── */}
-      {stab === "company" && (
-        <Card className="p-5">
-          <div className="flex items-center gap-3 mb-5">
-            <div className="p-2.5 bg-slate-100 rounded-xl"><ic.Building size={20} stroke="#475569"/></div>
-            <h3 className="font-bold text-slate-800">会社情報</h3>
-          </div>
-          <div className="space-y-4">
-            {[
-              { l: "会社名",     v: "株式会社サンプル" },
-              { l: "対応エリア", v: "関東・東海・関西" },
-              { l: "スタッフ数", v: "12名" },
-              { l: "ログイン方式", v: "Googleアカウント / メール&パスワード" },
-            ].map(item => (
-              <div key={item.l} className="flex items-center justify-between py-2">
-                <span className="text-sm text-slate-600">{item.l}</span>
-                <span className="text-sm font-medium text-slate-800 bg-slate-50 px-3 py-1.5 rounded-lg">{item.v}</span>
-              </div>
-            ))}
-          </div>
-        </Card>
-      )}
     </div>
   );
 };
@@ -2602,8 +3093,1448 @@ const StackedBarSVG = ({ data, keys, colors, w = 500, h = 240 }) => {
 };
 
 /* ═══════════════════════════════════════════════════════
-   SECTION 14: UNIFIED REPORTS PAGE
+   SECTION 13.5: INVOICE (請求書機能)
    ═══════════════════════════════════════════════════════ */
+
+/* ── 請求書モックデータ ── */
+const INV_STATUS = {
+  draft:    { l: "下書き",   bg: "bg-slate-100 text-slate-600",   dot: "#94a3b8" },
+  sent:     { l: "送付済み", bg: "bg-blue-100 text-blue-700",     dot: "#3b82f6" },
+  unpaid:   { l: "未払い",   bg: "bg-amber-100 text-amber-700",   dot: "#f59e0b" },
+  overdue:  { l: "期限超過", bg: "bg-red-100 text-red-700",       dot: "#ef4444" },
+  paid:     { l: "支払済み", bg: "bg-emerald-100 text-emerald-700", dot: "#10b981" },
+  cancelled:{ l: "キャンセル", bg: "bg-slate-100 text-slate-400", dot: "#cbd5e1" },
+};
+
+const INVOICES = [
+  {
+    id: "INV-2026-001", caseId: "CS-0023", status: "paid",
+    customer: "あかざわ たつゆき", phone: "090-6195-0960",
+    addr: "神奈川県逗子市桜山5-39-16 桜山ハイム麗生206号室",
+    issueDate: "2026-02-01", dueDate: "2026-02-15", paidDate: "2026-02-10",
+    cat: "不用品回収",
+    items: [
+      { name: "不用品回収作業費", qty: 1, unit: "式", price: 50000 },
+      { name: "トラック費用（2t）", qty: 1, unit: "台", price: 15000 },
+      { name: "追加料金（特殊品）", qty: 2, unit: "点", price: 5000 },
+    ],
+    tax: 10, note: "当日作業完了。ありがとうございました。", staff: "田中",
+  },
+  {
+    id: "INV-2026-002", caseId: "CS-0031", status: "unpaid",
+    customer: "ほり せいこ", phone: "080-1234-5678",
+    addr: "東京都世田谷区三軒茶屋2-15-8 ライオンズマンション504",
+    issueDate: "2026-02-05", dueDate: "2026-02-20",
+    cat: "ハウスクリーニング",
+    items: [
+      { name: "ハウスクリーニング（3LDK）", qty: 1, unit: "式", price: 85000 },
+      { name: "エアコンクリーニング", qty: 2, unit: "台", price: 12000 },
+    ],
+    tax: 10, note: "", staff: "佐藤",
+  },
+  {
+    id: "INV-2026-003", caseId: "CS-0018", status: "overdue",
+    customer: "むらた けんじ", phone: "070-9876-5432",
+    addr: "埼玉県さいたま市浦和区高砂3-2-1",
+    issueDate: "2026-01-20", dueDate: "2026-02-05",
+    cat: "引っ越し",
+    items: [
+      { name: "引っ越し作業費（3t車）", qty: 1, unit: "式", price: 120000 },
+      { name: "梱包資材", qty: 1, unit: "式", price: 8000 },
+      { name: "エレベーターなし割増", qty: 1, unit: "式", price: 10000 },
+    ],
+    tax: 10, note: "支払期限を過ぎています。ご確認ください。", staff: "鈴木",
+  },
+  {
+    id: "INV-2026-004", caseId: "CS-0044", status: "sent",
+    customer: "たきざわ ゆうこ", phone: "090-2345-6789",
+    addr: "神奈川県横浜市中区山下町22-3",
+    issueDate: "2026-02-10", dueDate: "2026-02-25",
+    cat: "水道修理",
+    items: [
+      { name: "水道修理（蛇口交換）", qty: 1, unit: "式", price: 25000 },
+      { name: "部品代", qty: 1, unit: "式", price: 4500 },
+      { name: "出張費", qty: 1, unit: "件", price: 3000 },
+    ],
+    tax: 10, note: "", staff: "高橋",
+  },
+  {
+    id: "INV-2026-005", caseId: "CS-0052", status: "draft",
+    customer: "かわしま りょう", phone: "080-3456-7890",
+    addr: "東京都港区赤坂4-9-11 パークサイド赤坂302",
+    issueDate: "2026-02-13", dueDate: "2026-02-28",
+    cat: "鍵トラブル",
+    items: [
+      { name: "鍵開け作業費", qty: 1, unit: "式", price: 15000 },
+      { name: "夜間割増", qty: 1, unit: "式", price: 5000 },
+    ],
+    tax: 10, note: "", staff: "渡辺",
+  },
+  {
+    id: "INV-2026-006", caseId: "CS-0008", status: "paid",
+    customer: "いしま たける", phone: "070-4567-8901",
+    addr: "千葉県船橋市本町6-1-18",
+    issueDate: "2026-01-15", dueDate: "2026-01-31", paidDate: "2026-01-28",
+    cat: "不用品回収",
+    items: [
+      { name: "不用品回収作業費（大型）", qty: 1, unit: "式", price: 150000 },
+      { name: "トラック費用（4t）", qty: 1, unit: "台", price: 25000 },
+    ],
+    tax: 10, note: "大型家具含む。作業員2名対応。", staff: "田中",
+  },
+];
+
+/* 請求書合計計算 */
+const calcInvoice = inv => {
+  const sub = inv.items.reduce((s, it) => s + it.price * it.qty, 0);
+  const taxAmt = Math.round(sub * inv.tax / 100);
+  return { sub, taxAmt, total: sub + taxAmt };
+};
+
+/* 会社情報（請求書ヘッダー用） */
+const COMPANY = {
+  name: "株式会社 スマカレサービス",
+  zip: "〒150-0001",
+  addr: "東京都渋谷区神宮前3-1-1 スマカレビル5F",
+  tel: "03-1234-5678",
+  email: "billing@sumakare.jp",
+  bank: "みずほ銀行 渋谷支店（普通） 1234567",
+};
+
+/* ── 請求書一覧 ── */
+const InvoiceList = ({ onSelect, onCreate }) => {
+  const [filter, setFilter] = useState("all");
+  const [search, setSearch] = useState("");
+
+  const filtered = INVOICES.filter(inv => {
+    const matchStatus = filter === "all" || inv.status === filter;
+    const matchSearch = !search ||
+      inv.customer.includes(search) ||
+      inv.id.toLowerCase().includes(search.toLowerCase()) ||
+      inv.caseId.toLowerCase().includes(search.toLowerCase());
+    return matchStatus && matchSearch;
+  });
+
+  /* KPI */
+  const totalUnpaid = INVOICES.filter(i => i.status === "unpaid" || i.status === "overdue")
+    .reduce((s, i) => s + calcInvoice(i).total, 0);
+  const totalPaid = INVOICES.filter(i => i.status === "paid")
+    .reduce((s, i) => s + calcInvoice(i).total, 0);
+  const overdueCount = INVOICES.filter(i => i.status === "overdue").length;
+
+  const filterTabs = [
+    { id: "all",      l: "すべて",   count: INVOICES.length },
+    { id: "draft",    l: "下書き",   count: INVOICES.filter(i => i.status === "draft").length },
+    { id: "sent",     l: "送付済み", count: INVOICES.filter(i => i.status === "sent").length },
+    { id: "unpaid",   l: "未払い",   count: INVOICES.filter(i => i.status === "unpaid").length },
+    { id: "overdue",  l: "期限超過", count: INVOICES.filter(i => i.status === "overdue").length },
+    { id: "paid",     l: "支払済み", count: INVOICES.filter(i => i.status === "paid").length },
+  ];
+
+  return (
+    <div className="space-y-5">
+      {/* KPIカード */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        {[
+          { label: "未収金合計",    value: fmt(totalUnpaid), sub: "未払い・期限超過", color: "text-amber-600",  bg: "bg-amber-50",  icon: ic.Yen    },
+          { label: "入金済み合計",  value: fmt(totalPaid),   sub: "今月",            color: "text-emerald-600",bg: "bg-emerald-50",icon: ic.Check  },
+          { label: "期限超過",      value: `${overdueCount}件`, sub: "早急に対応が必要", color: "text-red-600",  bg: "bg-red-50",    icon: ic.Clock  },
+          { label: "請求書総数",    value: `${INVOICES.length}件`, sub: "今月発行",   color: "text-indigo-600",bg: "bg-indigo-50", icon: ic.FileText},
+        ].map((k, i) => (
+          <Card key={i} className="p-4">
+            <div className="flex items-start justify-between">
+              <div className={cn("w-9 h-9 rounded-xl flex items-center justify-center", k.bg)}>
+                <k.icon size={18} className={k.color}/>
+              </div>
+            </div>
+            <p className={cn("text-xl font-bold mt-3", k.color)}>{k.value}</p>
+            <p className="text-xs text-slate-500 mt-0.5">{k.label}</p>
+            <p className="text-[10px] text-slate-400">{k.sub}</p>
+          </Card>
+        ))}
+      </div>
+
+      {/* 検索 + 新規作成 */}
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+        <div className="relative flex-1 max-w-sm">
+          <ic.Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"/>
+          <input value={search} onChange={e => setSearch(e.target.value)}
+            placeholder="顧客名・請求書番号・案件IDで検索..."
+            className="w-full pl-9 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition-colors"/>
+        </div>
+        <button onClick={onCreate}
+          className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 shadow-sm shadow-indigo-200 transition-colors whitespace-nowrap">
+          <ic.Plus size={16}/> 請求書を作成
+        </button>
+      </div>
+
+      {/* フィルタータブ */}
+      <div className="flex gap-1.5 flex-wrap">
+        {filterTabs.map(t => (
+          <button key={t.id} onClick={() => setFilter(t.id)}
+            className={cn("flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all border",
+              filter === t.id
+                ? "bg-indigo-600 text-white border-indigo-600 shadow-sm"
+                : "bg-white text-slate-500 border-slate-200 hover:border-slate-300"
+            )}>
+            {t.l}
+            {t.count > 0 && (
+              <span className={cn("px-1.5 py-0.5 rounded-full text-[10px] font-bold",
+                filter === t.id ? "bg-indigo-500 text-white" : "bg-slate-100 text-slate-500")}>{t.count}</span>
+            )}
+          </button>
+        ))}
+      </div>
+
+      {/* 請求書リスト */}
+      <Card className="overflow-hidden">
+        {/* デスクトップ テーブル */}
+        <div className="desktop-table">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-slate-100 bg-slate-50/60">
+                {["請求書番号","顧客名","サービス","発行日","支払期限","金額","ステータス"].map(h => (
+                  <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-slate-400">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.length === 0 ? (
+                <tr><td colSpan={7} className="text-center py-12 text-slate-400 text-sm">請求書が見つかりません</td></tr>
+              ) : filtered.map(inv => {
+                const { total } = calcInvoice(inv);
+                const st = INV_STATUS[inv.status];
+                return (
+                  <tr key={inv.id} onClick={() => onSelect(inv)} className="border-b border-slate-50 hover:bg-indigo-50/30 transition-colors cursor-pointer group">
+                    <td className="px-4 py-3.5">
+                      <span className="text-xs font-mono font-semibold text-indigo-600 bg-indigo-50 px-2 py-1 rounded-lg">{inv.id}</span>
+                    </td>
+                    <td className="px-4 py-3.5">
+                      <div className="text-sm font-semibold text-slate-800">{inv.customer}</div>
+                      <div className="text-xs text-slate-400">{inv.caseId}</div>
+                    </td>
+                    <td className="px-4 py-3.5 text-xs text-slate-600">{inv.cat}</td>
+                    <td className="px-4 py-3.5 text-xs text-slate-600">{inv.issueDate}</td>
+                    <td className="px-4 py-3.5">
+                      <span className={cn("text-xs font-medium", inv.status === "overdue" ? "text-red-600" : "text-slate-600")}>
+                        {inv.dueDate}
+                        {inv.status === "overdue" && " ⚠"}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3.5 text-sm font-bold text-slate-800">{fmt(total)}</td>
+                    <td className="px-4 py-3.5">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-1.5">
+                          <div className="w-1.5 h-1.5 rounded-full" style={{ background: st.dot }}/>
+                          <span className={cn("text-xs font-medium px-2 py-0.5 rounded-full", st.bg)}>{st.l}</span>
+                        </div>
+                        <ic.ChevR size={14} className="text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity ml-2"/>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+        {/* モバイル カードリスト */}
+        <div className="mobile-card-list divide-y divide-slate-50">
+          {filtered.length === 0 ? (
+            <div className="text-center py-10 text-slate-400 text-sm">請求書が見つかりません</div>
+          ) : filtered.map(inv => {
+            const { total } = calcInvoice(inv);
+            const st = INV_STATUS[inv.status];
+            return (
+              <div key={inv.id} onClick={() => onSelect(inv)}
+                className="flex items-center gap-3 px-4 py-3.5 active:bg-slate-50 cursor-pointer">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-xs font-mono text-indigo-600 font-semibold">{inv.id}</span>
+                    <span className={cn("text-[10px] font-medium px-2 py-0.5 rounded-full", st.bg)}>{st.l}</span>
+                  </div>
+                  <div className="text-sm font-semibold text-slate-800 mt-0.5">{inv.customer}</div>
+                  <div className="text-xs text-slate-400 mt-0.5">{inv.cat} · 期限: {inv.dueDate}</div>
+                </div>
+                <div className="text-right shrink-0">
+                  <div className="text-sm font-bold text-slate-800">{fmt(total)}</div>
+                  <div className="text-[10px] text-slate-400 mt-0.5">{inv.caseId}</div>
+                </div>
+                <ic.ChevR size={16} className="text-slate-300 shrink-0"/>
+              </div>
+            );
+          })}
+        </div>
+      </Card>
+    </div>
+  );
+};
+
+/* ── 請求書作成フォーム ── */
+const InvoiceForm = ({ onBack, onComplete }) => {
+  const [step, setStep] = useState(1); // 1: 基本情報, 2: 品目, 3: 確認
+  const [form, setForm] = useState({
+    caseId: "CS-0055",
+    customer: "",
+    phone: "",
+    addr: "",
+    cat: "fuyouhin",
+    issueDate: "2026-02-13",
+    dueDate: "2026-02-28",
+    paymentMethod: "bank",
+    note: "",
+    items: [{ name: "", qty: 1, unit: "式", price: 0 }],
+    tax: 10,
+  });
+
+  /* 案件から自動入力シミュレーション */
+  const [autoFilled, setAutoFilled] = useState(false);
+  const autoFill = () => {
+    setForm(f => ({
+      ...f,
+      customer: "やまだ こうへい",
+      phone: "090-5678-9012",
+      addr: "東京都中野区本町5-2-8 コーポ中野203",
+      cat: "fuyouhin",
+      items: [
+        { name: "不用品回収作業費", qty: 1, unit: "式", price: 45000 },
+        { name: "トラック費用（2t）", qty: 1, unit: "台", price: 15000 },
+      ],
+    }));
+    setAutoFilled(true);
+  };
+
+  const setF = (k, v) => setForm(f => ({ ...f, [k]: v }));
+  const addItem = () => setForm(f => ({ ...f, items: [...f.items, { name: "", qty: 1, unit: "式", price: 0 }] }));
+  const removeItem = i => setForm(f => ({ ...f, items: f.items.filter((_, idx) => idx !== i) }));
+  const setItem = (i, k, v) => setForm(f => ({
+    ...f,
+    items: f.items.map((it, idx) => idx === i ? { ...it, [k]: v } : it)
+  }));
+
+  const sub = form.items.reduce((s, it) => s + (Number(it.price) * Number(it.qty)), 0);
+  const taxAmt = Math.round(sub * form.tax / 100);
+  const total = sub + taxAmt;
+
+  const inputCls = "w-full px-3 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition-colors";
+
+  return (
+    <div className="space-y-5">
+      {/* ヘッダー */}
+      <div className="flex items-center gap-3">
+        <button onClick={onBack} className="p-2 rounded-xl hover:bg-slate-100 transition-colors">
+          <ic.ChevL size={20}/>
+        </button>
+        <div>
+          <h2 className="text-lg font-bold text-slate-800">請求書を作成</h2>
+          <p className="text-xs text-slate-400">ステップ {step} / 3</p>
+        </div>
+        {/* ステッパー */}
+        <div className="ml-auto flex items-center gap-2">
+          {[1,2,3].map(s => (
+            <div key={s} className="flex items-center gap-2">
+              <div className={cn("w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all",
+                step > s ? "bg-emerald-500 text-white" :
+                step === s ? "bg-indigo-600 text-white shadow shadow-indigo-300" :
+                "bg-slate-100 text-slate-400"
+              )}>
+                {step > s ? <ic.Check size={12}/> : s}
+              </div>
+              {s < 3 && <div className={cn("w-8 h-0.5 rounded-full", step > s ? "bg-emerald-400" : "bg-slate-200")}/>}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Step 1: 基本情報 */}
+      {step === 1 && (
+        <div className="space-y-4 fade-in">
+          {/* 案件から自動入力 */}
+          <Card className="p-4">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="p-2 bg-indigo-100 rounded-xl"><ic.Zap size={16} stroke="#4f46e5"/></div>
+              <div className="flex-1">
+                <p className="text-sm font-semibold text-slate-800">案件から自動入力</p>
+                <p className="text-xs text-slate-400">案件IDを入力すると顧客情報を自動取得</p>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <input value={form.caseId} onChange={e => setF("caseId", e.target.value)}
+                placeholder="CS-0055" className={inputCls + " flex-1"}/>
+              <button onClick={autoFill}
+                className={cn("px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors whitespace-nowrap",
+                  autoFilled
+                    ? "bg-emerald-100 text-emerald-700 border border-emerald-200"
+                    : "bg-indigo-600 text-white hover:bg-indigo-700"
+                )}>
+                {autoFilled ? "✓ 取得済み" : "自動入力"}
+              </button>
+            </div>
+          </Card>
+          <Card className="p-5 space-y-4">
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">顧客情報</p>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs font-medium text-slate-500 mb-1.5 block">顧客名 <span className="text-red-400">*</span></label>
+                <input value={form.customer} onChange={e => setF("customer", e.target.value)} placeholder="例: やまだ こうへい" className={inputCls}/>
+              </div>
+              <div>
+                <label className="text-xs font-medium text-slate-500 mb-1.5 block">電話番号</label>
+                <input value={form.phone} onChange={e => setF("phone", e.target.value)} placeholder="090-0000-0000" className={inputCls}/>
+              </div>
+            </div>
+            <div>
+              <label className="text-xs font-medium text-slate-500 mb-1.5 block">住所</label>
+              <input value={form.addr} onChange={e => setF("addr", e.target.value)} placeholder="都道府県・市区町村・番地" className={inputCls}/>
+            </div>
+          </Card>
+          <Card className="p-5 space-y-4">
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">請求情報</p>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs font-medium text-slate-500 mb-1.5 block">発行日</label>
+                <input type="date" value={form.issueDate} onChange={e => setF("issueDate", e.target.value)} className={inputCls}/>
+              </div>
+              <div>
+                <label className="text-xs font-medium text-slate-500 mb-1.5 block">支払期限</label>
+                <input type="date" value={form.dueDate} onChange={e => setF("dueDate", e.target.value)} className={inputCls}/>
+              </div>
+            </div>
+            <div>
+              <label className="text-xs font-medium text-slate-500 mb-1.5 block">支払方法</label>
+              <div className="flex gap-2">
+                {[["bank","銀行振込"],["cash","現金"],["credit","クレジット"]].map(([v,l]) => (
+                  <button key={v} onClick={() => setF("paymentMethod", v)}
+                    className={cn("flex-1 py-2.5 rounded-xl text-sm font-medium border-2 transition-all",
+                      form.paymentMethod === v ? "bg-indigo-600 text-white border-indigo-600" : "bg-white text-slate-600 border-slate-200 hover:border-slate-300"
+                    )}>{l}</button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <label className="text-xs font-medium text-slate-500 mb-1.5 block">備考</label>
+              <textarea value={form.note} onChange={e => setF("note", e.target.value)}
+                rows={2} placeholder="振込先・作業内容・特記事項など" className={inputCls + " resize-none"}/>
+            </div>
+          </Card>
+          <button onClick={() => setStep(2)}
+            disabled={!form.customer}
+            className={cn("w-full py-3.5 rounded-xl text-sm font-semibold transition-colors",
+              form.customer ? "bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm shadow-indigo-200" : "bg-slate-100 text-slate-400 cursor-not-allowed"
+            )}>次へ → 品目入力</button>
+        </div>
+      )}
+
+      {/* Step 2: 品目入力 */}
+      {step === 2 && (
+        <div className="space-y-4 fade-in">
+          <Card className="p-5">
+            <div className="flex items-center justify-between mb-4">
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">品目・作業内容</p>
+              <div className="flex items-center gap-2">
+                <label className="text-xs text-slate-500">消費税</label>
+                <select value={form.tax} onChange={e => setF("tax", Number(e.target.value))}
+                  className="text-sm border border-slate-200 rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-indigo-500/20">
+                  <option value={10}>10%</option>
+                  <option value={8}>8%（軽減）</option>
+                  <option value={0}>非課税</option>
+                </select>
+              </div>
+            </div>
+            <div className="space-y-2.5 mb-4">
+              {form.items.map((it, i) => (
+                <div key={i} className="grid gap-2" style={{ gridTemplateColumns: "1fr 60px 60px 100px 32px" }}>
+                  <input value={it.name} onChange={e => setItem(i, "name", e.target.value)}
+                    placeholder="品目・作業内容" className={inputCls}/>
+                  <input type="number" value={it.qty} onChange={e => setItem(i, "qty", Number(e.target.value))}
+                    min={1} className={inputCls + " text-center"}/>
+                  <select value={it.unit} onChange={e => setItem(i, "unit", e.target.value)}
+                    className={inputCls}>
+                    {["式","個","台","点","件","時間","日"].map(u => <option key={u}>{u}</option>)}
+                  </select>
+                  <input type="number" value={it.price} onChange={e => setItem(i, "price", Number(e.target.value))}
+                    placeholder="金額" className={inputCls}/>
+                  <button onClick={() => removeItem(i)} disabled={form.items.length <= 1}
+                    className="w-8 h-8 rounded-lg hover:bg-red-50 flex items-center justify-center disabled:opacity-30">
+                    <ic.X size={16} className="text-red-400"/>
+                  </button>
+                </div>
+              ))}
+              {/* ヘッダーラベル */}
+              <div className="grid text-[10px] text-slate-400 font-medium px-1" style={{ gridTemplateColumns: "1fr 60px 60px 100px 32px" }}>
+                <span>品目名</span><span className="text-center">数量</span><span className="text-center">単位</span><span>単価(税抜)</span>
+              </div>
+            </div>
+            <button onClick={addItem} className="flex items-center gap-2 text-sm text-indigo-600 font-medium hover:text-indigo-700 transition-colors">
+              <ic.Plus size={16}/> 品目を追加
+            </button>
+          </Card>
+
+          {/* 合計サマリー */}
+          <Card className="p-5">
+            <div className="space-y-2">
+              {[
+                ["小計（税抜）", fmt(sub)],
+                [`消費税（${form.tax}%）`, fmt(taxAmt)],
+              ].map(([l, v]) => (
+                <div key={l} className="flex justify-between text-sm text-slate-600">
+                  <span>{l}</span><span>{v}</span>
+                </div>
+              ))}
+              <div className="border-t border-slate-200 pt-2 flex justify-between">
+                <span className="text-base font-bold text-slate-800">合計（税込）</span>
+                <span className="text-xl font-bold text-indigo-600">{fmt(total)}</span>
+              </div>
+            </div>
+          </Card>
+
+          <div className="flex gap-3">
+            <button onClick={() => setStep(1)} className="px-5 py-3 border border-slate-200 rounded-xl text-sm font-medium hover:bg-slate-50 transition-colors">
+              ← 戻る
+            </button>
+            <button onClick={() => setStep(3)}
+              disabled={form.items.some(it => !it.name || it.price <= 0)}
+              className={cn("flex-1 py-3 rounded-xl text-sm font-semibold transition-colors",
+                form.items.every(it => it.name && it.price > 0) ? "bg-indigo-600 text-white hover:bg-indigo-700" : "bg-slate-100 text-slate-400 cursor-not-allowed"
+              )}>次へ → プレビュー・確認</button>
+          </div>
+        </div>
+      )}
+
+      {/* Step 3: プレビュー */}
+      {step === 3 && (
+        <div className="space-y-4 fade-in">
+          <InvoicePreview inv={{
+            id: "INV-2026-NEW",
+            ...form,
+            status: "draft",
+            items: form.items.filter(it => it.name && it.price > 0),
+          }} isNew={true}/>
+          <div className="flex gap-3">
+            <button onClick={() => setStep(2)} className="px-5 py-3.5 border border-slate-200 rounded-xl text-sm font-medium hover:bg-slate-50 transition-colors">
+              ← 戻る
+            </button>
+            <button onClick={onComplete}
+              className="flex-1 py-3.5 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 shadow-sm shadow-indigo-200 flex items-center justify-center gap-2 transition-colors">
+              <ic.Send size={16}/> 請求書を発行・送付
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+/* ── 請求書プレビュー（印刷用レイアウト） ── */
+const InvoicePreview = ({ inv, onBack, isNew = false }) => {
+  const { sub, taxAmt, total } = calcInvoice(inv);
+  const [printMode, setPrintMode] = useState(false);
+  const st = INV_STATUS[inv.status];
+
+  return (
+    <div className="space-y-4">
+      {!isNew && (
+        <div className="flex items-center justify-between">
+          <button onClick={onBack} className="flex items-center gap-2 text-sm text-slate-600 hover:text-slate-800 font-medium">
+            <ic.ChevL size={16}/> 一覧に戻る
+          </button>
+          <div className="flex items-center gap-2">
+            <span className={cn("text-sm font-semibold px-3 py-1.5 rounded-full", st.bg)}>{st.l}</span>
+          </div>
+        </div>
+      )}
+
+      {/* アクションバー（非印刷） */}
+      {!printMode && (
+        <div className="flex flex-wrap gap-2">
+          <button onClick={() => { window.print(); }}
+            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 transition-colors shadow-sm shadow-indigo-200">
+            <ic.Download size={16}/> PDF出力・印刷
+          </button>
+          <button className="flex items-center gap-2 px-4 py-2 border border-emerald-200 bg-emerald-50 text-emerald-700 rounded-xl text-sm font-semibold hover:bg-emerald-100 transition-colors">
+            <ic.Send size={16}/> メール送付
+          </button>
+          {!isNew && inv.status !== "paid" && (
+            <button className="flex items-center gap-2 px-4 py-2 border border-slate-200 text-slate-600 rounded-xl text-sm font-medium hover:bg-slate-50 transition-colors">
+              <ic.Check size={16}/> 入金済みにする
+            </button>
+          )}
+          {!isNew && (
+            <button className="flex items-center gap-2 px-4 py-2 border border-slate-200 text-slate-600 rounded-xl text-sm font-medium hover:bg-slate-50 transition-colors">
+              <ic.Download size={16}/> CSVエクスポート
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* 請求書本体（印刷用デザイン） */}
+      <div id="invoice-print" className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm" style={{ fontFamily: "'Noto Sans JP', sans-serif" }}>
+        {/* ヘッダー */}
+        <div className="bg-gradient-to-r from-indigo-600 to-violet-600 px-8 py-6 text-white">
+          <div className="flex items-start justify-between">
+            <div>
+              <div className="flex items-center gap-3 mb-2">
+                {/* ロゴ */}
+                <svg width="24" height="24" viewBox="0 0 30 30" fill="none">
+                  <defs><linearGradient id="invG" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#c7d2fe"/><stop offset="100%" stopColor="#a5b4fc"/></linearGradient></defs>
+                  <circle cx="5" cy="5" r="3" fill="white" opacity="0.6"/>
+                  <circle cx="15" cy="5" r="3" fill="white" opacity="0.6"/>
+                  <polygon points="25,0.2 26.3,3.7 29.8,3.7 27,5.9 28,9.4 25,7.3 22,9.4 23,5.9 20.2,3.7 23.7,3.7" fill="url(#invG)"/>
+                  <circle cx="5" cy="15" r="3" fill="white" opacity="0.6"/>
+                  <circle cx="15" cy="15" r="3" fill="white" opacity="0.6"/>
+                  <circle cx="25" cy="15" r="3" fill="white" opacity="0.6"/>
+                  <circle cx="5" cy="25" r="3" fill="white" opacity="0.6"/>
+                  <circle cx="15" cy="25" r="3" fill="white" opacity="0.6"/>
+                  <circle cx="25" cy="25" r="3" fill="white" opacity="0.6"/>
+                </svg>
+                <span className="text-lg font-bold tracking-wide">スマカレ</span>
+              </div>
+              <p className="text-indigo-200 text-xs">{COMPANY.name}</p>
+              <p className="text-indigo-200 text-xs">{COMPANY.zip} {COMPANY.addr}</p>
+              <p className="text-indigo-200 text-xs">TEL: {COMPANY.tel} / {COMPANY.email}</p>
+            </div>
+            <div className="text-right">
+              <p className="text-3xl font-black tracking-tight">請求書</p>
+              <p className="text-indigo-200 text-sm font-mono mt-1">{inv.id}</p>
+              {isNew ? (
+                <span className="inline-block mt-2 bg-slate-500/40 text-white text-xs px-3 py-1 rounded-full font-semibold">下書き</span>
+              ) : (
+                <span className={cn("inline-block mt-2 text-xs px-3 py-1 rounded-full font-semibold",
+                  inv.status === "paid" ? "bg-emerald-500/30 text-white" :
+                  inv.status === "overdue" ? "bg-red-400/30 text-white" : "bg-white/20 text-white"
+                )}>{st.l}</span>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="p-8">
+          {/* 宛先・日付情報 */}
+          <div className="flex flex-col sm:flex-row sm:justify-between gap-6 mb-8">
+            <div>
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">請求先</p>
+              <p className="text-lg font-bold text-slate-900">{inv.customer} 様</p>
+              {inv.phone && <p className="text-sm text-slate-600 mt-0.5">TEL: {inv.phone}</p>}
+              {inv.addr && <p className="text-sm text-slate-500 mt-0.5 max-w-xs">{inv.addr}</p>}
+            </div>
+            <div className="text-right space-y-2">
+              {[
+                ["発行日", inv.issueDate],
+                ["支払期限", inv.dueDate],
+                ["対応案件", inv.caseId],
+                ["担当スタッフ", inv.staff],
+              ].map(([l, v]) => (
+                <div key={l} className="flex items-center gap-6 justify-end">
+                  <span className="text-xs text-slate-400 w-20 text-right">{l}</span>
+                  <span className="text-sm font-semibold text-slate-800 w-32 text-right">{v}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* 品目テーブル */}
+          <div className="rounded-xl overflow-hidden border border-slate-200 mb-6">
+            <table className="w-full">
+              <thead>
+                <tr className="bg-slate-800 text-white text-xs">
+                  <th className="px-4 py-3 text-left font-semibold">品目・作業内容</th>
+                  <th className="px-4 py-3 text-center font-semibold w-16">数量</th>
+                  <th className="px-4 py-3 text-center font-semibold w-16">単位</th>
+                  <th className="px-4 py-3 text-right font-semibold w-28">単価（税抜）</th>
+                  <th className="px-4 py-3 text-right font-semibold w-28">小計</th>
+                </tr>
+              </thead>
+              <tbody>
+                {inv.items.map((it, i) => (
+                  <tr key={i} className={cn("border-t border-slate-100", i % 2 === 0 ? "bg-white" : "bg-slate-50/50")}>
+                    <td className="px-4 py-3 text-sm text-slate-800 font-medium">{it.name}</td>
+                    <td className="px-4 py-3 text-sm text-slate-600 text-center">{it.qty}</td>
+                    <td className="px-4 py-3 text-sm text-slate-500 text-center">{it.unit}</td>
+                    <td className="px-4 py-3 text-sm text-slate-700 text-right">{fmt(it.price)}</td>
+                    <td className="px-4 py-3 text-sm font-semibold text-slate-800 text-right">{fmt(it.price * it.qty)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* 合計 */}
+          <div className="flex justify-end mb-8">
+            <div className="w-72 space-y-2">
+              <div className="flex justify-between text-sm text-slate-600 py-1.5 border-b border-slate-100">
+                <span>小計（税抜）</span><span className="font-medium">{fmt(sub)}</span>
+              </div>
+              <div className="flex justify-between text-sm text-slate-600 py-1.5 border-b border-slate-100">
+                <span>消費税（{inv.tax}%）</span><span className="font-medium">{fmt(taxAmt)}</span>
+              </div>
+              <div className="flex justify-between items-center py-2 bg-indigo-50 rounded-xl px-4 mt-2">
+                <span className="text-base font-bold text-slate-800">合計（税込）</span>
+                <span className="text-2xl font-black text-indigo-600">{fmt(total)}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* 振込先・備考 */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-6 border-t border-slate-100">
+            <div>
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">お振込先</p>
+              <div className="bg-slate-50 rounded-xl p-4">
+                <p className="text-sm font-semibold text-slate-800">{COMPANY.bank}</p>
+                <p className="text-xs text-slate-500 mt-1">口座名義: {COMPANY.name}</p>
+              </div>
+            </div>
+            {inv.note && (
+              <div>
+                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">備考</p>
+                <div className="bg-slate-50 rounded-xl p-4">
+                  <p className="text-sm text-slate-700 whitespace-pre-wrap">{inv.note}</p>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* フッター */}
+          <div className="mt-8 pt-4 border-t border-slate-100 text-center">
+            <p className="text-xs text-slate-400">
+              本請求書に関するお問い合わせ: {COMPANY.tel} / {COMPANY.email}
+            </p>
+            <p className="text-[10px] text-slate-300 mt-1">Powered by スマカレ — 生活サービス業向け顧客管理プラットフォーム</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+/* ── 請求書メインコンポーネント ── */
+const InvoicePage = () => {
+  const [view, setView] = useState("list"); // "list" | "form" | "detail"
+  const [selectedInv, setSelectedInv] = useState(null);
+
+  if (view === "form") return (
+    <InvoiceForm
+      onBack={() => setView("list")}
+      onComplete={() => setView("list")}
+    />
+  );
+
+  if (view === "detail" && selectedInv) return (
+    <InvoicePreview
+      inv={selectedInv}
+      onBack={() => { setView("list"); setSelectedInv(null); }}
+    />
+  );
+
+  return (
+    <div className="space-y-5 fade-in">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">請求書管理</h1>
+          <SubLabel icon={ic.FileText} text="請求書発行・送付・入金管理を一元化"/>
+        </div>
+      </div>
+      <InvoiceList
+        onSelect={inv => { setSelectedInv(inv); setView("detail"); }}
+        onCreate={() => setView("form")}
+      />
+    </div>
+  );
+};
+/* ═══════════════════════════════════════════════════════
+   SECTION 13.6: ESTIMATE (見積書) + RECEIPT (領収書)
+   ═══════════════════════════════════════════════════════ */
+
+/* ── 見積書ステータス ── */
+const EST_STATUS = {
+  draft:    { l: "下書き",   bg: "bg-slate-100 text-slate-600",   dot: "#94a3b8" },
+  sent:     { l: "送付済み", bg: "bg-blue-100 text-blue-700",     dot: "#3b82f6" },
+  accepted: { l: "承認済み", bg: "bg-emerald-100 text-emerald-700", dot: "#10b981" },
+  rejected: { l: "辞退",     bg: "bg-red-100 text-red-700",       dot: "#ef4444" },
+  expired:  { l: "期限切れ", bg: "bg-slate-100 text-slate-500",   dot: "#cbd5e1" },
+};
+
+/* ── 見積書モックデータ ── */
+const ESTIMATES = [
+  {
+    id: "EST-2026-001", caseId: "CS-0061", status: "accepted",
+    customer: "なかの みき", phone: "090-1111-2222",
+    addr: "東京都杉並区高円寺南3-28-5",
+    issueDate: "2026-02-01", expiryDate: "2026-02-28",
+    cat: "不用品回収", staff: "田中",
+    items: [
+      { name: "不用品回収作業費", qty: 1, unit: "式", price: 45000 },
+      { name: "トラック費用（2t）", qty: 1, unit: "台", price: 15000 },
+      { name: "重量物割増（エアコン室外機）", qty: 2, unit: "点", price: 3000 },
+    ],
+    tax: 10, note: "作業時間: 2〜3時間を想定。駐車場: 現地確認済み。",
+    invoiceId: "INV-2026-001",
+  },
+  {
+    id: "EST-2026-002", caseId: "CS-0068", status: "sent",
+    customer: "やまだ こうへい", phone: "080-3333-4444",
+    addr: "神奈川県川崎市中原区武蔵小杉1-5-12",
+    issueDate: "2026-02-08", expiryDate: "2026-03-08",
+    cat: "引っ越し", staff: "佐藤",
+    items: [
+      { name: "引っ越し作業費（2t車）", qty: 1, unit: "式", price: 85000 },
+      { name: "梱包資材セット", qty: 1, unit: "式", price: 5000 },
+      { name: "エアコン取り外し・取付", qty: 1, unit: "台", price: 18000 },
+    ],
+    tax: 10, note: "3月中旬の土日祝は混み合います。お早めにご連絡ください。",
+  },
+  {
+    id: "EST-2026-003", caseId: "CS-0055", status: "draft",
+    customer: "かわしま りょう", phone: "080-5555-6666",
+    addr: "東京都港区赤坂4-9-11",
+    issueDate: "2026-02-13", expiryDate: "2026-03-13",
+    cat: "ハウスクリーニング", staff: "高橋",
+    items: [
+      { name: "ハウスクリーニング（2LDK）", qty: 1, unit: "式", price: 65000 },
+      { name: "浴室クリーニング（オプション）", qty: 1, unit: "式", price: 12000 },
+    ],
+    tax: 10, note: "",
+  },
+  {
+    id: "EST-2026-004", caseId: "CS-0042", status: "rejected",
+    customer: "さいとう ゆうた", phone: "070-7777-8888",
+    addr: "千葉県市川市本八幡2-4-7",
+    issueDate: "2026-01-25", expiryDate: "2026-02-24",
+    cat: "不用品回収", staff: "鈴木",
+    items: [
+      { name: "不用品回収作業費（大量）", qty: 1, unit: "式", price: 180000 },
+      { name: "4tトラック費用", qty: 1, unit: "台", price: 35000 },
+    ],
+    tax: 10, note: "他社比較により辞退。",
+  },
+];
+
+/* ── 領収書モックデータ ── */
+const RECEIPTS = [
+  {
+    id: "REC-2026-001", invoiceId: "INV-2026-001", caseId: "CS-0023",
+    customer: "あかざわ たつゆき", phone: "090-6195-0960",
+    addr: "神奈川県逗子市桜山5-39-16 桜山ハイム麗生206号室",
+    issueDate: "2026-02-10", cat: "不用品回収", staff: "田中",
+    payMethod: "bank", note: "確かに領収いたしました。",
+    items: [
+      { name: "不用品回収作業費", qty: 1, unit: "式", price: 50000 },
+      { name: "トラック費用（2t）", qty: 1, unit: "台", price: 15000 },
+      { name: "追加料金（特殊品）", qty: 2, unit: "点", price: 5000 },
+    ],
+    tax: 10,
+  },
+  {
+    id: "REC-2026-002", invoiceId: "INV-2026-006", caseId: "CS-0008",
+    customer: "いしま たける", phone: "070-4567-8901",
+    addr: "千葉県船橋市本町6-1-18",
+    issueDate: "2026-01-28", cat: "不用品回収", staff: "田中",
+    payMethod: "cash", note: "現金にてお受け取りいたしました。",
+    items: [
+      { name: "不用品回収作業費（大型）", qty: 1, unit: "式", price: 150000 },
+      { name: "トラック費用（4t）", qty: 1, unit: "台", price: 25000 },
+    ],
+    tax: 10,
+  },
+];
+
+/* ── 共通: 書類プリントスタイルヘッダー ── */
+const DocHeader = ({ docType, docId, accentFrom = "from-indigo-600", accentTo = "to-violet-600" }) => (
+  <div className={`bg-gradient-to-r ${accentFrom} ${accentTo} px-8 py-6 text-white`}>
+    <div className="flex items-start justify-between">
+      <div>
+        <div className="flex items-center gap-3 mb-2">
+          <svg width="24" height="24" viewBox="0 0 30 30" fill="none">
+            <defs><linearGradient id="dhG" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#c7d2fe"/><stop offset="100%" stopColor="#a5b4fc"/></linearGradient></defs>
+            <circle cx="5" cy="5" r="3" fill="white" opacity="0.6"/>
+            <circle cx="15" cy="5" r="3" fill="white" opacity="0.6"/>
+            <polygon points="25,0.2 26.3,3.7 29.8,3.7 27,5.9 28,9.4 25,7.3 22,9.4 23,5.9 20.2,3.7 23.7,3.7" fill="url(#dhG)"/>
+            <circle cx="5" cy="15" r="3" fill="white" opacity="0.6"/>
+            <circle cx="15" cy="15" r="3" fill="white" opacity="0.6"/>
+            <circle cx="25" cy="15" r="3" fill="white" opacity="0.6"/>
+            <circle cx="5" cy="25" r="3" fill="white" opacity="0.6"/>
+            <circle cx="15" cy="25" r="3" fill="white" opacity="0.6"/>
+            <circle cx="25" cy="25" r="3" fill="white" opacity="0.6"/>
+          </svg>
+          <span className="text-lg font-bold tracking-wide">スマカレ</span>
+        </div>
+        <p className="text-indigo-200 text-xs">{COMPANY.name}</p>
+        <p className="text-indigo-200 text-xs">{COMPANY.zip} {COMPANY.addr}</p>
+        <p className="text-indigo-200 text-xs">TEL: {COMPANY.tel} / {COMPANY.email}</p>
+      </div>
+      <div className="text-right">
+        <p className="text-3xl font-black tracking-tight">{docType}</p>
+        <p className="text-indigo-200 text-sm font-mono mt-1">{docId}</p>
+      </div>
+    </div>
+  </div>
+);
+
+/* ── 共通: 品目テーブル + 合計 ── */
+const DocItemTable = ({ items, tax }) => {
+  const sub = items.reduce((s, it) => s + it.price * it.qty, 0);
+  const taxAmt = Math.round(sub * tax / 100);
+  const total = sub + taxAmt;
+  return (
+    <>
+      <div className="rounded-xl overflow-hidden border border-slate-200 mb-6">
+        <table className="w-full">
+          <thead>
+            <tr className="bg-slate-800 text-white text-xs">
+              <th className="px-4 py-3 text-left font-semibold">品目・作業内容</th>
+              <th className="px-4 py-3 text-center font-semibold w-16">数量</th>
+              <th className="px-4 py-3 text-center font-semibold w-16">単位</th>
+              <th className="px-4 py-3 text-right font-semibold w-28">単価（税抜）</th>
+              <th className="px-4 py-3 text-right font-semibold w-28">小計</th>
+            </tr>
+          </thead>
+          <tbody>
+            {items.map((it, i) => (
+              <tr key={i} className={cn("border-t border-slate-100", i % 2 === 0 ? "bg-white" : "bg-slate-50/50")}>
+                <td className="px-4 py-3 text-sm text-slate-800 font-medium">{it.name}</td>
+                <td className="px-4 py-3 text-sm text-slate-600 text-center">{it.qty}</td>
+                <td className="px-4 py-3 text-sm text-slate-500 text-center">{it.unit}</td>
+                <td className="px-4 py-3 text-sm text-slate-700 text-right">{fmt(it.price)}</td>
+                <td className="px-4 py-3 text-sm font-semibold text-slate-800 text-right">{fmt(it.price * it.qty)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <div className="flex justify-end mb-8">
+        <div className="w-72 space-y-2">
+          {[["小計（税抜）", fmt(sub)], [`消費税（${tax}%）`, fmt(taxAmt)]].map(([l, v]) => (
+            <div key={l} className="flex justify-between text-sm text-slate-600 py-1.5 border-b border-slate-100">
+              <span>{l}</span><span className="font-medium">{v}</span>
+            </div>
+          ))}
+          <div className="flex justify-between items-center py-2 bg-indigo-50 rounded-xl px-4 mt-2">
+            <span className="text-base font-bold text-slate-800">合計（税込）</span>
+            <span className="text-2xl font-black text-indigo-600">{fmt(total)}</span>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+};
+
+/* ────────────────────────────────────────────
+   見積書コンポーネント群
+   ──────────────────────────────────────────── */
+const EstimateList = ({ onSelect, onCreate }) => {
+  const [filter, setFilter] = useState("all");
+  const [search, setSearch] = useState("");
+
+  const filtered = ESTIMATES.filter(e => {
+    const matchSt = filter === "all" || e.status === filter;
+    const matchSr = !search || e.customer.includes(search) || e.id.includes(search) || e.caseId.includes(search);
+    return matchSt && matchSr;
+  });
+
+  const kpi = [
+    { l: "送付済み・承認待ち", v: ESTIMATES.filter(e => e.status === "sent").length + "件",
+      color: "text-blue-600", bg: "bg-blue-50", icon: ic.Send },
+    { l: "承認済み",           v: ESTIMATES.filter(e => e.status === "accepted").length + "件",
+      color: "text-emerald-600", bg: "bg-emerald-50", icon: ic.Check },
+    { l: "辞退・期限切れ",     v: ESTIMATES.filter(e => ["rejected","expired"].includes(e.status)).length + "件",
+      color: "text-red-500", bg: "bg-red-50", icon: ic.XCircle },
+    { l: "見積書総数",          v: ESTIMATES.length + "件",
+      color: "text-indigo-600", bg: "bg-indigo-50", icon: ic.BookOpen },
+  ];
+
+  const filterTabs = [
+    { id: "all",      l: "すべて",   n: ESTIMATES.length },
+    { id: "draft",    l: "下書き",   n: ESTIMATES.filter(e=>e.status==="draft").length },
+    { id: "sent",     l: "送付済み", n: ESTIMATES.filter(e=>e.status==="sent").length },
+    { id: "accepted", l: "承認済み", n: ESTIMATES.filter(e=>e.status==="accepted").length },
+    { id: "rejected", l: "辞退",     n: ESTIMATES.filter(e=>e.status==="rejected").length },
+  ];
+
+  return (
+    <div className="space-y-5">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        {kpi.map((k,i) => (
+          <Card key={i} className="p-4">
+            <div className={cn("w-9 h-9 rounded-xl flex items-center justify-center", k.bg)}>
+              <k.icon size={18} className={k.color}/>
+            </div>
+            <p className={cn("text-xl font-bold mt-3", k.color)}>{k.v}</p>
+            <p className="text-xs text-slate-500 mt-0.5">{k.l}</p>
+          </Card>
+        ))}
+      </div>
+
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+        <div className="relative flex-1 max-w-sm">
+          <ic.Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"/>
+          <input value={search} onChange={e => setSearch(e.target.value)}
+            placeholder="顧客名・見積番号・案件IDで検索..."
+            className="w-full pl-9 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400"/>
+        </div>
+        <button onClick={onCreate}
+          className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 shadow-sm shadow-indigo-200 transition-colors whitespace-nowrap">
+          <ic.Plus size={16}/> 見積書を作成
+        </button>
+      </div>
+
+      <div className="flex gap-1.5 flex-wrap">
+        {filterTabs.map(t => (
+          <button key={t.id} onClick={() => setFilter(t.id)}
+            className={cn("flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all border",
+              filter === t.id ? "bg-indigo-600 text-white border-indigo-600 shadow-sm" : "bg-white text-slate-500 border-slate-200 hover:border-slate-300"
+            )}>
+            {t.l}
+            {t.n > 0 && <span className={cn("px-1.5 py-0.5 rounded-full text-[10px] font-bold",
+              filter === t.id ? "bg-indigo-500 text-white" : "bg-slate-100 text-slate-500")}>{t.n}</span>}
+          </button>
+        ))}
+      </div>
+
+      <Card className="overflow-hidden">
+        <div className="desktop-table">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-slate-100 bg-slate-50/60">
+                {["見積番号","顧客名","サービス","発行日","有効期限","金額","ステータス"].map(h => (
+                  <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-slate-400">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.length === 0 ? (
+                <tr><td colSpan={7} className="text-center py-12 text-slate-400 text-sm">見積書が見つかりません</td></tr>
+              ) : filtered.map(est => {
+                const { total } = calcInvoice(est);
+                const st = EST_STATUS[est.status];
+                return (
+                  <tr key={est.id} onClick={() => onSelect(est)} className="border-b border-slate-50 hover:bg-emerald-50/30 transition-colors cursor-pointer group">
+                    <td className="px-4 py-3.5">
+                      <span className="text-xs font-mono font-semibold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-lg">{est.id}</span>
+                    </td>
+                    <td className="px-4 py-3.5">
+                      <div className="text-sm font-semibold text-slate-800">{est.customer}</div>
+                      <div className="text-xs text-slate-400">{est.caseId}</div>
+                    </td>
+                    <td className="px-4 py-3.5 text-xs text-slate-600">{est.cat}</td>
+                    <td className="px-4 py-3.5 text-xs text-slate-600">{est.issueDate}</td>
+                    <td className="px-4 py-3.5 text-xs text-slate-600">{est.expiryDate}</td>
+                    <td className="px-4 py-3.5 text-sm font-bold text-slate-800">{fmt(total)}</td>
+                    <td className="px-4 py-3.5">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-1.5">
+                          <div className="w-1.5 h-1.5 rounded-full" style={{ background: st.dot }}/>
+                          <span className={cn("text-xs font-medium px-2 py-0.5 rounded-full", st.bg)}>{st.l}</span>
+                        </div>
+                        <ic.ChevR size={14} className="text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity ml-2"/>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+        <div className="mobile-card-list divide-y divide-slate-50">
+          {filtered.map(est => {
+            const { total } = calcInvoice(est);
+            const st = EST_STATUS[est.status];
+            return (
+              <div key={est.id} onClick={() => onSelect(est)}
+                className="flex items-center gap-3 px-4 py-3.5 active:bg-slate-50 cursor-pointer">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-xs font-mono text-emerald-600 font-semibold">{est.id}</span>
+                    <span className={cn("text-[10px] font-medium px-2 py-0.5 rounded-full", st.bg)}>{st.l}</span>
+                  </div>
+                  <div className="text-sm font-semibold text-slate-800 mt-0.5">{est.customer}</div>
+                  <div className="text-xs text-slate-400 mt-0.5">{est.cat} · 有効期限: {est.expiryDate}</div>
+                </div>
+                <div className="text-right shrink-0">
+                  <div className="text-sm font-bold text-slate-800">{fmt(total)}</div>
+                </div>
+                <ic.ChevR size={16} className="text-slate-300 shrink-0"/>
+              </div>
+            );
+          })}
+        </div>
+      </Card>
+    </div>
+  );
+};
+
+const EstimatePreview = ({ est, onBack }) => {
+  const { sub, taxAmt, total } = calcInvoice(est);
+  const st = EST_STATUS[est.status];
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <button onClick={onBack} className="flex items-center gap-2 text-sm text-slate-600 hover:text-slate-800 font-medium">
+          <ic.ChevL size={16}/> 一覧に戻る
+        </button>
+        <span className={cn("text-sm font-semibold px-3 py-1.5 rounded-full", st.bg)}>{st.l}</span>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        <button onClick={() => window.print()}
+          className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-xl text-sm font-semibold hover:bg-emerald-700 transition-colors shadow-sm shadow-emerald-200">
+          <ic.Download size={16}/> PDF出力・印刷
+        </button>
+        <button className="flex items-center gap-2 px-4 py-2 border border-emerald-200 bg-emerald-50 text-emerald-700 rounded-xl text-sm font-semibold hover:bg-emerald-100 transition-colors">
+          <ic.Send size={16}/> メール送付
+        </button>
+        {est.status === "accepted" && !est.invoiceId && (
+          <button className="flex items-center gap-2 px-4 py-2 border border-indigo-200 bg-indigo-50 text-indigo-700 rounded-xl text-sm font-semibold hover:bg-indigo-100 transition-colors">
+            <ic.FilePlus size={16}/> 請求書を作成
+          </button>
+        )}
+        {est.invoiceId && (
+          <div className="flex items-center gap-2 px-4 py-2 bg-indigo-50 border border-indigo-100 rounded-xl text-sm text-indigo-600 font-medium">
+            <ic.FileText size={14}/> {est.invoiceId} に請求書作成済み
+          </div>
+        )}
+      </div>
+      <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+        <DocHeader docType="御見積書" docId={est.id} accentFrom="from-emerald-600" accentTo="to-teal-600"/>
+        <div className="p-8">
+          <div className="flex flex-col sm:flex-row sm:justify-between gap-6 mb-8">
+            <div>
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">見積先</p>
+              <p className="text-lg font-bold text-slate-900">{est.customer} 様</p>
+              {est.phone && <p className="text-sm text-slate-600 mt-0.5">TEL: {est.phone}</p>}
+              {est.addr && <p className="text-sm text-slate-500 mt-0.5 max-w-xs">{est.addr}</p>}
+            </div>
+            <div className="text-right space-y-2">
+              {[["発行日", est.issueDate], ["有効期限", est.expiryDate], ["対応案件", est.caseId], ["担当", est.staff]].map(([l,v]) => (
+                <div key={l} className="flex items-center gap-6 justify-end">
+                  <span className="text-xs text-slate-400 w-20 text-right">{l}</span>
+                  <span className="text-sm font-semibold text-slate-800 w-32 text-right">{v}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+          {/* 有効期限バナー */}
+          <div className="mb-6 p-3 bg-amber-50 border border-amber-100 rounded-xl flex items-center gap-3">
+            <ic.Clock size={16} className="text-amber-600 shrink-0"/>
+            <p className="text-xs text-amber-800 font-medium">
+              本見積書の有効期限は <strong>{est.expiryDate}</strong> です。期限までにご承認ください。
+            </p>
+          </div>
+          <DocItemTable items={est.items} tax={est.tax}/>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-6 border-t border-slate-100">
+            <div>
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">お支払い方法</p>
+              <div className="bg-slate-50 rounded-xl p-4">
+                <p className="text-sm font-semibold text-slate-800">{COMPANY.bank}</p>
+                <p className="text-xs text-slate-500 mt-1">銀行振込 または 現地現金払い</p>
+              </div>
+            </div>
+            {est.note && (
+              <div>
+                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">備考</p>
+                <div className="bg-slate-50 rounded-xl p-4">
+                  <p className="text-sm text-slate-700 whitespace-pre-wrap">{est.note}</p>
+                </div>
+              </div>
+            )}
+          </div>
+          <div className="mt-8 pt-4 border-t border-slate-100 text-center">
+            <p className="text-xs text-slate-400">お問い合わせ: {COMPANY.tel} / {COMPANY.email}</p>
+            <p className="text-[10px] text-slate-300 mt-1">Powered by スマカレ</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const EstimatePage = () => {
+  const [view, setView] = useState("list");
+  const [sel, setSel] = useState(null);
+  if (view === "detail" && sel) return <EstimatePreview est={sel} onBack={() => { setView("list"); setSel(null); }}/>;
+  return (
+    <EstimateList
+      onSelect={e => { setSel(e); setView("detail"); }}
+      onCreate={() => {}}
+    />
+  );
+};
+
+/* ────────────────────────────────────────────
+   領収書コンポーネント群
+   ──────────────────────────────────────────── */
+const ReceiptList = ({ onSelect, onCreate }) => {
+  const [search, setSearch] = useState("");
+  const filtered = RECEIPTS.filter(r =>
+    !search || r.customer.includes(search) || r.id.includes(search) || r.invoiceId.includes(search)
+  );
+  const totalIssued = RECEIPTS.reduce((s, r) => s + calcInvoice(r).total, 0);
+
+  return (
+    <div className="space-y-5">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        {[
+          { l: "発行済み領収書", v: `${RECEIPTS.length}件`, color: "text-violet-600", bg: "bg-violet-50", icon: ic.Receipt },
+          { l: "領収総額",       v: fmt(totalIssued),        color: "text-emerald-600", bg: "bg-emerald-50", icon: ic.Yen },
+          { l: "現金領収",       v: `${RECEIPTS.filter(r=>r.payMethod==="cash").length}件`, color: "text-amber-600", bg: "bg-amber-50", icon: ic.CreditCard },
+          { l: "振込領収",       v: `${RECEIPTS.filter(r=>r.payMethod==="bank").length}件`, color: "text-blue-600", bg: "bg-blue-50", icon: ic.Building },
+        ].map((k,i) => (
+          <Card key={i} className="p-4">
+            <div className={cn("w-9 h-9 rounded-xl flex items-center justify-center", k.bg)}>
+              <k.icon size={18} className={k.color}/>
+            </div>
+            <p className={cn("text-xl font-bold mt-3", k.color)}>{k.v}</p>
+            <p className="text-xs text-slate-500 mt-0.5">{k.l}</p>
+          </Card>
+        ))}
+      </div>
+
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+        <div className="relative flex-1 max-w-sm">
+          <ic.Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"/>
+          <input value={search} onChange={e => setSearch(e.target.value)}
+            placeholder="顧客名・領収書番号・請求書番号で検索..."
+            className="w-full pl-9 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400"/>
+        </div>
+        <button onClick={onCreate}
+          className="flex items-center gap-2 px-4 py-2.5 bg-violet-600 text-white rounded-xl text-sm font-semibold hover:bg-violet-700 shadow-sm shadow-violet-200 transition-colors whitespace-nowrap">
+          <ic.Plus size={16}/> 領収書を発行
+        </button>
+      </div>
+
+      {/* 入金済み請求書から自動発行バナー */}
+      <div className="p-4 bg-violet-50 border border-violet-100 rounded-2xl flex items-start gap-3">
+        <div className="w-8 h-8 rounded-xl bg-violet-100 flex items-center justify-center shrink-0 mt-0.5">
+          <ic.Zap size={16} className="text-violet-600"/>
+        </div>
+        <div className="flex-1">
+          <p className="text-sm font-semibold text-violet-900">入金済み請求書から自動発行</p>
+          <p className="text-xs text-violet-700 mt-0.5">
+            請求書ステータスが「支払済み」になると、領収書を1クリックで自動生成できます。
+          </p>
+        </div>
+        <div className="flex items-center gap-1.5 shrink-0">
+          <div className="w-2 h-2 rounded-full bg-emerald-400"/>
+          <span className="text-xs text-emerald-600 font-medium">{INVOICES.filter(i=>i.status==="paid").length}件 発行可能</span>
+        </div>
+      </div>
+
+      <Card className="overflow-hidden">
+        <div className="desktop-table">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-slate-100 bg-slate-50/60">
+                {["領収書番号","顧客名","サービス","発行日","支払方法","金額","請求書連番"].map(h => (
+                  <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-slate-400">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.length === 0 ? (
+                <tr><td colSpan={7} className="text-center py-12 text-slate-400 text-sm">領収書が見つかりません</td></tr>
+              ) : filtered.map(rec => {
+                const { total } = calcInvoice(rec);
+                const pmLabel = { bank: "銀行振込", cash: "現金", credit: "クレジット" }[rec.payMethod] || rec.payMethod;
+                return (
+                  <tr key={rec.id} onClick={() => onSelect(rec)} className="border-b border-slate-50 hover:bg-violet-50/30 transition-colors cursor-pointer group">
+                    <td className="px-4 py-3.5">
+                      <span className="text-xs font-mono font-semibold text-violet-600 bg-violet-50 px-2 py-1 rounded-lg">{rec.id}</span>
+                    </td>
+                    <td className="px-4 py-3.5">
+                      <div className="text-sm font-semibold text-slate-800">{rec.customer}</div>
+                      <div className="text-xs text-slate-400">{rec.caseId}</div>
+                    </td>
+                    <td className="px-4 py-3.5 text-xs text-slate-600">{rec.cat}</td>
+                    <td className="px-4 py-3.5 text-xs text-slate-600">{rec.issueDate}</td>
+                    <td className="px-4 py-3.5">
+                      <span className={cn("text-xs font-medium px-2 py-1 rounded-full",
+                        rec.payMethod === "cash" ? "bg-amber-100 text-amber-700" :
+                        rec.payMethod === "bank" ? "bg-blue-100 text-blue-700" : "bg-slate-100 text-slate-600"
+                      )}>{pmLabel}</span>
+                    </td>
+                    <td className="px-4 py-3.5 text-sm font-bold text-slate-800">{fmt(total)}</td>
+                    <td className="px-4 py-3.5">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-slate-400 font-mono">{rec.invoiceId}</span>
+                        <ic.ChevR size={14} className="text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity ml-2"/>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+        <div className="mobile-card-list divide-y divide-slate-50">
+          {filtered.map(rec => {
+            const { total } = calcInvoice(rec);
+            return (
+              <div key={rec.id} onClick={() => onSelect(rec)}
+                className="flex items-center gap-3 px-4 py-3.5 active:bg-slate-50 cursor-pointer">
+                <div className="flex-1 min-w-0">
+                  <span className="text-xs font-mono text-violet-600 font-semibold">{rec.id}</span>
+                  <div className="text-sm font-semibold text-slate-800 mt-0.5">{rec.customer}</div>
+                  <div className="text-xs text-slate-400 mt-0.5">{rec.cat} · {rec.issueDate}</div>
+                </div>
+                <div className="text-sm font-bold text-slate-800 shrink-0">{fmt(total)}</div>
+                <ic.ChevR size={16} className="text-slate-300 shrink-0"/>
+              </div>
+            );
+          })}
+        </div>
+      </Card>
+    </div>
+  );
+};
+
+const ReceiptPreview = ({ rec, onBack }) => {
+  const { total } = calcInvoice(rec);
+  const pmLabel = { bank: "銀行振込", cash: "現金払い", credit: "クレジットカード" }[rec.payMethod] || rec.payMethod;
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <button onClick={onBack} className="flex items-center gap-2 text-sm text-slate-600 hover:text-slate-800 font-medium">
+          <ic.ChevL size={16}/> 一覧に戻る
+        </button>
+        <span className="text-sm font-semibold px-3 py-1.5 rounded-full bg-emerald-100 text-emerald-700">発行済み</span>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        <button onClick={() => window.print()}
+          className="flex items-center gap-2 px-4 py-2 bg-violet-600 text-white rounded-xl text-sm font-semibold hover:bg-violet-700 shadow-sm shadow-violet-200 transition-colors">
+          <ic.Download size={16}/> PDF出力・印刷
+        </button>
+        <button className="flex items-center gap-2 px-4 py-2 border border-violet-200 bg-violet-50 text-violet-700 rounded-xl text-sm font-semibold hover:bg-violet-100 transition-colors">
+          <ic.Send size={16}/> メール送付
+        </button>
+        {rec.invoiceId && (
+          <div className="flex items-center gap-2 px-4 py-2 bg-indigo-50 border border-indigo-100 rounded-xl text-sm text-indigo-600 font-medium">
+            <ic.FileText size={14}/> {rec.invoiceId} の請求書
+          </div>
+        )}
+      </div>
+      <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+        <DocHeader docType="領収書" docId={rec.id} accentFrom="from-violet-600" accentTo="to-purple-600"/>
+        <div className="p-8">
+          {/* 領収金額（大きく中央表示） */}
+          <div className="text-center py-8 mb-8 border-b border-slate-100">
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">領収金額</p>
+            <p className="text-5xl font-black text-slate-900 tracking-tight">{fmt(total)}</p>
+            <p className="text-sm text-slate-500 mt-2">消費税（{rec.tax}%）含む</p>
+            <div className="inline-flex items-center gap-2 mt-3 px-4 py-2 bg-emerald-50 border border-emerald-100 rounded-full">
+              <ic.Check size={14} className="text-emerald-600"/>
+              <span className="text-sm text-emerald-700 font-semibold">確かに領収いたしました</span>
+            </div>
+          </div>
+          <div className="flex flex-col sm:flex-row sm:justify-between gap-6 mb-8">
+            <div>
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">お支払者</p>
+              <p className="text-lg font-bold text-slate-900">{rec.customer} 様</p>
+              {rec.phone && <p className="text-sm text-slate-600 mt-0.5">TEL: {rec.phone}</p>}
+            </div>
+            <div className="text-right space-y-2">
+              {[["発行日", rec.issueDate], ["支払方法", pmLabel], ["対応案件", rec.caseId], ["担当", rec.staff]].map(([l,v]) => (
+                <div key={l} className="flex items-center gap-6 justify-end">
+                  <span className="text-xs text-slate-400 w-20 text-right">{l}</span>
+                  <span className="text-sm font-semibold text-slate-800 w-32 text-right">{v}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">内訳</p>
+          <DocItemTable items={rec.items} tax={rec.tax}/>
+          {rec.note && (
+            <div className="pt-4 border-t border-slate-100">
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">備考</p>
+              <div className="bg-slate-50 rounded-xl p-4">
+                <p className="text-sm text-slate-700">{rec.note}</p>
+              </div>
+            </div>
+          )}
+          <div className="mt-8 pt-6 border-t border-slate-100 flex items-end justify-between">
+            <div>
+              <p className="text-xs text-slate-400">上記の金額正に領収いたしました。</p>
+              <p className="text-xs text-slate-400 mt-0.5">{COMPANY.name}</p>
+              <p className="text-xs text-slate-400">{COMPANY.tel} / {COMPANY.email}</p>
+            </div>
+            <div className="text-right">
+              <p className="text-sm font-bold text-slate-800">{COMPANY.name}</p>
+              <div className="w-16 h-16 border-2 border-dashed border-slate-300 rounded-full flex items-center justify-center mt-2 ml-auto">
+                <span className="text-[10px] text-slate-300">印</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const ReceiptPage = () => {
+  const [view, setView] = useState("list");
+  const [sel, setSel] = useState(null);
+  if (view === "detail" && sel) return <ReceiptPreview rec={sel} onBack={() => { setView("list"); setSel(null); }}/>;
+  return <ReceiptList onSelect={r => { setSel(r); setView("detail"); }} onCreate={() => {}}/>;
+};
+
+/* ────────────────────────────────────────────
+   書類管理 メインページ（DocsPage）
+   ──────────────────────────────────────────── */
+const DOCS_TABS = [
+  { id: "estimate", l: "見積書", I: ic.BookOpen,  color: "text-emerald-600", activeBg: "bg-emerald-600", badge: null },
+  { id: "invoice",  l: "請求書", I: ic.FileText,  color: "text-indigo-600",  activeBg: "bg-indigo-600",  badge: INVOICES.filter(i => i.status === "overdue").length || null },
+  { id: "receipt",  l: "領収書", I: ic.Receipt,   color: "text-violet-600",  activeBg: "bg-violet-600",  badge: null },
+];
+
+const DocsPage = () => {
+  const [tab, setTab] = useState("estimate");
+  const active = DOCS_TABS.find(t => t.id === tab);
+
+  /* 書類間クロスリンク: 案件フローに沿った遷移ガイド */
+  const flowSteps = [
+    { id: "estimate", label: "見積書",  icon: ic.BookOpen,  desc: "訪問見積後に作成・送付",  color: "text-emerald-600", bg: "bg-emerald-50", border: "border-emerald-200" },
+    { id: "invoice",  label: "請求書",  icon: ic.FileText,  desc: "承認後に発行・入金管理",   color: "text-indigo-600",  bg: "bg-indigo-50",  border: "border-indigo-200" },
+    { id: "receipt",  label: "領収書",  icon: ic.Receipt,   desc: "入金確認後に自動発行",     color: "text-violet-600",  bg: "bg-violet-50",  border: "border-violet-200" },
+  ];
+
+  return (
+    <div className="space-y-5 fade-in">
+      {/* ページヘッダー */}
+      <div>
+        <h1 className="text-2xl font-bold text-slate-900">書類管理</h1>
+        <SubLabel icon={ic.Folder} text="見積書・請求書・領収書を一元管理"/>
+      </div>
+
+      {/* 書類フロー（案件→見積→請求→領収） */}
+      <div className="flex items-center gap-2 overflow-x-auto pb-1">
+        {flowSteps.map((s, i) => (
+          <React.Fragment key={s.id}>
+            <button onClick={() => setTab(s.id)}
+              className={cn("flex items-center gap-2.5 px-4 py-3 rounded-2xl border-2 transition-all shrink-0",
+                tab === s.id ? `${s.bg} ${s.border} shadow-sm` : "bg-white border-slate-100 hover:border-slate-200"
+              )}>
+              <div className={cn("w-8 h-8 rounded-xl flex items-center justify-center", tab === s.id ? s.bg : "bg-slate-100")}>
+                <s.icon size={16} className={tab === s.id ? s.color : "text-slate-400"}/>
+              </div>
+              <div className="text-left">
+                <p className={cn("text-sm font-bold", tab === s.id ? s.color : "text-slate-600")}>{s.label}</p>
+                <p className={cn("text-[10px]", tab === s.id ? s.color + " opacity-70" : "text-slate-400")}>{s.desc}</p>
+              </div>
+            </button>
+            {i < flowSteps.length - 1 && (
+              <div className="flex items-center gap-1 shrink-0 text-slate-300">
+                <div className="w-4 h-0.5 bg-slate-200"/>
+                <ic.ChevR size={14} className="text-slate-300"/>
+                <div className="w-4 h-0.5 bg-slate-200"/>
+              </div>
+            )}
+          </React.Fragment>
+        ))}
+      </div>
+
+      {/* タブコンテンツ */}
+      {tab === "estimate" && <EstimatePage/>}
+      {tab === "invoice"  && <InvoicePage/>}
+      {tab === "receipt"  && <ReceiptPage/>}
+    </div>
+  );
+};
+
 const REPORT_TABS = [
   { id: "settlement", l: "日報・精算",   I: ic.Calculator },
   { id: "analytics",  l: "売上分析",     I: ic.BarChart },
@@ -2614,7 +4545,7 @@ const ReportsPage = () => {
   const [rtab, setRtab] = useState("settlement");
   return (
     <div className="fade-in">
-      <div className="flex gap-1 bg-white rounded-2xl p-1.5 mb-6 border border-slate-200/60 shadow-sm w-fit">
+      <div className="flex gap-1 flex-wrap bg-white rounded-2xl p-1.5 mb-6 border border-slate-200/60 shadow-sm w-fit">
         {REPORT_TABS.map(t => (
           <button key={t.id} onClick={() => setRtab(t.id)} className={cn(
             "flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all",
@@ -2641,11 +4572,16 @@ const NAV_MAIN = [
   { id: "line",       l: "LINE受信",       I: ic.Inbox, badge: LINE_MSGS.filter(m => m.status === "pending").length },
   { id: "cases",      l: "案件管理",       I: ic.FileText },
   { id: "calendar",   l: "スケジュール",   I: ic.Calendar },
+  { id: "docs",       l: "書類管理",       I: ic.Folder, badge: INVOICES.filter(i => i.status === "overdue").length },
   { id: "reports",    l: "レポート",       I: ic.BarChart },
 ];
 
-const NAV_UTIL = [
-  { id: "settings",   l: "設定",           I: ic.Gear },
+const NAV_SETTINGS = [
+  { id: "settings/labels",  l: "ラベル管理", I: ic.Layers   },
+  { id: "settings/areas",   l: "リスト管理", I: ic.MapPin   },
+  { id: "settings/staff",   l: "従業員管理", I: ic.Users    },
+  { id: "settings/roles",   l: "権限管理",   I: ic.Shield   },
+  { id: "settings/company", l: "会社情報",   I: ic.Building },
 ];
 
 /* ロール定義 */
@@ -2685,18 +4621,23 @@ function App() {
 
   const Page = () => {
     switch (page) {
-      case "dashboard":  return <Dashboard onNav={nav}/>;
-      case "line":       return <LineInbox/>;
-      case "cases":      return <CaseMgmt/>;
-      case "calendar":   return <CalView/>;
-      case "reports":    return roleInfo.canViewSales ? <ReportsPage/> : (
+      case "dashboard":        return <Dashboard onNav={nav}/>;
+      case "line":             return <LineInbox/>;
+      case "cases":            return <CaseMgmt/>;
+      case "calendar":         return <CalView/>;
+      case "docs":             return <DocsPage/>;
+      case "reports":          return roleInfo.canViewSales ? <ReportsPage/> : (
         <div className="flex flex-col items-center justify-center h-64 gap-4 text-slate-400">
           <ic.Shield size={48} className="opacity-30"/>
           <p className="text-sm">このページを閲覧する権限がありません</p>
         </div>
       );
-      case "settings":   return <SetPage currentRole={currentRole} onRoleChange={setCurrentRole} areas={areas} onAreasChange={setAreas} currentArea={currentArea} onAreaChange={setCurrentArea}/>;
-      default:           return <Dashboard onNav={nav}/>;
+      case "settings/labels":  return <SetPage tab="labels"  onNav={nav} currentRole={currentRole} onRoleChange={setCurrentRole} areas={areas} onAreasChange={setAreas} currentArea={currentArea} onAreaChange={setCurrentArea}/>;
+      case "settings/areas":   return <SetPage tab="areas"   onNav={nav} currentRole={currentRole} onRoleChange={setCurrentRole} areas={areas} onAreasChange={setAreas} currentArea={currentArea} onAreaChange={setCurrentArea}/>;
+      case "settings/staff":   return <SetPage tab="staff"   onNav={nav} currentRole={currentRole} onRoleChange={setCurrentRole} areas={areas} onAreasChange={setAreas} currentArea={currentArea} onAreaChange={setCurrentArea}/>;
+      case "settings/roles":   return <SetPage tab="roles"   onNav={nav} currentRole={currentRole} onRoleChange={setCurrentRole} areas={areas} onAreasChange={setAreas} currentArea={currentArea} onAreaChange={setCurrentArea}/>;
+      case "settings/company": return <SetPage tab="company" onNav={nav} currentRole={currentRole} onRoleChange={setCurrentRole} areas={areas} onAreasChange={setAreas} currentArea={currentArea} onAreaChange={setCurrentArea}/>;
+      default:                 return <Dashboard onNav={nav}/>;
     }
   };
 
@@ -2713,13 +4654,29 @@ function App() {
         sbOpen ? "w-64" : "w-[72px]",
         mob ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
       )}>
-        <div className={cn("flex items-center gap-3 h-16 border-b border-slate-100 shrink-0", sbOpen ? "px-5" : "px-4 justify-center")}>
-          <div className="w-9 h-9 bg-gradient-to-br from-indigo-500 to-violet-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-200 shrink-0">
-            <ic.Layers size={20} stroke="white"/>
-          </div>
+        <div className={cn("flex items-center h-16 border-b border-slate-100 shrink-0", sbOpen ? "px-5 gap-2.5" : "px-3 justify-center")}>
+          {/* スマカレ ロゴアイコン SVG */}
+          <svg width="32" height="32" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg" style={{flexShrink:0}} aria-label="スマカレ">
+            <defs>
+              <linearGradient id="sbStarGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#818CF8"/>
+                <stop offset="100%" stopColor="#6366F1"/>
+              </linearGradient>
+            </defs>
+            {/* row0 col0 */}<circle cx="5" cy="5" r="3" fill="#6B7FA3" opacity="0.85"/>
+            {/* row0 col1 */}<circle cx="15" cy="5" r="3" fill="#6B7FA3" opacity="0.85"/>
+            {/* row0 col2: 4角星 */}
+            <polygon points="25,0.2 26.3,3.7 29.8,3.7 27,5.9 28,9.4 25,7.3 22,9.4 23,5.9 20.2,3.7 23.7,3.7" fill="url(#sbStarGrad)"/>
+            {/* row1 */}<circle cx="5" cy="15" r="3" fill="#6B7FA3" opacity="0.85"/>
+            <circle cx="15" cy="15" r="3" fill="#6B7FA3" opacity="0.85"/>
+            <circle cx="25" cy="15" r="3" fill="#6B7FA3" opacity="0.85"/>
+            {/* row2 */}<circle cx="5" cy="25" r="3" fill="#6B7FA3" opacity="0.85"/>
+            <circle cx="15" cy="25" r="3" fill="#6B7FA3" opacity="0.85"/>
+            <circle cx="25" cy="25" r="3" fill="#6B7FA3" opacity="0.85"/>
+          </svg>
           {sbOpen && (
             <div className="min-w-0">
-              <h1 className="font-bold text-sm text-slate-800 truncate">スマカレ</h1>
+              <h1 className="font-bold text-sm text-indigo-600 truncate">スマカレ</h1>
               <p className="text-[10px] text-slate-400 truncate">顧客管理プラットフォーム</p>
             </div>
           )}
@@ -2752,30 +4709,34 @@ function App() {
         )}
 
         {/* Main Navigation */}
-        <nav className="flex-1 py-3 px-3 overflow-y-auto flex flex-col">
-          {sbOpen && <p className="text-[10px] font-semibold text-slate-300 uppercase tracking-widest px-3 mb-2">メニュー</p>}
-          <div className="space-y-1">
-            {NAV_MAIN.map(item => {
-              const active = page === item.id;
-              return (
-                <button key={item.id} onClick={() => nav(item.id)} className={cn(
-                  "flex items-center gap-3 w-full rounded-xl transition-all duration-200",
-                  sbOpen ? "px-3 py-2.5" : "p-2.5 justify-center",
-                  active ? "bg-indigo-50 text-indigo-700" : "text-slate-500 hover:bg-slate-50 hover:text-slate-700"
-                )}>
-                  <div className="relative">
-                    <item.I size={20} stroke={active ? "#4f46e5" : "currentColor"}/>
-                    {item.badge > 0 && (
-                      <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
-                        {item.badge}
-                      </span>
-                    )}
-                  </div>
-                  {sbOpen && <span className="text-sm font-medium truncate">{item.l}</span>}
-                </button>
-              );
-            })}
+        <nav className="flex-1 py-3 px-3 overflow-y-auto flex flex-col gap-4">
+          {/* メインメニュー */}
+          <div>
+            {sbOpen && <p className="text-[10px] font-semibold text-slate-300 uppercase tracking-widest px-3 mb-2">メニュー</p>}
+            <div className="space-y-1">
+              {NAV_MAIN.map(item => {
+                const active = page === item.id;
+                return (
+                  <button key={item.id} onClick={() => nav(item.id)} className={cn(
+                    "flex items-center gap-3 w-full rounded-xl transition-all duration-200",
+                    sbOpen ? "px-3 py-2.5" : "p-2.5 justify-center",
+                    active ? "bg-indigo-50 text-indigo-700" : "text-slate-500 hover:bg-slate-50 hover:text-slate-700"
+                  )}>
+                    <div className="relative">
+                      <item.I size={20} stroke={active ? "#4f46e5" : "currentColor"}/>
+                      {item.badge > 0 && (
+                        <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
+                          {item.badge}
+                        </span>
+                      )}
+                    </div>
+                    {sbOpen && <span className="text-sm font-medium truncate">{item.l}</span>}
+                  </button>
+                );
+              })}
+            </div>
           </div>
+
         </nav>
 
         {/* User Profile */}
@@ -2840,10 +4801,24 @@ function App() {
             <button onClick={() => setSb(!sbOpen)} className="p-2 rounded-lg hover:bg-slate-100 hidden lg:block"><ic.Menu size={20} stroke="#64748b"/></button>
             {/* モバイルのみロゴ表示 */}
             <div className="flex items-center gap-2 lg:hidden">
-              <div className="w-7 h-7 bg-gradient-to-br from-indigo-500 to-violet-600 rounded-lg flex items-center justify-center shadow-sm">
-                <ic.Layers size={14} stroke="white"/>
-              </div>
-              <span className="text-sm font-bold text-slate-800">スマカレ</span>
+              <svg width="26" height="26" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="スマカレ">
+                <defs>
+                  <linearGradient id="hStarGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#818CF8"/>
+                    <stop offset="100%" stopColor="#6366F1"/>
+                  </linearGradient>
+                </defs>
+                <circle cx="5" cy="5" r="3" fill="#6B7FA3" opacity="0.85"/>
+                <circle cx="15" cy="5" r="3" fill="#6B7FA3" opacity="0.85"/>
+                <polygon points="25,0.2 26.3,3.7 29.8,3.7 27,5.9 28,9.4 25,7.3 22,9.4 23,5.9 20.2,3.7 23.7,3.7" fill="url(#hStarGrad)"/>
+                <circle cx="5" cy="15" r="3" fill="#6B7FA3" opacity="0.85"/>
+                <circle cx="15" cy="15" r="3" fill="#6B7FA3" opacity="0.85"/>
+                <circle cx="25" cy="15" r="3" fill="#6B7FA3" opacity="0.85"/>
+                <circle cx="5" cy="25" r="3" fill="#6B7FA3" opacity="0.85"/>
+                <circle cx="15" cy="25" r="3" fill="#6B7FA3" opacity="0.85"/>
+                <circle cx="25" cy="25" r="3" fill="#6B7FA3" opacity="0.85"/>
+              </svg>
+              <span className="text-sm font-bold text-indigo-600">スマカレ</span>
             </div>
             <div className="hidden sm:block w-72"><SearchInput value="" onChange={() => {}} placeholder="案件ID、顧客名で検索..."/></div>
           </div>
@@ -2897,18 +4872,19 @@ function App() {
 
       {/* ── ボトムナビゲーション（モバイル専用） ── */}
       <nav className="fixed bottom-0 left-0 right-0 z-40 lg:hidden bg-white/95 backdrop-blur-md border-t border-slate-200/60 safe-area-pb">
-        <div className="flex items-center justify-around h-16 px-2">
+        <div className="flex items-center justify-around h-16 px-1">
           {[
-            { id: "dashboard", l: "ホーム",     I: ic.Grid },
-            { id: "cases",     l: "案件",       I: ic.FileText },
-            { id: "calendar",  l: "カレンダー", I: ic.Calendar },
-            { id: "line",      l: "LINE",       I: ic.Inbox, badge: LINE_MSGS.filter(m => m.status === "pending").length },
-            { id: "settings",  l: "設定",       I: ic.Gear },
+            { id: "dashboard",        l: "ホーム",     I: ic.Grid },
+            { id: "cases",            l: "案件",       I: ic.FileText },
+            { id: "docs",             l: "書類",       I: ic.Folder, badge: INVOICES.filter(i => i.status === "overdue").length },
+            { id: "calendar",         l: "カレンダー", I: ic.Calendar },
+            { id: "line",             l: "LINE",       I: ic.Inbox, badge: LINE_MSGS.filter(m => m.status === "pending").length },
+            { id: "settings/company", l: "設定",       I: ic.Gear },
           ].map(item => {
-            const active = page === item.id;
+            const active = page === item.id || (item.id === "settings/company" && page.startsWith("settings/"));
             return (
               <button key={item.id} onClick={() => nav(item.id)}
-                className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl transition-all relative">
+                className="flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-xl transition-all relative">
                 <div className="relative">
                   <item.I size={22} stroke={active ? "#4f46e5" : "#94a3b8"}/>
                   {item.badge > 0 && (

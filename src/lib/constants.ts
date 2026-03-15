@@ -19,7 +19,7 @@ export const STATUS_MAP: Record<CaseStatus, StatusDef> = {
 };
 
 export const NAV_ITEMS: NavItem[] = [
-  { id: "dashboard", label: "ダッシュボード", icon: "LayoutGrid", href: "/" },
+  { id: "dashboard", label: "ホーム", icon: "LayoutGrid", href: "/" },
   { id: "line", label: "LINE受信", icon: "Inbox", href: "/line", badge: 3 },
   { id: "cases", label: "案件管理", icon: "FileText", href: "/cases" },
   { id: "calendar", label: "スケジュール", icon: "Calendar", href: "/calendar" },

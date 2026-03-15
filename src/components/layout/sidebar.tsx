@@ -4,9 +4,10 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { NAV_ITEMS } from "@/lib/constants";
+import { Logo, LogoIcon } from "@/components/ui/logo";
 import {
   LayoutGrid, Inbox, FileText, Calendar, Calculator, BarChart3,
-  Globe, ClipboardList, Layers, ChevronDown,
+  Globe, ClipboardList, ChevronDown,
 } from "lucide-react";
 
 const iconMap: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
@@ -28,17 +29,13 @@ export function Sidebar({ open }: SidebarProps) {
     )}>
       {/* Logo */}
       <div className={cn(
-        "flex items-center gap-3 h-16 border-b border-slate-100 shrink-0",
-        open ? "px-5" : "px-4 justify-center"
+        "flex items-center h-16 border-b border-slate-100 shrink-0",
+        open ? "px-5" : "px-3 justify-center"
       )}>
-        <div className="w-9 h-9 bg-gradient-to-br from-indigo-500 to-violet-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-200 shrink-0">
-          <Layers size={20} className="text-white" />
-        </div>
-        {open && (
-          <div className="min-w-0">
-            <h1 className="font-bold text-sm text-slate-800 truncate">スマカレ</h1>
-            <p className="text-[10px] text-slate-400 truncate">顧客管理プラットフォーム</p>
-          </div>
+        {open ? (
+          <Logo variant="full" theme="auto" size="sm" />
+        ) : (
+          <LogoIcon size={32} />
         )}
       </div>
 

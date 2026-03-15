@@ -44,7 +44,7 @@ export default function DashboardPage() {
         {/* Header - hidden on mobile (shown in header bar) */}
         <div className="hidden lg:flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-bold text-slate-900">ダッシュボード</h1>
+            <h1 className="text-2xl font-bold text-slate-900">ホーム</h1>
             <p className="text-sm text-slate-500 mt-0.5">2026年2月13日（木）の概況</p>
           </div>
           <button className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700 shadow-lg shadow-indigo-200 self-start transition-colors">
