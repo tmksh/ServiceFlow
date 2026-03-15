@@ -1801,6 +1801,7 @@ const CalView = () => {
   const [selCase, setSelCase] = useState(null);
   const [selDay, setSelDay] = useState(13);
   const [mapTooltip, setMapTooltip] = useState(null);
+  const [dayPopup, setDayPopup] = useState(null); // { day, cases, anchorRect }
 
   const y = cur.getFullYear(), m = cur.getMonth();
   const mn = ["1月","2月","3月","4月","5月","6月","7月","8月","9月","10月","11月","12月"];
@@ -1860,6 +1861,13 @@ const CalView = () => {
     const w0 = weekDays[0], w6 = weekDays[6];
     return `${mn[w0.month]}${w0.date}日 〜 ${mn[w6.month]}${w6.date}日`;
   };
+  /* スマホ用短縮ラベル */
+  const headerLabelShort = () => {
+    if (calMode === "month") return `${mn[m]}`;
+    if (calMode === "day")   return `${mn[m].replace("月","")}/${selDay}（${dn[new Date(y,m,selDay).getDay()]}）`;
+    const w0 = weekDays[0], w6 = weekDays[6];
+    return `${w0.date}〜${w6.date}日`;
+  };
 
   /* ─── 月ビュー ─── */
   const MonthView = () => {
@@ -1867,7 +1875,6 @@ const CalView = () => {
     const days = [];
     for (let i = 0; i < fd; i++) days.push(null);
     for (let i = 1; i <= dim; i++) days.push(i);
-    // セル高さ: 画面高さからヘッダー等を引いた領域を週数で均等分割
     const cellH = Math.max(64, Math.floor((window.innerHeight - 260) / weeks));
     return (
       <div>
@@ -1885,7 +1892,12 @@ const CalView = () => {
             const dow = i % 7;
             const isSel = d === selDay;
             return (
-              <div key={i} onClick={() => d && setSelDay(d)}
+              <div key={i} onClick={e => {
+                if (!d) return;
+                setSelDay(d);
+                const rect = e.currentTarget.getBoundingClientRect();
+                setDayPopup({ day: d, dateStr: ds, cases: dc, rect });
+              }}
                 className={cn("border-r border-b border-slate-100 cursor-pointer group transition-colors overflow-hidden p-1",
                   !d ? "bg-slate-50/40" : isSel ? "bg-indigo-50/60" : "hover:bg-slate-50/80"
                 )}
@@ -1903,7 +1915,7 @@ const CalView = () => {
                           className="flex items-center gap-1 px-1 py-0.5 rounded-md text-[9px] truncate cursor-pointer hover:opacity-75"
                           style={{ background: c.category.color + "18", color: c.category.color }}>
                           {c.urgent && <ic.Zap size={8}/>}
-                          <span className="truncate font-medium leading-tight">{c.time} {c.customer}</span>
+                          <span className="truncate font-medium leading-tight">{c.category.label}</span>
                         </div>
                       ))}
                       {dc.length > (cellH > 80 ? 3 : 1) && (
@@ -1916,6 +1928,74 @@ const CalView = () => {
             );
           })}
         </div>
+
+        {/* 日別予定ポップアップ */}
+        {dayPopup && (
+          <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center"
+            onClick={() => setDayPopup(null)}>
+            {/* オーバーレイ */}
+            <div className="absolute inset-0 bg-slate-900/30 backdrop-blur-[2px]"/>
+            {/* モーダル本体 */}
+            <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 mb-4 sm:mb-0 overflow-hidden"
+              onClick={e => e.stopPropagation()}>
+              {/* ヘッダー */}
+              <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+                <div>
+                  <p className="text-xs text-slate-400 font-medium">{y}年{m + 1}月</p>
+                  <h3 className="text-lg font-bold text-slate-900">{dayPopup.day}日
+                    <span className="ml-2 text-sm font-normal text-slate-400">
+                      {dn[new Date(y, m, dayPopup.day).getDay()]}曜日
+                    </span>
+                  </h3>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs bg-indigo-50 text-indigo-600 font-semibold px-2.5 py-1 rounded-full">
+                    {dayPopup.cases.length}件
+                  </span>
+                  <button onClick={() => setDayPopup(null)}
+                    className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-100 transition-colors text-slate-400">
+                    <ic.X size={16}/>
+                  </button>
+                </div>
+              </div>
+              {/* 予定リスト */}
+              <div className="overflow-y-auto max-h-72 divide-y divide-slate-50">
+                {dayPopup.cases.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-10 text-slate-400">
+                    <ic.Calendar size={32} className="mb-2 opacity-40"/>
+                    <p className="text-sm">この日の予定はありません</p>
+                  </div>
+                ) : dayPopup.cases.map(c => (
+                  <div key={c.id} onClick={() => { setDayPopup(null); setSelCase(c); }}
+                    className="flex items-center gap-3 px-5 py-3.5 hover:bg-slate-50 cursor-pointer transition-colors active:bg-slate-100">
+                    {/* カテゴリカラーバー */}
+                    <div className="w-1 h-10 rounded-full shrink-0" style={{ background: c.category.color }}/>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5 mb-0.5">
+                        <span className="text-xs font-semibold px-1.5 py-0.5 rounded-md" style={{ background: c.category.color + "18", color: c.category.color }}>
+                          {c.category.label}
+                        </span>
+                        {c.urgent && <span className="flex items-center gap-0.5 text-[10px] text-amber-500 font-semibold"><ic.Zap size={10}/>緊急</span>}
+                      </div>
+                      <p className="text-sm font-semibold text-slate-800 truncate">{c.customer}</p>
+                      <p className="text-xs text-slate-400 truncate">{c.addr}</p>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <p className="text-sm font-bold" style={{ color: c.category.color }}>{c.time}</p>
+                      <p className="text-[11px] text-slate-400">{c.staff}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {/* フッター */}
+              {dayPopup.cases.length > 0 && (
+                <div className="px-5 py-3 border-t border-slate-100 bg-slate-50/60">
+                  <p className="text-xs text-slate-400 text-center">タップで案件詳細を表示</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     );
   };
@@ -2251,7 +2331,10 @@ const CalView = () => {
             <button onClick={navNext} className="p-1.5 lg:p-2 rounded-xl hover:bg-slate-100 active:bg-slate-200 transition-colors">
               <ic.ChevR size={16}/>
             </button>
-            <span className="text-xs lg:text-sm font-bold text-slate-700 ml-0.5">{headerLabel()}</span>
+            <span className="text-xs lg:text-sm font-bold text-slate-700 ml-0.5 truncate max-w-[100px] lg:max-w-none">
+              <span className="lg:hidden">{headerLabelShort()}</span>
+              <span className="hidden lg:inline">{headerLabel()}</span>
+            </span>
           </div>
           {/* ビュー切り替えタブ */}
           <div className="flex gap-0.5 lg:gap-1 bg-slate-100 rounded-xl p-0.5 lg:p-1">
@@ -4697,17 +4780,20 @@ const EstimateList = ({ onSelect, onCreate }) => {
   );
 };
 
-const EstimatePreview = ({ est, onBack }) => {
+const EstimatePreview = ({ est, onBack, isNew = false }) => {
   const { sub, taxAmt, total } = calcInvoice(est);
-  const st = EST_STATUS[est.status];
+  const st = EST_STATUS[est.status] || EST_STATUS["draft"];
   return (
     <div className="space-y-4">
+      {!isNew && (
       <div className="flex items-center justify-between">
         <button onClick={onBack} className="flex items-center gap-2 text-sm text-slate-600 hover:text-slate-800 font-medium">
           <ic.ChevL size={16}/> 一覧に戻る
         </button>
         <span className={cn("text-sm font-semibold px-3 py-1.5 rounded-full", st.bg)}>{st.l}</span>
       </div>
+      )}
+      {!isNew && (
       <div className="flex flex-wrap gap-2">
         <button onClick={() => window.print()}
           className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-xl text-sm font-semibold hover:bg-emerald-700 transition-colors shadow-sm shadow-emerald-200">
@@ -4727,6 +4813,7 @@ const EstimatePreview = ({ est, onBack }) => {
           </div>
         )}
       </div>
+      )}
       <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
         <DocHeader docType="御見積書" docId={est.id} accentFrom="from-emerald-600" accentTo="to-teal-600"/>
         <div className="p-8">
@@ -4781,14 +4868,278 @@ const EstimatePreview = ({ est, onBack }) => {
   );
 };
 
+/* ── 見積書作成フォーム ── */
+const EstimateForm = ({ onBack, onComplete }) => {
+  const [step, setStep] = useState(1);
+  const [form, setForm] = useState({
+    caseId: "CS-0061",
+    customer: "",
+    phone: "",
+    addr: "",
+    cat: "fuyouhin",
+    issueDate: new Date().toISOString().slice(0, 10),
+    expiryDate: (() => { const d = new Date(); d.setDate(d.getDate() + 30); return d.toISOString().slice(0, 10); })(),
+    paymentMethod: "bank",
+    note: "",
+    items: [{ name: "", qty: 1, unit: "式", price: 0 }],
+    tax: 10,
+  });
+  const [autoFilled, setAutoFilled] = useState(false);
+
+  const autoFill = () => {
+    setForm(f => ({
+      ...f,
+      customer: "なかの みき",
+      phone: "090-1111-2222",
+      addr: "東京都杉並区高円寺南3-28-5",
+      cat: "fuyouhin",
+      items: [
+        { name: "不用品回収作業費", qty: 1, unit: "式", price: 45000 },
+        { name: "トラック費用（2t）", qty: 1, unit: "台", price: 15000 },
+        { name: "スタッフ追加料金", qty: 1, unit: "式", price: 8000 },
+      ],
+    }));
+    setAutoFilled(true);
+  };
+
+  const setF = (k, v) => setForm(f => ({ ...f, [k]: v }));
+  const addItem = () => setForm(f => ({ ...f, items: [...f.items, { name: "", qty: 1, unit: "式", price: 0 }] }));
+  const removeItem = i => setForm(f => ({ ...f, items: f.items.filter((_, idx) => idx !== i) }));
+  const setItem = (i, k, v) => setForm(f => ({
+    ...f,
+    items: f.items.map((it, idx) => idx === i ? { ...it, [k]: v } : it)
+  }));
+
+  const sub = form.items.reduce((s, it) => s + (Number(it.price) * Number(it.qty)), 0);
+  const taxAmt = Math.round(sub * form.tax / 100);
+  const total = sub + taxAmt;
+
+  const inputCls = "w-full px-3 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-400 transition-colors";
+
+  const CAT_OPTIONS = [
+    { v: "fuyouhin", l: "不用品回収" },
+    { v: "hikkoshi",  l: "引っ越し" },
+    { v: "cleaning",  l: "ハウスクリーニング" },
+    { v: "kaikatsu",  l: "遺品整理" },
+    { v: "other",     l: "その他" },
+  ];
+
+  return (
+    <div className="space-y-5">
+      {/* ヘッダー */}
+      <div className="flex items-center gap-3">
+        <button onClick={onBack} className="p-2 rounded-xl hover:bg-slate-100 transition-colors">
+          <ic.ChevL size={20}/>
+        </button>
+        <div>
+          <h2 className="text-lg font-bold text-slate-800">見積書を作成</h2>
+          <p className="text-xs text-slate-400">ステップ {step} / 3</p>
+        </div>
+        <div className="ml-auto flex items-center gap-2">
+          {[1, 2, 3].map(s => (
+            <div key={s} className="flex items-center gap-2">
+              <div className={cn("w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all",
+                step > s ? "bg-emerald-500 text-white" :
+                step === s ? "bg-emerald-600 text-white shadow shadow-emerald-300" :
+                "bg-slate-100 text-slate-400"
+              )}>
+                {step > s ? <ic.Check size={12}/> : s}
+              </div>
+              {s < 3 && <div className={cn("w-8 h-0.5 rounded-full", step > s ? "bg-emerald-400" : "bg-slate-200")}/>}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Step 1: 基本情報 */}
+      {step === 1 && (
+        <div className="space-y-4 fade-in">
+          <Card className="p-4">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="p-2 bg-emerald-100 rounded-xl"><ic.Zap size={16} stroke="#059669"/></div>
+              <div className="flex-1">
+                <p className="text-sm font-semibold text-slate-800">案件から自動入力</p>
+                <p className="text-xs text-slate-400">案件IDを入力すると顧客情報を自動取得</p>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <input value={form.caseId} onChange={e => setF("caseId", e.target.value)}
+                placeholder="CS-0061" className={inputCls + " flex-1"}/>
+              <button onClick={autoFill}
+                className={cn("px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors whitespace-nowrap",
+                  autoFilled
+                    ? "bg-emerald-100 text-emerald-700 border border-emerald-200"
+                    : "bg-emerald-600 text-white hover:bg-emerald-700"
+                )}>
+                {autoFilled ? "✓ 取得済み" : "自動入力"}
+              </button>
+            </div>
+          </Card>
+
+          <Card className="p-5 space-y-4">
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">顧客情報</p>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs font-medium text-slate-500 mb-1.5 block">顧客名 <span className="text-red-400">*</span></label>
+                <input value={form.customer} onChange={e => setF("customer", e.target.value)} placeholder="例: なかの みき" className={inputCls}/>
+              </div>
+              <div>
+                <label className="text-xs font-medium text-slate-500 mb-1.5 block">電話番号</label>
+                <input value={form.phone} onChange={e => setF("phone", e.target.value)} placeholder="090-0000-0000" className={inputCls}/>
+              </div>
+            </div>
+            <div>
+              <label className="text-xs font-medium text-slate-500 mb-1.5 block">住所</label>
+              <input value={form.addr} onChange={e => setF("addr", e.target.value)} placeholder="都道府県・市区町村・番地" className={inputCls}/>
+            </div>
+            <div>
+              <label className="text-xs font-medium text-slate-500 mb-1.5 block">サービス種別</label>
+              <div className="grid grid-cols-3 gap-2">
+                {CAT_OPTIONS.map(({ v, l }) => (
+                  <button key={v} onClick={() => setF("cat", v)}
+                    className={cn("py-2 rounded-xl text-xs font-medium border-2 transition-all",
+                      form.cat === v ? "bg-emerald-600 text-white border-emerald-600" : "bg-white text-slate-600 border-slate-200 hover:border-slate-300"
+                    )}>{l}</button>
+                ))}
+              </div>
+            </div>
+          </Card>
+
+          <Card className="p-5 space-y-4">
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">見積情報</p>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs font-medium text-slate-500 mb-1.5 block">発行日</label>
+                <input type="date" value={form.issueDate} onChange={e => setF("issueDate", e.target.value)} className={inputCls}/>
+              </div>
+              <div>
+                <label className="text-xs font-medium text-slate-500 mb-1.5 block">有効期限 <span className="text-slate-300">（推奨: 30日）</span></label>
+                <input type="date" value={form.expiryDate} onChange={e => setF("expiryDate", e.target.value)} className={inputCls}/>
+              </div>
+            </div>
+            <div>
+              <label className="text-xs font-medium text-slate-500 mb-1.5 block">備考</label>
+              <textarea value={form.note} onChange={e => setF("note", e.target.value)}
+                rows={2} placeholder="有効期限・作業条件・特記事項など" className={inputCls + " resize-none"}/>
+            </div>
+          </Card>
+
+          <button onClick={() => setStep(2)}
+            disabled={!form.customer}
+            className={cn("w-full py-3.5 rounded-xl text-sm font-semibold transition-colors",
+              form.customer ? "bg-emerald-600 text-white hover:bg-emerald-700 shadow-sm shadow-emerald-200" : "bg-slate-100 text-slate-400 cursor-not-allowed"
+            )}>次へ → 品目入力</button>
+        </div>
+      )}
+
+      {/* Step 2: 品目入力 */}
+      {step === 2 && (
+        <div className="space-y-4 fade-in">
+          <Card className="p-5">
+            <div className="flex items-center justify-between mb-4">
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">品目・作業内容</p>
+              <div className="flex items-center gap-2">
+                <label className="text-xs text-slate-500">消費税</label>
+                <select value={form.tax} onChange={e => setF("tax", Number(e.target.value))}
+                  className="text-sm border border-slate-200 rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-emerald-500/20">
+                  <option value={10}>10%</option>
+                  <option value={8}>8%（軽減）</option>
+                  <option value={0}>非課税</option>
+                </select>
+              </div>
+            </div>
+            <div className="space-y-2.5 mb-4">
+              {form.items.map((it, i) => (
+                <div key={i} className="grid gap-2" style={{ gridTemplateColumns: "1fr 60px 60px 100px 32px" }}>
+                  <input value={it.name} onChange={e => setItem(i, "name", e.target.value)}
+                    placeholder="品目・作業内容" className={inputCls}/>
+                  <input type="number" value={it.qty} onChange={e => setItem(i, "qty", Number(e.target.value))}
+                    min={1} className={inputCls + " text-center"}/>
+                  <select value={it.unit} onChange={e => setItem(i, "unit", e.target.value)}
+                    className={inputCls}>
+                    {["式","個","台","点","件","時間","日"].map(u => <option key={u}>{u}</option>)}
+                  </select>
+                  <input type="number" value={it.price} onChange={e => setItem(i, "price", Number(e.target.value))}
+                    placeholder="金額" className={inputCls}/>
+                  <button onClick={() => removeItem(i)} disabled={form.items.length <= 1}
+                    className="w-8 h-8 rounded-lg hover:bg-red-50 flex items-center justify-center disabled:opacity-30">
+                    <ic.X size={16} className="text-red-400"/>
+                  </button>
+                </div>
+              ))}
+              <div className="grid text-[10px] text-slate-400 font-medium px-1" style={{ gridTemplateColumns: "1fr 60px 60px 100px 32px" }}>
+                <span>品目名</span><span className="text-center">数量</span><span className="text-center">単位</span><span>単価(税抜)</span>
+              </div>
+            </div>
+            <button onClick={addItem} className="flex items-center gap-2 text-sm text-emerald-600 font-medium hover:text-emerald-700 transition-colors">
+              <ic.Plus size={16}/> 品目を追加
+            </button>
+          </Card>
+
+          <Card className="p-5">
+            <div className="space-y-2">
+              {[
+                ["小計（税抜）", fmt(sub)],
+                [`消費税（${form.tax}%）`, fmt(taxAmt)],
+              ].map(([l, v]) => (
+                <div key={l} className="flex justify-between text-sm text-slate-600">
+                  <span>{l}</span><span>{v}</span>
+                </div>
+              ))}
+              <div className="border-t border-slate-200 pt-2 flex justify-between">
+                <span className="text-base font-bold text-slate-800">合計（税込）</span>
+                <span className="text-xl font-bold text-emerald-600">{fmt(total)}</span>
+              </div>
+            </div>
+          </Card>
+
+          <div className="flex gap-3">
+            <button onClick={() => setStep(1)} className="px-5 py-3 border border-slate-200 rounded-xl text-sm font-medium hover:bg-slate-50 transition-colors">
+              ← 戻る
+            </button>
+            <button onClick={() => setStep(3)}
+              disabled={form.items.some(it => !it.name || it.price <= 0)}
+              className={cn("flex-1 py-3 rounded-xl text-sm font-semibold transition-colors",
+                form.items.every(it => it.name && it.price > 0) ? "bg-emerald-600 text-white hover:bg-emerald-700" : "bg-slate-100 text-slate-400 cursor-not-allowed"
+              )}>次へ → プレビュー・確認</button>
+          </div>
+        </div>
+      )}
+
+      {/* Step 3: プレビュー */}
+      {step === 3 && (
+        <div className="space-y-4 fade-in">
+          <EstimatePreview est={{
+            id: "EST-2026-NEW",
+            ...form,
+            status: "draft",
+            staff: "田中",
+            items: form.items.filter(it => it.name && it.price > 0),
+          }} onBack={() => setStep(2)} isNew={true}/>
+          <div className="flex gap-3">
+            <button onClick={() => setStep(2)} className="px-5 py-3.5 border border-slate-200 rounded-xl text-sm font-medium hover:bg-slate-50 transition-colors">
+              ← 戻る
+            </button>
+            <button onClick={onComplete}
+              className="flex-1 py-3.5 bg-emerald-600 text-white rounded-xl text-sm font-semibold hover:bg-emerald-700 shadow-sm shadow-emerald-200 flex items-center justify-center gap-2 transition-colors">
+              <ic.Send size={16}/> 見積書を送付する
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 const EstimatePage = () => {
   const [view, setView] = useState("list");
   const [sel, setSel] = useState(null);
+  if (view === "form") return <EstimateForm onBack={() => setView("list")} onComplete={() => setView("list")}/>;
   if (view === "detail" && sel) return <EstimatePreview est={sel} onBack={() => { setView("list"); setSel(null); }}/>;
   return (
     <EstimateList
       onSelect={e => { setSel(e); setView("detail"); }}
-      onCreate={() => {}}
+      onCreate={() => setView("form")}
     />
   );
 };
@@ -4922,17 +5273,20 @@ const ReceiptList = ({ onSelect, onCreate }) => {
   );
 };
 
-const ReceiptPreview = ({ rec, onBack }) => {
+const ReceiptPreview = ({ rec, onBack, isNew = false }) => {
   const { total } = calcInvoice(rec);
   const pmLabel = { bank: "銀行振込", cash: "現金払い", credit: "クレジットカード" }[rec.payMethod] || rec.payMethod;
   return (
     <div className="space-y-4">
+      {!isNew && (
       <div className="flex items-center justify-between">
         <button onClick={onBack} className="flex items-center gap-2 text-sm text-slate-600 hover:text-slate-800 font-medium">
           <ic.ChevL size={16}/> 一覧に戻る
         </button>
         <span className="text-sm font-semibold px-3 py-1.5 rounded-full bg-emerald-100 text-emerald-700">発行済み</span>
       </div>
+      )}
+      {!isNew && (
       <div className="flex flex-wrap gap-2">
         <button onClick={() => window.print()}
           className="flex items-center gap-2 px-4 py-2 bg-violet-600 text-white rounded-xl text-sm font-semibold hover:bg-violet-700 shadow-sm shadow-violet-200 transition-colors">
@@ -4947,6 +5301,7 @@ const ReceiptPreview = ({ rec, onBack }) => {
           </div>
         )}
       </div>
+      )}
       <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
         <DocHeader docType="領収書" docId={rec.id} accentFrom="from-violet-600" accentTo="to-purple-600"/>
         <div className="p-8">
@@ -5004,11 +5359,301 @@ const ReceiptPreview = ({ rec, onBack }) => {
   );
 };
 
+/* ── 領収書発行フォーム ── */
+const ReceiptForm = ({ onBack, onComplete }) => {
+  const [mode, setMode] = useState("select"); // "select" | "auto" | "manual"
+  const [selectedInvoice, setSelectedInvoice] = useState(null);
+  const [form, setForm] = useState({
+    caseId: "",
+    customer: "",
+    phone: "",
+    addr: "",
+    cat: "fuyouhin",
+    issueDate: new Date().toISOString().slice(0, 10),
+    payMethod: "bank",
+    note: "",
+    items: [{ name: "", qty: 1, unit: "式", price: 0 }],
+    tax: 10,
+  });
+
+  const setF = (k, v) => setForm(f => ({ ...f, [k]: v }));
+  const addItem = () => setForm(f => ({ ...f, items: [...f.items, { name: "", qty: 1, unit: "式", price: 0 }] }));
+  const removeItem = i => setForm(f => ({ ...f, items: f.items.filter((_, idx) => idx !== i) }));
+  const setItem = (i, k, v) => setForm(f => ({
+    ...f,
+    items: f.items.map((it, idx) => idx === i ? { ...it, [k]: v } : it)
+  }));
+
+  const paidInvoices = INVOICES.filter(inv => inv.status === "paid");
+
+  const applyInvoice = inv => {
+    setSelectedInvoice(inv);
+    setForm(f => ({
+      ...f,
+      caseId: inv.caseId,
+      customer: inv.customer,
+      phone: inv.phone || "",
+      addr: inv.addr || "",
+      cat: inv.cat,
+      payMethod: inv.paymentMethod || "bank",
+      note: `請求書番号: ${inv.id}`,
+      items: inv.items,
+      tax: inv.tax,
+    }));
+    setMode("preview");
+  };
+
+  const sub = form.items.reduce((s, it) => s + (Number(it.price) * Number(it.qty)), 0);
+  const taxAmt = Math.round(sub * form.tax / 100);
+  const total = sub + taxAmt;
+
+  const inputCls = "w-full px-3 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-400 transition-colors";
+  const pmLabel = { bank: "銀行振込", cash: "現金払い", credit: "クレジットカード" };
+
+  /* ── モード選択画面 ── */
+  if (mode === "select") return (
+    <div className="space-y-5">
+      <div className="flex items-center gap-3">
+        <button onClick={onBack} className="p-2 rounded-xl hover:bg-slate-100 transition-colors">
+          <ic.ChevL size={20}/>
+        </button>
+        <div>
+          <h2 className="text-lg font-bold text-slate-800">領収書を発行</h2>
+          <p className="text-xs text-slate-400">発行方法を選択してください</p>
+        </div>
+      </div>
+
+      {/* 自動生成オプション */}
+      <div>
+        <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">入金済み請求書から自動生成</p>
+        {paidInvoices.length === 0 ? (
+          <Card className="p-6 text-center">
+            <div className="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-3">
+              <ic.FileText size={20} className="text-slate-400"/>
+            </div>
+            <p className="text-sm font-semibold text-slate-600">入金済み請求書はありません</p>
+            <p className="text-xs text-slate-400 mt-1">請求書ステータスを「支払済み」にすると表示されます</p>
+          </Card>
+        ) : (
+          <div className="space-y-2">
+            {paidInvoices.map(inv => {
+              const { total: invTotal } = calcInvoice(inv);
+              return (
+                <button key={inv.id} onClick={() => applyInvoice(inv)}
+                  className="w-full flex items-center gap-3 p-4 bg-white border border-slate-200 rounded-2xl hover:border-violet-300 hover:bg-violet-50/30 transition-all group text-left">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center shrink-0">
+                    <ic.Check size={18} className="text-emerald-600"/>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-xs font-mono font-semibold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-lg">{inv.id}</span>
+                      <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-medium">支払済み</span>
+                    </div>
+                    <p className="text-sm font-semibold text-slate-800 mt-0.5">{inv.customer} 様</p>
+                    <p className="text-xs text-slate-400">{inv.caseId} · {inv.issueDate}</p>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <p className="text-base font-bold text-slate-800">{fmt(invTotal)}</p>
+                    <p className="text-xs text-slate-400">{pmLabel[inv.paymentMethod] || inv.paymentMethod}</p>
+                  </div>
+                  <ic.ChevR size={16} className="text-slate-300 group-hover:text-violet-400 transition-colors shrink-0"/>
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* 区切り線 */}
+      <div className="flex items-center gap-3">
+        <div className="flex-1 h-px bg-slate-200"/>
+        <span className="text-xs text-slate-400 font-medium">または</span>
+        <div className="flex-1 h-px bg-slate-200"/>
+      </div>
+
+      {/* 手動入力オプション */}
+      <button onClick={() => setMode("manual")}
+        className="w-full flex items-center gap-3 p-4 bg-white border-2 border-dashed border-slate-200 rounded-2xl hover:border-violet-300 hover:bg-violet-50/20 transition-all group">
+        <div className="w-10 h-10 rounded-xl bg-violet-50 flex items-center justify-center shrink-0">
+          <ic.Plus size={18} className="text-violet-600"/>
+        </div>
+        <div className="text-left">
+          <p className="text-sm font-semibold text-slate-800">手動で領収書を作成</p>
+          <p className="text-xs text-slate-400">顧客情報・金額を手動入力して発行</p>
+        </div>
+        <ic.ChevR size={16} className="text-slate-300 group-hover:text-violet-400 transition-colors ml-auto shrink-0"/>
+      </button>
+    </div>
+  );
+
+  /* ── 手動入力フォーム ── */
+  if (mode === "manual") return (
+    <div className="space-y-5">
+      <div className="flex items-center gap-3">
+        <button onClick={() => setMode("select")} className="p-2 rounded-xl hover:bg-slate-100 transition-colors">
+          <ic.ChevL size={20}/>
+        </button>
+        <div>
+          <h2 className="text-lg font-bold text-slate-800">領収書を手動作成</h2>
+          <p className="text-xs text-slate-400">顧客情報と内訳を入力してください</p>
+        </div>
+      </div>
+
+      <Card className="p-5 space-y-4">
+        <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">顧客情報</p>
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="text-xs font-medium text-slate-500 mb-1.5 block">顧客名 <span className="text-red-400">*</span></label>
+            <input value={form.customer} onChange={e => setF("customer", e.target.value)} placeholder="例: やまだ こうへい" className={inputCls}/>
+          </div>
+          <div>
+            <label className="text-xs font-medium text-slate-500 mb-1.5 block">電話番号</label>
+            <input value={form.phone} onChange={e => setF("phone", e.target.value)} placeholder="090-0000-0000" className={inputCls}/>
+          </div>
+        </div>
+      </Card>
+
+      <Card className="p-5 space-y-4">
+        <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">支払情報</p>
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="text-xs font-medium text-slate-500 mb-1.5 block">発行日</label>
+            <input type="date" value={form.issueDate} onChange={e => setF("issueDate", e.target.value)} className={inputCls}/>
+          </div>
+          <div>
+            <label className="text-xs font-medium text-slate-500 mb-1.5 block">消費税率</label>
+            <select value={form.tax} onChange={e => setF("tax", Number(e.target.value))} className={inputCls}>
+              <option value={10}>10%</option>
+              <option value={8}>8%（軽減）</option>
+              <option value={0}>非課税</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label className="text-xs font-medium text-slate-500 mb-1.5 block">支払方法</label>
+          <div className="flex gap-2">
+            {[["bank","銀行振込"],["cash","現金"],["credit","クレジット"]].map(([v,l]) => (
+              <button key={v} onClick={() => setF("payMethod", v)}
+                className={cn("flex-1 py-2.5 rounded-xl text-sm font-medium border-2 transition-all",
+                  form.payMethod === v ? "bg-violet-600 text-white border-violet-600" : "bg-white text-slate-600 border-slate-200 hover:border-slate-300"
+                )}>{l}</button>
+            ))}
+          </div>
+        </div>
+      </Card>
+
+      <Card className="p-5">
+        <div className="flex items-center justify-between mb-4">
+          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">内訳</p>
+        </div>
+        <div className="space-y-2.5 mb-4">
+          {form.items.map((it, i) => (
+            <div key={i} className="grid gap-2" style={{ gridTemplateColumns: "1fr 60px 60px 100px 32px" }}>
+              <input value={it.name} onChange={e => setItem(i, "name", e.target.value)}
+                placeholder="品目・作業内容" className={inputCls}/>
+              <input type="number" value={it.qty} onChange={e => setItem(i, "qty", Number(e.target.value))}
+                min={1} className={inputCls + " text-center"}/>
+              <select value={it.unit} onChange={e => setItem(i, "unit", e.target.value)} className={inputCls}>
+                {["式","個","台","点","件","時間","日"].map(u => <option key={u}>{u}</option>)}
+              </select>
+              <input type="number" value={it.price} onChange={e => setItem(i, "price", Number(e.target.value))}
+                placeholder="金額" className={inputCls}/>
+              <button onClick={() => removeItem(i)} disabled={form.items.length <= 1}
+                className="w-8 h-8 rounded-lg hover:bg-red-50 flex items-center justify-center disabled:opacity-30">
+                <ic.X size={16} className="text-red-400"/>
+              </button>
+            </div>
+          ))}
+          <div className="grid text-[10px] text-slate-400 font-medium px-1" style={{ gridTemplateColumns: "1fr 60px 60px 100px 32px" }}>
+            <span>品目名</span><span className="text-center">数量</span><span className="text-center">単位</span><span>単価(税抜)</span>
+          </div>
+        </div>
+        <button onClick={addItem} className="flex items-center gap-2 text-sm text-violet-600 font-medium hover:text-violet-700 transition-colors">
+          <ic.Plus size={16}/> 品目を追加
+        </button>
+      </Card>
+
+      <Card className="p-5">
+        <div className="space-y-2">
+          {[["小計（税抜）", fmt(sub)], [`消費税（${form.tax}%）`, fmt(taxAmt)]].map(([l, v]) => (
+            <div key={l} className="flex justify-between text-sm text-slate-600">
+              <span>{l}</span><span>{v}</span>
+            </div>
+          ))}
+          <div className="border-t border-slate-200 pt-2 flex justify-between">
+            <span className="text-base font-bold text-slate-800">合計（税込）</span>
+            <span className="text-xl font-bold text-violet-600">{fmt(total)}</span>
+          </div>
+        </div>
+      </Card>
+
+      <div className="flex gap-3">
+        <button onClick={() => setMode("select")} className="px-5 py-3.5 border border-slate-200 rounded-xl text-sm font-medium hover:bg-slate-50 transition-colors">
+          ← 戻る
+        </button>
+        <button onClick={() => setMode("preview")}
+          disabled={!form.customer || form.items.some(it => !it.name || it.price <= 0)}
+          className={cn("flex-1 py-3.5 rounded-xl text-sm font-semibold transition-colors",
+            form.customer && form.items.every(it => it.name && it.price > 0)
+              ? "bg-violet-600 text-white hover:bg-violet-700 shadow-sm shadow-violet-200"
+              : "bg-slate-100 text-slate-400 cursor-not-allowed"
+          )}>プレビュー・確認 →</button>
+      </div>
+    </div>
+  );
+
+  /* ── プレビュー画面 ── */
+  return (
+    <div className="space-y-5">
+      <div className="flex items-center gap-3">
+        <button onClick={() => setMode(selectedInvoice ? "select" : "manual")} className="p-2 rounded-xl hover:bg-slate-100 transition-colors">
+          <ic.ChevL size={20}/>
+        </button>
+        <div>
+          <h2 className="text-lg font-bold text-slate-800">領収書プレビュー</h2>
+          <p className="text-xs text-slate-400">内容を確認して発行してください</p>
+        </div>
+        <span className="ml-auto text-xs bg-amber-100 text-amber-700 font-semibold px-3 py-1.5 rounded-full">発行前確認</span>
+      </div>
+
+      {selectedInvoice && (
+        <div className="flex items-center gap-3 p-3.5 bg-emerald-50 border border-emerald-100 rounded-xl">
+          <ic.Zap size={16} className="text-emerald-600 shrink-0"/>
+          <p className="text-xs text-emerald-800 font-medium flex-1">
+            請求書 <strong>{selectedInvoice.id}</strong> から自動生成されました
+          </p>
+          <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-semibold">自動</span>
+        </div>
+      )}
+
+      <ReceiptPreview rec={{
+        id: "REC-2026-NEW",
+        ...form,
+        invoiceId: selectedInvoice ? selectedInvoice.id : "",
+        staff: "田中",
+        items: form.items.filter(it => it.name && it.price > 0),
+      }} onBack={() => {}} isNew={true}/>
+
+      <div className="flex gap-3">
+        <button onClick={() => setMode(selectedInvoice ? "select" : "manual")}
+          className="px-5 py-3.5 border border-slate-200 rounded-xl text-sm font-medium hover:bg-slate-50 transition-colors">
+          ← 修正する
+        </button>
+        <button onClick={onComplete}
+          className="flex-1 py-3.5 bg-violet-600 text-white rounded-xl text-sm font-semibold hover:bg-violet-700 shadow-sm shadow-violet-200 flex items-center justify-center gap-2 transition-colors">
+          <ic.Check size={16}/> 領収書を発行する
+        </button>
+      </div>
+    </div>
+  );
+};
+
 const ReceiptPage = () => {
   const [view, setView] = useState("list");
   const [sel, setSel] = useState(null);
+  if (view === "form") return <ReceiptForm onBack={() => setView("list")} onComplete={() => setView("list")}/>;
   if (view === "detail" && sel) return <ReceiptPreview rec={sel} onBack={() => { setView("list"); setSel(null); }}/>;
-  return <ReceiptList onSelect={r => { setSel(r); setView("detail"); }} onCreate={() => {}}/>;
+  return <ReceiptList onSelect={r => { setSel(r); setView("detail"); }} onCreate={() => setView("form")}/>;
 };
 
 /* ────────────────────────────────────────────
