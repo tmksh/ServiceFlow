@@ -122,7 +122,7 @@ const BarSVG = ({ data, dk, w = 500, h = 220, color = "#6366f1" }) => {
   const bw = Math.min(28, (w - 60) / data.length - 4);
   const sx = 50;
   return (
-    <svg viewBox={`0 0 ${w} ${h}`} className="w-full" style={{ maxHeight: h }}>
+    <svg viewBox={`0 0 ${w} ${h}`} className="w-full h-full" preserveAspectRatio="xMidYMid meet">
       {[0, .25, .5, .75, 1].map(f => {
         const y = h - 30 - (h - 50) * f;
         return (
@@ -163,7 +163,7 @@ const AreaSVG = ({ data, dk, w = 500, h = 220, color = "#6366f1", gid = "ag" }) 
   const pathD = pts.map((p, i) => `${i === 0 ? "M" : "L"}${p.x},${p.y}`).join(" ");
   const areaD = pathD + ` L${pts[pts.length - 1].x},${h - 30} L${pts[0].x},${h - 30} Z`;
   return (
-    <svg viewBox={`0 0 ${w} ${h}`} className="w-full" style={{ maxHeight: h }}>
+    <svg viewBox={`0 0 ${w} ${h}`} className="w-full h-full" preserveAspectRatio="xMidYMid meet">
       <defs>
         <linearGradient id={gid} x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stopColor={color} stopOpacity=".15"/>
@@ -430,7 +430,7 @@ const Dashboard = ({ onNav }) => {
     <div className="space-y-6 fade-in">
       <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">ダッシュボード</h1>
+          <h1 className="text-2xl font-bold text-slate-900">ホーム</h1>
           <p className="text-sm text-slate-500 mt-0.5">2026年2月13日（金）の概況</p>
         </div>
         <button className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700 shadow-lg shadow-indigo-200 self-start">
@@ -471,9 +471,11 @@ const Dashboard = ({ onNav }) => {
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <Card className="lg:col-span-2 p-5">
-          <h3 className="font-bold text-slate-800 mb-4">売上推移（月次）</h3>
-          <AreaSVG data={monthlyRev} dk="売上" h={240} color="#6366f1" gid="rev"/>
+        <Card className="lg:col-span-2 p-5 flex flex-col">
+          <h3 className="font-bold text-slate-800 mb-3">売上推移（月次）</h3>
+          <div className="flex-1" style={{ minHeight: 240 }}>
+            <AreaSVG data={monthlyRev} dk="売上" h={300} color="#6366f1" gid="rev"/>
+          </div>
         </Card>
         <Card className="p-5">
           <h3 className="font-bold text-slate-800 mb-4">カテゴリ別案件</h3>
@@ -519,9 +521,11 @@ const Dashboard = ({ onNav }) => {
             ))}
           </div>
         </Card>
-        <Card className="p-5">
-          <h3 className="font-bold text-slate-800 mb-4">時間帯別の案件分布</h3>
-          <BarSVG data={hourData} dk="案件数" h={260}/>
+        <Card className="p-5 flex flex-col">
+          <h3 className="font-bold text-slate-800 mb-3">時間帯別の案件分布</h3>
+          <div className="flex-1" style={{ minHeight: 300 }}>
+            <BarSVG data={hourData} dk="案件数" h={340}/>
+          </div>
         </Card>
       </div>
     </div>
@@ -531,6 +535,206 @@ const Dashboard = ({ onNav }) => {
 /* ═══════════════════════════════════════════════════════
    SECTION 6: LINE受信（自動取込） ★ Core Innovation
    ═══════════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════
+   SECTION 5.5: FORM CONFIG PANEL（受電入力フォーム項目設定）
+   ═══════════════════════════════════════════════════════ */
+
+const FORM_FIELDS_DEFAULT = {
+  /* コールセンター情報 */
+  center:  { label: "センター",         section: "コールセンター情報", visible: true,  required: false, type: "select" },
+  channel: { label: "チャネル",         section: "コールセンター情報", visible: true,  required: false, type: "select" },
+  op:      { label: "オペレーター",     section: "コールセンター情報", visible: true,  required: false, type: "text"   },
+  /* 顧客情報 */
+  name:    { label: "顧客名",           section: "顧客情報",           visible: true,  required: true,  type: "text",  locked: true },
+  phone:   { label: "電話番号",         section: "顧客情報",           visible: true,  required: true,  type: "tel",   locked: true },
+  postal:  { label: "郵便番号",         section: "顧客情報",           visible: true,  required: false, type: "text"   },
+  pref:    { label: "都道府県",         section: "顧客情報",           visible: true,  required: false, type: "select" },
+  addr:    { label: "住所（詳細）",     section: "顧客情報",           visible: true,  required: false, type: "text"   },
+  /* サービス情報 */
+  date:    { label: "希望日",           section: "サービス情報",       visible: true,  required: true,  type: "date",  locked: true },
+  time:    { label: "希望時間帯",       section: "サービス情報",       visible: true,  required: false, type: "select" },
+  cat:     { label: "サービスカテゴリ", section: "サービス情報",       visible: true,  required: false, type: "select" },
+  items:   { label: "品目・荷物内容",   section: "サービス情報",       visible: true,  required: false, type: "text"   },
+  note:    { label: "備考・特記事項",   section: "サービス情報",       visible: true,  required: false, type: "textarea" },
+};
+
+const SECTION_COLORS = {
+  "コールセンター情報": { bg: "bg-slate-50",   border: "border-slate-200", icon: ic.Phone,    iconColor: "text-slate-500",   iconBg: "bg-slate-100"   },
+  "顧客情報":           { bg: "bg-blue-50/40", border: "border-blue-100",  icon: ic.User,     iconColor: "text-blue-600",    iconBg: "bg-blue-50"     },
+  "サービス情報":       { bg: "bg-indigo-50/40", border: "border-indigo-100", icon: ic.Wrench, iconColor: "text-indigo-600", iconBg: "bg-indigo-50"   },
+};
+
+const Toggle = ({ value, onChange, disabled }) => (
+  <button onClick={() => !disabled && onChange(!value)} disabled={disabled}
+    className={cn("relative w-10 h-5 rounded-full transition-colors shrink-0",
+      disabled ? "opacity-40 cursor-not-allowed" : "cursor-pointer",
+      value ? "bg-indigo-500" : "bg-slate-300")}>
+    <div className={cn("absolute top-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-transform",
+      value ? "translate-x-5" : "translate-x-0.5")}/>
+  </button>
+);
+
+const FormConfigPanel = () => {
+  const [fields, setFields] = useState(FORM_FIELDS_DEFAULT);
+  const [saved, setSaved] = useState(false);
+
+  const toggle = (key, prop) => setFields(prev => ({
+    ...prev,
+    [key]: { ...prev[key], [prop]: !prev[key][prop] }
+  }));
+
+  const handleSave = () => {
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2000);
+  };
+
+  const sections = [...new Set(Object.values(fields).map(f => f.section))];
+  const typeLabel = { text: "テキスト", tel: "電話番号", date: "日付", select: "選択肢", textarea: "テキストエリア" };
+
+  return (
+    <div className="space-y-5 fade-in">
+      {/* ヘッダー */}
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <div>
+          <h2 className="text-base font-bold text-slate-800">受電入力フォーム 項目設定</h2>
+          <p className="text-xs text-slate-400 mt-0.5">コールセンタースタッフが入力する各項目の表示・必須を管理します</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <a href="callcenter-form.html" target="_blank" rel="noopener noreferrer"
+            className="flex items-center gap-1.5 px-3 py-2 border border-indigo-200 bg-indigo-50 text-indigo-700 rounded-xl text-xs font-semibold hover:bg-indigo-100 transition-colors">
+            <ic.Eye size={13}/> フォームをプレビュー
+          </a>
+          <button onClick={handleSave}
+            className={cn("flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold transition-all",
+              saved ? "bg-emerald-500 text-white" : "bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm shadow-indigo-200")}>
+            {saved ? <><ic.Check size={13}/> 保存しました</> : <><ic.Clipboard size={13}/> 設定を保存</>}
+          </button>
+        </div>
+      </div>
+
+      {/* 凡例 */}
+      <div className="flex items-center gap-4 px-4 py-3 bg-amber-50 border border-amber-100 rounded-xl">
+        <ic.Zap size={14} className="text-amber-600 shrink-0"/>
+        <div className="flex items-center gap-5 flex-wrap">
+          {[
+            { icon: "🔒", label: "ロック済み項目は非表示・任意に変更できません（システム必須）" },
+          ].map((n, i) => <p key={i} className="text-xs text-amber-800">{n.icon} {n.label}</p>)}
+        </div>
+      </div>
+
+      {/* セクション別フィールド設定 */}
+      {sections.map(section => {
+        const sectionFields = Object.entries(fields).filter(([, f]) => f.section === section);
+        const sc = SECTION_COLORS[section];
+        const SIcon = sc.icon;
+        const visibleCount = sectionFields.filter(([, f]) => f.visible).length;
+
+        return (
+          <div key={section} className={cn("rounded-2xl border overflow-hidden", sc.border)}>
+            {/* セクションヘッダー */}
+            <div className={cn("flex items-center justify-between px-5 py-3.5", sc.bg)}>
+              <div className="flex items-center gap-2.5">
+                <div className={cn("w-7 h-7 rounded-lg flex items-center justify-center", sc.iconBg)}>
+                  <SIcon size={14} className={sc.iconColor}/>
+                </div>
+                <span className="text-sm font-bold text-slate-700">{section}</span>
+                <span className="text-[10px] text-slate-400 bg-white/70 px-2 py-0.5 rounded-full border border-slate-200/60">
+                  {visibleCount}/{sectionFields.length} 項目表示中
+                </span>
+              </div>
+            </div>
+
+            {/* フィールド一覧 */}
+            <div className="bg-white divide-y divide-slate-50">
+              {/* テーブルヘッダー */}
+              <div className="grid grid-cols-[1fr_80px_80px_100px] gap-4 px-5 py-2.5 bg-slate-50/60">
+                {["項目名", "表示", "必須", "入力タイプ"].map(h => (
+                  <span key={h} className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">{h}</span>
+                ))}
+              </div>
+              {sectionFields.map(([key, f]) => (
+                <div key={key}
+                  className={cn("grid grid-cols-[1fr_80px_80px_100px] gap-4 items-center px-5 py-3.5 transition-colors",
+                    !f.visible && "opacity-40", f.locked && "bg-slate-50/40")}>
+                  {/* 項目名 */}
+                  <div className="flex items-center gap-2 min-w-0">
+                    {f.locked && (
+                      <span title="システム必須項目">
+                        <ic.Key size={12} className="text-slate-400 shrink-0"/>
+                      </span>
+                    )}
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-slate-800 truncate">{f.label}</p>
+                      <p className="text-[10px] text-slate-400 font-mono">{key}</p>
+                    </div>
+                    {f.required && f.visible && (
+                      <span className="text-[10px] text-red-500 bg-red-50 px-1.5 py-0.5 rounded font-medium shrink-0">必須</span>
+                    )}
+                  </div>
+                  {/* 表示トグル */}
+                  <Toggle value={f.visible} onChange={v => toggle(key, "visible")} disabled={!!f.locked}/>
+                  {/* 必須トグル */}
+                  <Toggle value={f.required} onChange={v => toggle(key, "required")} disabled={!!f.locked || !f.visible}/>
+                  {/* 入力タイプ */}
+                  <span className="text-[11px] text-slate-500 bg-slate-100 px-2 py-1 rounded-lg font-mono w-fit">
+                    {typeLabel[f.type] || f.type}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      })}
+
+      {/* カスタム選択肢設定 */}
+      <Card className="p-5">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-7 h-7 rounded-lg bg-violet-50 flex items-center justify-center shrink-0">
+            <ic.Layers size={14} className="text-violet-600"/>
+          </div>
+          <div>
+            <h3 className="text-sm font-bold text-slate-800">選択肢のカスタマイズ</h3>
+            <p className="text-xs text-slate-400">センター・チャネル・時間帯などの選択肢を編集</p>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {[
+            { label: "センター名",   values: ["ネコ", "わん"],                                key: "centers" },
+            { label: "チャネル",     values: ["受電", "LINE", "Web"],                          key: "channels" },
+            { label: "希望時間帯",   values: ["9-12時", "10-12時", "12-15時", "14-17時", "15-18時", "時間指定なし"], key: "times" },
+          ].map(item => (
+            <div key={item.key} className="space-y-2">
+              <p className="text-xs font-semibold text-slate-600">{item.label}</p>
+              <div className="flex flex-wrap gap-1.5">
+                {item.values.map(v => (
+                  <div key={v} className="flex items-center gap-1 px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-700">
+                    {v}
+                    <button className="text-slate-300 hover:text-red-400 transition-colors ml-0.5">
+                      <ic.X size={10}/>
+                    </button>
+                  </div>
+                ))}
+                <button className="flex items-center gap-1 px-2.5 py-1.5 border border-dashed border-slate-300 rounded-lg text-xs text-slate-400 hover:border-indigo-400 hover:text-indigo-600 transition-colors">
+                  <ic.Plus size={10}/> 追加
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </Card>
+
+      {/* 保存ボタン（下部） */}
+      <div className="flex justify-end">
+        <button onClick={handleSave}
+          className={cn("flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all",
+            saved ? "bg-emerald-500 text-white" : "bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm shadow-indigo-200")}>
+          {saved ? <><ic.Check size={15}/> 設定を保存しました</> : <><ic.Clipboard size={15}/> 設定を保存</>}
+        </button>
+      </div>
+    </div>
+  );
+};
+
 const LineInbox = () => {
   const [sel, setSel] = useState(LINE_MSGS[0]);
   const [autoMode, setAutoMode] = useState(true);
@@ -542,75 +746,59 @@ const LineInbox = () => {
 
   return (
     <div className="space-y-5 fade-in">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">LINE受信</h1>
-          
-        </div>
+      <div className="flex items-center justify-between gap-3 flex-wrap">
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 px-4 py-2 bg-emerald-50 border border-emerald-200 rounded-xl">
-            <div className="w-2 h-2 bg-emerald-500 rounded-full anim-pulse"/><span className="text-sm font-medium text-emerald-700">Webhook接続中</span>
+          <h1 className="text-2xl font-bold text-slate-900">LINE受信</h1>
+          {/* タブ */}
+          <div className="flex gap-1 bg-white rounded-xl p-1 border border-slate-200/60 shadow-sm">
+            {[["inbox","LINE自動取込",ic.Inbox],["formconfig","フォーム設定",ic.Clipboard]].map(([k,l,I]) => (
+              <button key={k} onClick={() => setLtab(k)} className={cn(
+                "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all",
+                ltab === k ? "bg-indigo-50 text-indigo-700 shadow-sm" : "text-slate-400 hover:text-slate-600 hover:bg-slate-50"
+              )}><I size={14}/>{l}{k === "inbox" && pending > 0 && <span className="w-4 h-4 bg-amber-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">{pending}</span>}</button>
+            ))}
           </div>
-          {/* コールセンター入力フォームへのリンク */}
+        </div>
+        <div className="flex items-center gap-2.5 flex-wrap">
+          {/* 自動登録モード */}
+          <div className="flex items-center gap-2 px-3 py-2 bg-white border border-slate-200 rounded-xl">
+            <ic.Shield size={14} stroke="#4f46e5"/>
+            <span className="text-xs font-medium text-slate-600">自動登録</span>
+            <button onClick={() => setAutoMode(!autoMode)}
+              className={cn("relative w-9 h-5 rounded-full transition-colors ml-1", autoMode ? "bg-indigo-600" : "bg-slate-300")}>
+              <div className={cn("absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform", autoMode ? "translate-x-4" : "translate-x-0.5")}/>
+            </button>
+          </div>
+          <div className="flex items-center gap-2 px-3 py-2 bg-emerald-50 border border-emerald-200 rounded-xl">
+            <div className="w-2 h-2 bg-emerald-500 rounded-full anim-pulse"/><span className="text-xs font-medium text-emerald-700">LINE連携中</span>
+          </div>
           <a href="callcenter-form.html" target="_blank" rel="noopener noreferrer"
-            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700 transition-colors shadow-md shadow-indigo-200">
-            <ic.Phone size={14}/>
-            <span>受電入力フォームを開く</span>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
-            </svg>
+            className="flex items-center gap-2 px-3 py-2 bg-indigo-600 text-white rounded-xl text-xs font-medium hover:bg-indigo-700 transition-colors shadow-sm shadow-indigo-200">
+            <ic.Phone size={13}/>
+            <span>受電入力フォーム</span>
           </a>
         </div>
       </div>
 
-      {/* コールセンター専用フォーム案内 */}
-      <div className="flex items-center gap-3 px-3 py-2.5 bg-indigo-50 border border-indigo-100 rounded-xl">
-        <ic.Phone size={14} stroke="#6366f1" className="shrink-0"/>
-        <p className="text-xs text-indigo-600">
-          コールセンター専用URL:&nbsp;
-          <code className="bg-indigo-100 px-1 py-0.5 rounded text-indigo-700 font-mono">callcenter-form.html</code>
-          &nbsp;をスタッフに共有してください
-        </p>
-      </div>
-
-      {/* タブ（LINE取込のみ） */}
-      <div className="flex gap-1 bg-white rounded-2xl p-1.5 border border-slate-200/60 shadow-sm w-fit">
-        {[["inbox","LINE自動取込",ic.Inbox]].map(([k,l,I]) => (
-          <button key={k} onClick={() => setLtab(k)} className={cn(
-            "flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all",
-            ltab === k ? "bg-indigo-50 text-indigo-700 shadow-sm" : "text-slate-400 hover:text-slate-600 hover:bg-slate-50"
-          )}><I size={14}/>{l}{k === "inbox" && pending > 0 && <span className="w-5 h-5 bg-amber-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">{pending}</span>}</button>
-        ))}
-      </div>
-
       {/* ── LINE自動取込タブ ── */}
       {ltab === "inbox" && (<>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-3 gap-2">
         {[
-          { icon: ic.Zap, v: "847", l: "今月の自動取込", color: "bg-emerald-500", bg: "bg-gradient-to-br from-green-50 to-emerald-50 border-emerald-100" },
-          { icon: ic.Refresh, v: "98.2%", l: "自動認識精度", color: "bg-blue-500", bg: "" },
-          { icon: ic.Clock, v: "~3秒", l: "平均処理時間", color: "bg-violet-500", bg: "" },
+          { icon: ic.Zap, v: "847", l: "今月の自動取込", color: "text-emerald-600", bg: "bg-emerald-50" },
+          { icon: ic.Refresh, v: "98.2%", l: "自動認識精度", color: "text-blue-600", bg: "bg-blue-50" },
+          { icon: ic.Clock, v: "~3秒", l: "平均処理時間", color: "text-violet-600", bg: "bg-violet-50" },
         ].map((s, i) => (
-          <Card key={i} className={cn("p-5", s.bg)}>
-            <div className="flex items-center gap-3">
-              <div className={cn("p-2.5 rounded-xl", s.color)}><s.icon size={20} stroke="white"/></div>
-              <div><p className="text-2xl font-bold text-slate-900">{s.v}</p><p className="text-sm text-slate-500">{s.l}</p></div>
+          <div key={i} className="flex items-center gap-2.5 px-3 py-2.5 bg-white border border-slate-200/60 rounded-xl shadow-sm">
+            <div className={cn("w-7 h-7 rounded-lg flex items-center justify-center shrink-0", s.bg)}>
+              <s.icon size={14} className={s.color}/>
             </div>
-          </Card>
+            <div>
+              <p className={cn("text-sm font-bold leading-tight", s.color)}>{s.v}</p>
+              <p className="text-[10px] text-slate-400">{s.l}</p>
+            </div>
+          </div>
         ))}
       </div>
-
-      <Card className="p-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-indigo-100 rounded-xl"><ic.Shield size={18} stroke="#4f46e5"/></div>
-            <div><h3 className="font-semibold text-slate-800">自動案件登録モード</h3><p className="text-xs text-slate-400">LINEメッセージを自動解析し案件として即時登録</p></div>
-          </div>
-          <button onClick={() => setAutoMode(!autoMode)} className={cn("relative w-14 h-7 rounded-full transition-colors", autoMode ? "bg-indigo-600" : "bg-slate-300")}>
-            <div className={cn("absolute top-0.5 w-6 h-6 bg-white rounded-full shadow transition-transform", autoMode ? "translate-x-7" : "translate-x-0.5")}/>
-          </button>
-        </div>
-      </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-4" style={{ minHeight: 480 }}>
         {/* LEFT: Message List */}
@@ -718,6 +906,9 @@ const LineInbox = () => {
         </Card>
       </div>
       </>)}
+
+      {/* ── フォーム設定タブ ── */}
+      {ltab === "formconfig" && <FormConfigPanel/>}
 
     </div>
   );
@@ -1037,24 +1228,22 @@ const CaseMgmt = () => {
 
   return (
     <div className="space-y-5 fade-in">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div>
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
           <h1 className="text-2xl font-bold text-slate-900">案件管理</h1>
-          
+          {/* 案件 / 顧客 切り替えタブ */}
+          <div className="flex gap-1 bg-white rounded-xl p-1 border border-slate-200/60 shadow-sm">
+            {[["cases","案件一覧",ic.FileText],["customers","顧客一覧",ic.Users]].map(([k,l,I]) => (
+              <button key={k} onClick={() => setView(k)} className={cn(
+                "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all",
+                view === k ? "bg-indigo-50 text-indigo-700 shadow-sm" : "text-slate-400 hover:text-slate-600 hover:bg-slate-50"
+              )}><I size={14} stroke={view === k ? "#4f46e5" : "currentColor"}/>{l}</button>
+            ))}
+          </div>
         </div>
-        <button className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700 shadow-lg shadow-indigo-200 self-start">
+        <button className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700 shadow-lg shadow-indigo-200">
           <ic.Plus size={16}/> 新規案件
         </button>
-      </div>
-
-      {/* 案件 / 顧客 切り替え */}
-      <div className="flex gap-1 bg-white rounded-2xl p-1.5 border border-slate-200/60 shadow-sm w-fit">
-        {[["cases","案件一覧",ic.FileText],["customers","顧客一覧",ic.Users]].map(([k,l,I]) => (
-          <button key={k} onClick={() => setView(k)} className={cn(
-            "flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all",
-            view === k ? "bg-indigo-50 text-indigo-700 shadow-sm" : "text-slate-400 hover:text-slate-600 hover:bg-slate-50"
-          )}><I size={16} stroke={view === k ? "#4f46e5" : "currentColor"}/>{l}</button>
-        ))}
       </div>
 
       {/* ===== 案件ビュー ===== */}
@@ -1159,11 +1348,23 @@ const CaseMgmt = () => {
 
       {/* ===== 顧客ビュー ===== */}
       {view === "customers" && <>
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <Stat icon={ic.Users} label="総顧客数" value={`${custs.length}名`} accent="bg-gradient-to-br from-indigo-500 to-indigo-600"/>
-        <Stat icon={ic.Star} label="VIP顧客" value={`${custs.filter(c => c.total >= vipThreshold).length}名`} accent="bg-gradient-to-br from-amber-500 to-amber-600"/>
-        <Stat icon={ic.Yen} label="顧客平均単価" value={fmt(Math.round(custs.reduce((s,c) => s + c.total, 0) / (custs.length || 1)))} accent="bg-gradient-to-br from-emerald-500 to-emerald-600"/>
-        <Stat icon={ic.Activity} label="リピーター" value={`${custs.filter(c => c.cases.length >= 15).length}名`} sub={`${custs.length > 0 ? Math.round(custs.filter(c => c.cases.length >= 15).length / custs.length * 100) : 0}%`} accent="bg-gradient-to-br from-violet-500 to-violet-600"/>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
+        {[
+          { icon: ic.Users,    label: "総顧客数",     value: `${custs.length}名`,                                                                                                       color: "text-indigo-600",  bg: "bg-indigo-50"  },
+          { icon: ic.Star,     label: "VIP顧客",       value: `${custs.filter(c => c.total >= vipThreshold).length}名`,                                                                  color: "text-amber-600",   bg: "bg-amber-50"   },
+          { icon: ic.Yen,      label: "顧客平均単価",  value: fmt(Math.round(custs.reduce((s,c) => s + c.total, 0) / (custs.length || 1))),                                              color: "text-emerald-600", bg: "bg-emerald-50" },
+          { icon: ic.Activity, label: "リピーター",    value: `${custs.filter(c => c.cases.length >= 15).length}名`, sub: `${custs.length > 0 ? Math.round(custs.filter(c => c.cases.length >= 15).length / custs.length * 100) : 0}%`, color: "text-violet-600", bg: "bg-violet-50" },
+        ].map((k, i) => (
+          <div key={i} className="flex items-center gap-2.5 px-3 py-2.5 bg-white border border-slate-200/60 rounded-xl shadow-sm">
+            <div className={cn("w-7 h-7 rounded-lg flex items-center justify-center shrink-0", k.bg)}>
+              <k.icon size={14} className={k.color}/>
+            </div>
+            <div className="min-w-0">
+              <p className={cn("text-sm font-bold leading-tight", k.color)}>{k.value}{k.sub && <span className="text-[10px] font-normal ml-1 text-slate-400">{k.sub}</span>}</p>
+              <p className="text-[10px] text-slate-400 truncate">{k.label}</p>
+            </div>
+          </div>
+        ))}
       </div>
       <Card className="overflow-hidden">
         <div className="p-4 border-b border-slate-100 flex items-center justify-between gap-3 flex-wrap">
@@ -1848,11 +2049,23 @@ const SettlementPage = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <Stat icon={ic.Yen} label="売上合計" value={fmt(grandTotal)} accent="bg-gradient-to-br from-indigo-500 to-indigo-600"/>
-        <Stat icon={ic.CreditCard} label="現金売上" value={fmt(cashTotal)} accent="bg-gradient-to-br from-emerald-500 to-emerald-600"/>
-        <Stat icon={ic.CreditCard} label="クレジット" value={fmt(creditTotal)} accent="bg-gradient-to-br from-violet-500 to-violet-600"/>
-        <Stat icon={ic.XCircle} label="キャンセル" value={`${cancelCount}件`} accent="bg-gradient-to-br from-red-400 to-red-500"/>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
+        {[
+          { icon: ic.Yen,     label: "売上合計",  value: fmt(grandTotal),       color: "text-indigo-600",  bg: "bg-indigo-50"  },
+          { icon: ic.CreditCard, label: "現金売上", value: fmt(cashTotal),       color: "text-emerald-600", bg: "bg-emerald-50" },
+          { icon: ic.CreditCard, label: "クレジット", value: fmt(creditTotal),   color: "text-violet-600",  bg: "bg-violet-50"  },
+          { icon: ic.XCircle, label: "キャンセル", value: `${cancelCount}件`,    color: "text-red-500",     bg: "bg-red-50"     },
+        ].map((k, i) => (
+          <div key={i} className="flex items-center gap-2.5 px-3 py-2.5 bg-white border border-slate-200/60 rounded-xl shadow-sm">
+            <div className={cn("w-7 h-7 rounded-lg flex items-center justify-center shrink-0", k.bg)}>
+              <k.icon size={14} className={k.color}/>
+            </div>
+            <div className="min-w-0">
+              <p className={cn("text-sm font-bold leading-tight", k.color)}>{k.value}</p>
+              <p className="text-[10px] text-slate-400 truncate">{k.label}</p>
+            </div>
+          </div>
+        ))}
       </div>
 
       <Card className="overflow-hidden">
@@ -2107,7 +2320,7 @@ const Analytics = () => {
 const MOCK_STAFF_LIST = [
   { id: 1, name: "田中 一郎", role: "staff",  email: "tanaka@example.com",  area: "関東",  cases: 42, active: true  },
   { id: 2, name: "佐藤 花子", role: "staff",  email: "sato@example.com",    area: "関東",  cases: 38, active: true  },
-  { id: 3, name: "鈴木 太郎", role: "admin",  email: "suzuki@example.com",  area: "全エリア", cases: 67, active: true  },
+  { id: 3, name: "鈴木 太郎", role: "admin",  email: "suzuki@example.com",  area: "すべて", cases: 67, active: true  },
   { id: 4, name: "高橋 美咲", role: "staff",  email: "takahashi@example.com",area: "神奈川", cases: 25, active: true  },
   { id: 5, name: "渡辺 健",   role: "viewer", email: "watanabe@example.com", area: "福岡",  cases: 19, active: false },
 ];
@@ -2452,7 +2665,7 @@ const SetPage = ({ tab = "company", onNav, currentRole, onRoleChange, areas = AR
           <AddAreaForm areas={areas} onAreasChange={onAreasChange}/>
 
           <p className="text-xs text-slate-400 mt-4">
-            ※ 「全エリア」は削除できません。絵文字はクリックで順送り変更できます。
+            ※ 「すべて」は削除できません。絵文字はクリックで順送り変更できます。
           </p>
         </Card>
       )}
@@ -3234,23 +3447,22 @@ const InvoiceList = ({ onSelect, onCreate }) => {
   return (
     <div className="space-y-5">
       {/* KPIカード */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
         {[
           { label: "未収金合計",    value: fmt(totalUnpaid), sub: "未払い・期限超過", color: "text-amber-600",  bg: "bg-amber-50",  icon: ic.Yen    },
           { label: "入金済み合計",  value: fmt(totalPaid),   sub: "今月",            color: "text-emerald-600",bg: "bg-emerald-50",icon: ic.Check  },
           { label: "期限超過",      value: `${overdueCount}件`, sub: "早急に対応が必要", color: "text-red-600",  bg: "bg-red-50",    icon: ic.Clock  },
           { label: "請求書総数",    value: `${INVOICES.length}件`, sub: "今月発行",   color: "text-indigo-600",bg: "bg-indigo-50", icon: ic.FileText},
         ].map((k, i) => (
-          <Card key={i} className="p-4">
-            <div className="flex items-start justify-between">
-              <div className={cn("w-9 h-9 rounded-xl flex items-center justify-center", k.bg)}>
-                <k.icon size={18} className={k.color}/>
-              </div>
+          <div key={i} className="flex items-center gap-2.5 px-3 py-2.5 bg-white border border-slate-200/60 rounded-xl shadow-sm">
+            <div className={cn("w-7 h-7 rounded-lg flex items-center justify-center shrink-0", k.bg)}>
+              <k.icon size={14} className={k.color}/>
             </div>
-            <p className={cn("text-xl font-bold mt-3", k.color)}>{k.value}</p>
-            <p className="text-xs text-slate-500 mt-0.5">{k.label}</p>
-            <p className="text-[10px] text-slate-400">{k.sub}</p>
-          </Card>
+            <div className="min-w-0">
+              <p className={cn("text-sm font-bold leading-tight", k.color)}>{k.value}</p>
+              <p className="text-[10px] text-slate-400 truncate">{k.label}</p>
+            </div>
+          </div>
         ))}
       </div>
 
@@ -3826,12 +4038,6 @@ const InvoicePage = () => {
 
   return (
     <div className="space-y-5 fade-in">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">請求書管理</h1>
-          <SubLabel icon={ic.FileText} text="請求書発行・送付・入金管理を一元化"/>
-        </div>
-      </div>
       <InvoiceList
         onSelect={inv => { setSelectedInv(inv); setView("detail"); }}
         onCreate={() => setView("form")}
@@ -4050,15 +4256,17 @@ const EstimateList = ({ onSelect, onCreate }) => {
 
   return (
     <div className="space-y-5">
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
         {kpi.map((k,i) => (
-          <Card key={i} className="p-4">
-            <div className={cn("w-9 h-9 rounded-xl flex items-center justify-center", k.bg)}>
-              <k.icon size={18} className={k.color}/>
+          <div key={i} className="flex items-center gap-2.5 px-3 py-2.5 bg-white border border-slate-200/60 rounded-xl shadow-sm">
+            <div className={cn("w-7 h-7 rounded-lg flex items-center justify-center shrink-0", k.bg)}>
+              <k.icon size={14} className={k.color}/>
             </div>
-            <p className={cn("text-xl font-bold mt-3", k.color)}>{k.v}</p>
-            <p className="text-xs text-slate-500 mt-0.5">{k.l}</p>
-          </Card>
+            <div className="min-w-0">
+              <p className={cn("text-sm font-bold leading-tight", k.color)}>{k.v}</p>
+              <p className="text-[10px] text-slate-400 truncate">{k.l}</p>
+            </div>
+          </div>
         ))}
       </div>
 
@@ -4268,20 +4476,22 @@ const ReceiptList = ({ onSelect, onCreate }) => {
 
   return (
     <div className="space-y-5">
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
         {[
           { l: "発行済み領収書", v: `${RECEIPTS.length}件`, color: "text-violet-600", bg: "bg-violet-50", icon: ic.Receipt },
           { l: "領収総額",       v: fmt(totalIssued),        color: "text-emerald-600", bg: "bg-emerald-50", icon: ic.Yen },
           { l: "現金領収",       v: `${RECEIPTS.filter(r=>r.payMethod==="cash").length}件`, color: "text-amber-600", bg: "bg-amber-50", icon: ic.CreditCard },
           { l: "振込領収",       v: `${RECEIPTS.filter(r=>r.payMethod==="bank").length}件`, color: "text-blue-600", bg: "bg-blue-50", icon: ic.Building },
         ].map((k,i) => (
-          <Card key={i} className="p-4">
-            <div className={cn("w-9 h-9 rounded-xl flex items-center justify-center", k.bg)}>
-              <k.icon size={18} className={k.color}/>
+          <div key={i} className="flex items-center gap-2.5 px-3 py-2.5 bg-white border border-slate-200/60 rounded-xl shadow-sm">
+            <div className={cn("w-7 h-7 rounded-lg flex items-center justify-center shrink-0", k.bg)}>
+              <k.icon size={14} className={k.color}/>
             </div>
-            <p className={cn("text-xl font-bold mt-3", k.color)}>{k.v}</p>
-            <p className="text-xs text-slate-500 mt-0.5">{k.l}</p>
-          </Card>
+            <div className="min-w-0">
+              <p className={cn("text-sm font-bold leading-tight", k.color)}>{k.v}</p>
+              <p className="text-[10px] text-slate-400 truncate">{k.l}</p>
+            </div>
+          </div>
         ))}
       </div>
 
@@ -4483,7 +4693,6 @@ const DOCS_TABS = [
 
 const DocsPage = () => {
   const [tab, setTab] = useState("estimate");
-  const active = DOCS_TABS.find(t => t.id === tab);
 
   /* 書類間クロスリンク: 案件フローに沿った遷移ガイド */
   const flowSteps = [
@@ -4494,12 +4703,6 @@ const DocsPage = () => {
 
   return (
     <div className="space-y-5 fade-in">
-      {/* ページヘッダー */}
-      <div>
-        <h1 className="text-2xl font-bold text-slate-900">書類管理</h1>
-        <SubLabel icon={ic.Folder} text="見積書・請求書・領収書を一元管理"/>
-      </div>
-
       {/* 書類フロー（案件→見積→請求→領収） */}
       <div className="flex items-center gap-2 overflow-x-auto pb-1">
         {flowSteps.map((s, i) => (
@@ -4526,6 +4729,17 @@ const DocsPage = () => {
           </React.Fragment>
         ))}
       </div>
+
+      {/* ページヘッダー（アクティブなタブ名を表示） */}
+      {(() => {
+        const step = flowSteps.find(s => s.id === tab);
+        return (
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900">{step ? step.label : "書類管理"}</h1>
+            <SubLabel icon={step ? step.icon : ic.Folder} text={step ? step.desc : "見積書・請求書・領収書を一元管理"}/>
+          </div>
+        );
+      })()}
 
       {/* タブコンテンツ */}
       {tab === "estimate" && <EstimatePage/>}
@@ -4568,7 +4782,7 @@ const ReportsPage = () => {
    SECTION 15: APP SHELL (Sidebar + Header + Router)
    ═══════════════════════════════════════════════════════ */
 const NAV_MAIN = [
-  { id: "dashboard",  l: "ダッシュボード", I: ic.Grid },
+  { id: "dashboard",  l: "ホーム", I: ic.Grid },
   { id: "line",       l: "LINE受信",       I: ic.Inbox, badge: LINE_MSGS.filter(m => m.status === "pending").length },
   { id: "cases",      l: "案件管理",       I: ic.FileText },
   { id: "calendar",   l: "スケジュール",   I: ic.Calendar },
@@ -4594,7 +4808,7 @@ const ROLES = {
 
 /* エリア定義 */
 const AREAS_DEFAULT = [
-  { id: "all",       l: "全エリア",   flag: "🗾" },
+  { id: "all",       l: "すべて",   flag: "🗂️" },
   { id: "kanto",     l: "関東",       flag: "🗼" },
   { id: "kanagawa",  l: "神奈川",     flag: "⛵" },
   { id: "fukuoka",   l: "福岡",       flag: "🍜" },
@@ -4651,7 +4865,7 @@ function App() {
       {/* Sidebar */}
       <aside className={cn(
         "fixed lg:relative z-50 flex flex-col bg-white border-r border-slate-200/60 h-full transition-all duration-300",
-        sbOpen ? "w-64" : "w-[72px]",
+        sbOpen ? "w-52" : "w-[60px]",
         mob ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
       )}>
         <div className={cn("flex items-center h-16 border-b border-slate-100 shrink-0", sbOpen ? "px-5 gap-2.5" : "px-3 justify-center")}>
@@ -4709,33 +4923,62 @@ function App() {
         )}
 
         {/* Main Navigation */}
-        <nav className="flex-1 py-3 px-3 overflow-y-auto flex flex-col gap-4">
-          {/* メインメニュー */}
-          <div>
-            {sbOpen && <p className="text-[10px] font-semibold text-slate-300 uppercase tracking-widest px-3 mb-2">メニュー</p>}
-            <div className="space-y-1">
-              {NAV_MAIN.map(item => {
-                const active = page === item.id;
-                return (
-                  <button key={item.id} onClick={() => nav(item.id)} className={cn(
-                    "flex items-center gap-3 w-full rounded-xl transition-all duration-200",
-                    sbOpen ? "px-3 py-2.5" : "p-2.5 justify-center",
-                    active ? "bg-indigo-50 text-indigo-700" : "text-slate-500 hover:bg-slate-50 hover:text-slate-700"
-                  )}>
-                    <div className="relative">
-                      <item.I size={20} stroke={active ? "#4f46e5" : "currentColor"}/>
-                      {item.badge > 0 && (
-                        <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
-                          {item.badge}
-                        </span>
-                      )}
-                    </div>
-                    {sbOpen && <span className="text-sm font-medium truncate">{item.l}</span>}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
+        <nav className="flex-1 py-3 px-3 overflow-y-auto flex flex-col gap-1">
+          {/* 業務グループ */}
+          {sbOpen && <p className="text-[10px] font-semibold text-slate-300 uppercase tracking-widest px-3 mb-1 mt-2">業務</p>}
+          {[
+            { id: "dashboard", l: "ホーム",         I: ic.Grid,     badge: null },
+            { id: "line",      l: "LINE受信",       I: ic.Inbox,    badge: LINE_MSGS.filter(m => m.status === "pending").length },
+            { id: "cases",     l: "案件管理",       I: ic.FileText, badge: null },
+            { id: "calendar",  l: "スケジュール",   I: ic.Calendar, badge: null },
+          ].map(item => {
+            const active = page === item.id;
+            return (
+              <button key={item.id} onClick={() => nav(item.id)} className={cn(
+                "flex items-center gap-3 w-full rounded-xl transition-all duration-200",
+                sbOpen ? "px-3 py-2.5" : "p-2.5 justify-center",
+                active ? "bg-indigo-50 text-indigo-700" : "text-slate-500 hover:bg-slate-50 hover:text-slate-700"
+              )}>
+                <div className="relative shrink-0">
+                  <item.I size={20} stroke={active ? "#4f46e5" : "currentColor"}/>
+                  {item.badge > 0 && (
+                    <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
+                      {item.badge}
+                    </span>
+                  )}
+                </div>
+                {sbOpen && <span className="text-sm font-medium truncate">{item.l}</span>}
+              </button>
+            );
+          })}
+
+          {/* 管理グループ */}
+          {sbOpen && <p className="text-[10px] font-semibold text-slate-300 uppercase tracking-widest px-3 mb-1 mt-4">管理</p>}
+          {!sbOpen && <div className="my-2 mx-3 h-px bg-slate-100"/>}
+          {[
+            { id: "docs",    l: "書類管理", I: ic.Folder,   badge: INVOICES.filter(i => i.status === "overdue").length },
+            { id: "reports", l: "レポート", I: ic.BarChart, badge: null },
+          ].map(item => {
+            const active = page === item.id;
+            return (
+              <button key={item.id} onClick={() => nav(item.id)} className={cn(
+                "flex items-center gap-3 w-full rounded-xl transition-all duration-200",
+                sbOpen ? "px-3 py-2.5" : "p-2.5 justify-center",
+                active ? "bg-indigo-50 text-indigo-700" : "text-slate-500 hover:bg-slate-50 hover:text-slate-700"
+              )}>
+                <div className="relative shrink-0">
+                  <item.I size={20} stroke={active ? "#4f46e5" : "currentColor"}/>
+                  {item.badge > 0 && (
+                    <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
+                      {item.badge}
+                    </span>
+                  )}
+                </div>
+                {sbOpen && <span className="text-sm font-medium truncate">{item.l}</span>}
+              </button>
+            );
+          })}
+
 
         </nav>
 
