@@ -647,42 +647,74 @@ export default function CalendarPage() {
       </div>
 
       {/* ===== デスクトップ ===== */}
-      <div className="hidden lg:block animate-fade-in">
-        {/* カレンダー本体 */}
-        <div className="space-y-5">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div>
-                <h1 className="text-2xl font-bold text-slate-900">
+      <div className="hidden lg:flex animate-fade-in gap-5 items-start">
+
+        {/* ── 左: グループサイドバー ── */}
+        <div className="w-48 xl:w-56 shrink-0 space-y-1.5">
+          {/* サイドバーヘッダー */}
+          <div className="flex items-center justify-between px-1 mb-3">
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest">カレンダー</p>
+          </div>
+
+          {CALENDAR_GROUPS.filter(g => g.myRole !== "none").map((g) => {
+            const isActive = activeGroup?.id === g.id;
+            const cnt = (() => {
+              const f = g.caseFilter;
+              return CASES.filter((c) => {
+                if (f.prefs?.length && !f.prefs.includes(c.pref)) return false;
+                if (f.centers?.length && !f.centers.includes(c.center)) return false;
+                if (f.staffIds?.length && !f.staffIds.includes(c.staff)) return false;
+                return true;
+              }).length;
+            })();
+
+            return (
+              <button
+                key={g.id}
+                onClick={() => setActiveGroup(g)}
+                className={cn(
+                  "w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-left transition-all group",
+                  isActive
+                    ? "text-white shadow-sm"
+                    : "hover:bg-white/70 text-slate-600"
+                )}
+                style={isActive ? { backgroundColor: g.color } : undefined}
+              >
+                <span className="text-lg leading-none shrink-0">{g.coverEmoji}</span>
+                <div className="flex-1 min-w-0">
+                  <p className={cn("text-xs font-semibold truncate leading-tight", isActive ? "text-white" : "text-slate-700")}>
+                    {g.name}
+                  </p>
+                  <p className={cn("text-[10px] mt-0.5 truncate", isActive ? "text-white/70" : "text-slate-400")}>
+                    {g.area}エリア · {cnt}件
+                  </p>
+                </div>
+                {isActive && (
+                  <div className="w-1.5 h-1.5 rounded-full bg-white/70 shrink-0" />
+                )}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* ── 右: カレンダー本体 ── */}
+        <div className="flex-1 min-w-0 space-y-4">
+
+          {/* 上部バー: タイトル + ビュー切替 + 追加 */}
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-1 h-9 rounded-full shrink-0" style={{ backgroundColor: accentColor }} />
+              <div className="min-w-0">
+                <h1 className="text-lg font-bold text-slate-900 truncate leading-tight">
                   {activeGroup ? activeGroup.name : "カレンダー"}
                 </h1>
-                <p className="text-xs text-slate-400 mt-1">
+                <p className="text-xs text-slate-400">
                   {activeGroup ? `${activeGroup.area}エリア · ${filteredCases.length}件` : "カレンダーを選択してください"}
                 </p>
               </div>
-              {/* グループ切り替えドロップダウン */}
-              <div className="flex gap-1 flex-wrap ml-2">
-                {CALENDAR_GROUPS.filter(g => g.myRole !== "none").map((g) => (
-                  <button
-                    key={g.id}
-                    onClick={() => setActiveGroup(g)}
-                    className={cn(
-                      "flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all",
-                      activeGroup?.id === g.id
-                        ? "text-white border-transparent shadow-sm"
-                        : "bg-white text-slate-500 border-slate-200 hover:border-slate-300"
-                    )}
-                    style={activeGroup?.id === g.id ? { backgroundColor: g.color, borderColor: g.color } : undefined}
-                  >
-                    <span>{g.coverEmoji}</span>
-                    <span className="hidden xl:inline truncate max-w-[100px]">{g.name}</span>
-                  </button>
-                ))}
-              </div>
             </div>
-            <div className="flex items-center gap-2">
-              {/* ビュー切替 */}
-              <div className="flex gap-1 liquid-glass rounded-xl p-1 border border-white/60 shadow-sm">
+            <div className="flex items-center gap-2 shrink-0">
+              <div className="flex gap-1 bg-white rounded-xl p-1 border border-slate-200/60 shadow-sm">
                 {([
                   ["month", "月", Calendar],
                   ["week",  "週", CalendarDays],
@@ -698,10 +730,10 @@ export default function CalendarPage() {
               </div>
               {canEdit && (
                 <button
-                  className="flex items-center gap-2 px-4 py-2 text-white rounded-xl text-sm font-medium hover:opacity-90 transition-opacity"
+                  className="flex items-center gap-2 px-4 py-2 text-white rounded-xl text-sm font-medium hover:opacity-90 transition-opacity shadow-sm"
                   style={{ backgroundColor: accentColor }}
                 >
-                  <Plus size={16} /> 予定追加
+                  <Plus size={15} /> 予定追加
                 </button>
               )}
             </div>
@@ -810,8 +842,8 @@ export default function CalendarPage() {
           {calMode === "day" && (
             <DayView cur={cur} setCur={setCur} cByDate={cByDate} accentColor={accentColor} canEdit={canEdit} />
           )}
-        </div>
-      </div>
+        </div> {/* 右カラム space-y-4 */}
+      </div> {/* lg:flex */}
 
       {/* グループ選択モーダル（モバイル） */}
       <CalendarGroupPickerModal

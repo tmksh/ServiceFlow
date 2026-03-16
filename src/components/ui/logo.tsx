@@ -1,38 +1,61 @@
 import { useId } from "react";
 import { cn } from "@/lib/utils";
 
-// ─── 共通座標定義 ──────────────────────────────────────────────────────────────
-const DOTS_BASE = [
-  [8,  8 ], [16, 8 ],
-  [8,  16], [16, 16], [24, 16],
-  [8,  24], [16, 24], [24, 24],
-] as const;
-const STAR_POINTS = "24,3.6 25.1,6.9 28.4,6.9 25.8,8.9 26.8,12.2 24,10.3 21.2,12.2 22.2,8.9 19.6,6.9 22.9,6.9";
+// ─── ドット配置（3×3グリッド、右上を星に置換） ────────────────────────────────
+// 列: x=8,18,28  行: y=8,18,28
+const DOTS: [number, number][] = [
+  [8,  8], [18, 8],          // 上行: 左・中（右上は星）
+  [8, 18], [18, 18], [28, 18], // 中行: 3つ
+  [8, 28], [18, 28], [28, 28], // 下行: 3つ
+];
+
+// 星（4pointed）の中心: 右上 [28, 8]
+const STAR_CX = 28;
+const STAR_CY = 8;
+const STAR_R  = 5.5; // 外径
+function starPoints(cx: number, cy: number, r: number): string {
+  // 4-pointed star using 8 points (outer r, inner r*0.38)
+  const ri = r * 0.38;
+  const pts: string[] = [];
+  for (let i = 0; i < 8; i++) {
+    const angle = (i * Math.PI) / 4 - Math.PI / 2;
+    const rr = i % 2 === 0 ? r : ri;
+    pts.push(`${cx + rr * Math.cos(angle)},${cy + rr * Math.sin(angle)}`);
+  }
+  return pts.join(" ");
+}
 
 function LogoDefs({ uid }: { uid: string }) {
   return (
     <defs>
-      <linearGradient id={`${uid}-grad`} x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" stopColor="#818CF8" />
+      {/* 星グラデーション: 明るい青紫 */}
+      <linearGradient id={`${uid}-star`} x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%"   stopColor="#818CF8" />
         <stop offset="100%" stopColor="#6366F1" />
       </linearGradient>
-      <filter id={`${uid}-shadow`} x="-20%" y="-20%" width="140%" height="140%">
-        <feDropShadow dx="0" dy="1" stdDeviation="1.5" floodColor="#6366F1" floodOpacity="0.35" />
+      {/* テキストグラデーション: ダーク紫 */}
+      <linearGradient id={`${uid}-text`} x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%"   stopColor="#3730a3" />
+        <stop offset="100%" stopColor="#4338ca" />
+      </linearGradient>
+      <filter id={`${uid}-glow`} x="-40%" y="-40%" width="180%" height="180%">
+        <feDropShadow dx="0" dy="0.5" stdDeviation="1.2" floodColor="#6366F1" floodOpacity="0.4" />
       </filter>
     </defs>
   );
 }
 
-function GridDots({ uid, r = 2.4 }: { uid: string; r?: number }) {
+function GridDots({ uid }: { uid: string }) {
   return (
     <>
-      {DOTS_BASE.map(([cx, cy]) => (
-        <circle key={`${cx}-${cy}`} cx={cx} cy={cy} r={r} fill="#6B7FA3" opacity="0.8" />
+      {DOTS.map(([cx, cy]) => (
+        <circle key={`${cx}-${cy}`} cx={cx} cy={cy} r={2.6} fill="#6B7FA3" opacity="0.75" />
       ))}
+      {/* 星（右上） */}
       <polygon
-        points={STAR_POINTS}
-        fill={`url(#${uid}-grad)`}
-        filter={`url(#${uid}-shadow)`}
+        points={starPoints(STAR_CX, STAR_CY, STAR_R)}
+        fill={`url(#${uid}-star)`}
+        filter={`url(#${uid}-glow)`}
       />
     </>
   );
@@ -42,35 +65,22 @@ function GridDots({ uid, r = 2.4 }: { uid: string; r?: number }) {
 
 interface LogoIconProps {
   size?: number;
-  /** ガラス背景つき角丸矩形（サイドバー・ヘッダーロゴ用） */
-  bg?: boolean;
   className?: string;
 }
 
-/**
- * スマカレ ロゴアイコン
- * - bg=true: iOSアイコン風の角丸ダーク背景付き
- * - bg=false (default): 透明背景（テキストロゴと並べる用途）
- */
-export function LogoIcon({ size = 36, bg = false, className }: LogoIconProps) {
+export function LogoIcon({ size = 36, className }: LogoIconProps) {
   const uid = useId();
   return (
     <svg
       width={size}
       height={size}
-      viewBox="0 0 32 32"
+      viewBox="0 0 36 36"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       className={className}
       aria-label="スマカレ"
     >
       <LogoDefs uid={uid} />
-      {bg && (
-        <rect
-          width="32" height="32" rx="8"
-          fill="#0F0F1A"
-        />
-      )}
       <GridDots uid={uid} />
     </svg>
   );
@@ -84,31 +94,52 @@ interface LogoProps {
 }
 
 const SIZE_MAP = {
-  sm: { icon: 26, fontSize: "text-[15px]", subSize: "text-[9px]",  gap: "gap-2"   },
-  md: { icon: 32, fontSize: "text-lg",      subSize: "text-[10px]", gap: "gap-2.5" },
-  lg: { icon: 42, fontSize: "text-2xl",     subSize: "text-xs",     gap: "gap-3"   },
+  sm: { icon: 24, fontSize: "text-[17px]", gap: "gap-2"   },
+  md: { icon: 30, fontSize: "text-[20px]", gap: "gap-2.5" },
+  lg: { icon: 40, fontSize: "text-[26px]", gap: "gap-3"   },
 } as const;
 
-/**
- * スマカレ ロゴ（アイコン + テキスト）
- */
 export function Logo({ variant = "full", theme = "auto", className, size = "md" }: LogoProps) {
+  const uid = useId();
   const s = SIZE_MAP[size];
-  const textColor = theme === "dark" ? "text-white" : "text-indigo-600";
+
+  if (variant === "icon") {
+    return <LogoIcon size={s.icon} className={className} />;
+  }
+
+  // フルロゴ: アイコン + SVGテキスト（グラデーション）
+  const textH = s.icon;
+  const textW = Math.round(textH * 2.8);
+  const totalW = s.icon + 8 + textW;
 
   return (
     <div className={cn("flex items-center", s.gap, className)}>
-      <LogoIcon size={s.icon} />
-      {variant === "full" && (
-        <div className="min-w-0">
-          <p className={cn("font-bold leading-none tracking-tight", s.fontSize, textColor)}>
-            スマカレ
-          </p>
-          <p className={cn("leading-none mt-0.5", s.subSize, "text-slate-400")}>
-            顧客管理プラットフォーム
-          </p>
-        </div>
-      )}
+      <svg
+        width={totalW}
+        height={textH}
+        viewBox={`0 0 ${totalW} ${textH}`}
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        aria-label="スマカレ"
+      >
+        <LogoDefs uid={uid} />
+        {/* アイコン部 */}
+        <g transform={`scale(${textH / 36})`}>
+          <GridDots uid={uid} />
+        </g>
+        {/* テキスト部 */}
+        <text
+          x={s.icon + 8}
+          y={textH * 0.78}
+          fontFamily="'Hiragino Kaku Gothic ProN', 'Noto Sans JP', 'Yu Gothic', sans-serif"
+          fontWeight="700"
+          fontSize={textH * 0.72}
+          fill={theme === "dark" ? "#E2E8F0" : `url(#${uid}-text)`}
+          letterSpacing="-0.5"
+        >
+          スマカレ
+        </text>
+      </svg>
     </div>
   );
 }
@@ -125,11 +156,11 @@ export function LogoHorizontal({
   theme?: "dark" | "light";
   className?: string;
 }) {
-  const h = Math.round(width * 0.3);
+  const uid = `lh-${width}`;
+  const h = Math.round(width * 0.28);
   const iconSize = h;
-  const scale = iconSize / 32;
-  const textColor = theme === "dark" ? "#E2E8F0" : "#1E293B";
-  const subColor  = theme === "dark" ? "#64748B" : "#94A3B8";
+  const scale = iconSize / 36;
+  const textColor = theme === "dark" ? "#E2E8F0" : "#3730a3";
 
   return (
     <svg
@@ -142,41 +173,37 @@ export function LogoHorizontal({
       aria-label="スマカレ"
     >
       <defs>
-        <linearGradient id="lh-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#818CF8" />
+        <linearGradient id={`${uid}-star`} x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%"   stopColor="#818CF8" />
           <stop offset="100%" stopColor="#6366F1" />
         </linearGradient>
-        <filter id="lh-shadow" x="-20%" y="-20%" width="140%" height="140%">
-          <feDropShadow dx="0" dy="1" stdDeviation="1.5" floodColor="#6366F1" floodOpacity="0.35" />
+        <filter id={`${uid}-glow`} x="-40%" y="-40%" width="180%" height="180%">
+          <feDropShadow dx="0" dy="0.5" stdDeviation="1.2" floodColor="#6366F1" floodOpacity="0.4" />
         </filter>
       </defs>
 
       <g transform={`scale(${scale})`}>
-        {DOTS_BASE.map(([cx, cy]) => (
-          <circle key={`${cx}-${cy}`} cx={cx} cy={cy} r={2.4} fill="#6B7FA3" opacity="0.8" />
+        {DOTS.map(([cx, cy]) => (
+          <circle key={`${cx}-${cy}`} cx={cx} cy={cy} r={2.6} fill="#6B7FA3" opacity="0.75" />
         ))}
-        <polygon points={STAR_POINTS} fill="url(#lh-grad)" filter="url(#lh-shadow)" />
+        <polygon
+          points={starPoints(STAR_CX * scale, STAR_CY * scale, STAR_R * scale)}
+          fill={`url(#${uid}-star)`}
+          filter={`url(#${uid}-glow)`}
+          transform={`scale(${1 / scale})`}
+        />
       </g>
 
       <text
-        x={iconSize + 8} y={h * 0.58}
-        fontFamily="'Noto Sans JP', 'Hiragino Kaku Gothic ProN', sans-serif"
+        x={iconSize + 8}
+        y={h * 0.78}
+        fontFamily="'Hiragino Kaku Gothic ProN', 'Noto Sans JP', sans-serif"
         fontWeight="700"
-        fontSize={h * 0.44}
+        fontSize={h * 0.72}
         fill={textColor}
-        letterSpacing="-0.3"
+        letterSpacing="-0.5"
       >
         スマカレ
-      </text>
-      <text
-        x={iconSize + 9} y={h * 0.88}
-        fontFamily="'Noto Sans JP', 'Hiragino Kaku Gothic ProN', sans-serif"
-        fontWeight="400"
-        fontSize={h * 0.2}
-        fill={subColor}
-        letterSpacing="0.2"
-      >
-        顧客管理プラットフォーム
       </text>
     </svg>
   );

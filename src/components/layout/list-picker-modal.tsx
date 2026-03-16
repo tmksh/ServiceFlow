@@ -49,14 +49,14 @@ export function CalendarGroupPickerModal({ open, onClose, currentGroupId, onSele
     if (open) setTab("all");
   }, [open]);
 
-  if (!open) return null;
-
   const filtered = CALENDAR_GROUPS.filter((g) => {
     if (g.myRole === "none") return false;
     if (tab === "pinned") return g.isPinned;
     if (tab === "viewer") return g.myRole === "viewer";
     return true;
   });
+
+  if (!open) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col justify-end sm:justify-center sm:items-center">
@@ -192,9 +192,9 @@ export function ListPickerModal({ open, onClose, currentListId, onSelect }: List
     if (open) { setShowNew(false); setNewName(""); }
   }, [open]);
 
-  if (!open) return null;
-
   const filtered = tab === "all" ? LIST_DATA : LIST_DATA.filter((d) => d.type === tab || d.id === "all");
+
+  if (!open) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col justify-end sm:justify-center sm:items-center">

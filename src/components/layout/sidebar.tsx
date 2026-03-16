@@ -7,7 +7,7 @@ import { NAV_ITEMS } from "@/lib/constants";
 import { Logo, LogoIcon } from "@/components/ui/logo";
 import {
   LayoutGrid, Inbox, FileText, Calendar, Calculator, BarChart3,
-  Globe, ClipboardList, ChevronRight, ChevronDown, Folder,
+  Globe, ClipboardList, ChevronDown, Folder,
 } from "lucide-react";
 
 const iconMap: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
@@ -20,10 +20,6 @@ const NAV_GROUPS = [
   {
     label: "業務",
     ids: ["dashboard", "line", "cases", "calendar", "docs"],
-  },
-  {
-    label: "管理",
-    ids: ["settlement", "analytics", "ads", "reports"],
   },
 ];
 
@@ -39,7 +35,7 @@ export function Sidebar({ open }: SidebarProps) {
       "hidden lg:flex flex-col h-full transition-all duration-300 shrink-0",
       "bg-white/60 backdrop-blur-2xl border-r border-white/60",
       "shadow-[1px_0_0_0_rgba(255,255,255,0.5)_inset]",
-      open ? "w-52" : "w-[72px]"
+      open ? "w-44" : "w-[72px]"
     )}>
       {/* Logo */}
       <div className={cn(
@@ -99,23 +95,24 @@ export function Sidebar({ open }: SidebarProps) {
           );
         })}
 
-        {/* 設定リンク（縮小時はアイコンのみ） */}
-        {open && (
-          <div className="mt-auto pt-2 border-t border-slate-100">
-            <Link
-              href="/settings"
-              className={cn(
-                "flex items-center gap-3 w-full px-3 py-2.5 rounded-xl transition-all duration-200 text-xs font-medium",
-                pathname === "/settings"
-                  ? "bg-indigo-50 text-indigo-700"
-                  : "text-slate-400 hover:text-slate-600 hover:bg-slate-50"
-              )}
-            >
-              <ChevronRight size={14} />
-              設定
-            </Link>
-          </div>
-        )}
+        {/* 設定リンク */}
+        <div className="mt-auto pt-2 border-t border-slate-100">
+          <Link
+            href="/settings"
+            className={cn(
+              "flex items-center gap-3 w-full rounded-xl transition-all duration-200",
+              open ? "px-3 py-2.5" : "p-2.5 justify-center",
+              pathname === "/settings"
+                ? "bg-indigo-50 text-indigo-700"
+                : "text-slate-500 hover:bg-slate-50 hover:text-slate-700"
+            )}
+          >
+            <div className="relative shrink-0">
+              <ClipboardList size={20} className={pathname === "/settings" ? "text-indigo-600" : ""} />
+            </div>
+            {open && <span className="text-sm font-medium truncate">設定</span>}
+          </Link>
+        </div>
       </nav>
 
       {/* User Profile */}
