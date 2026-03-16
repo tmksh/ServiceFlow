@@ -45,7 +45,7 @@ export function Sidebar({ open }: SidebarProps) {
         {open ? (
           <Logo variant="full" theme="auto" size="sm" />
         ) : (
-          <LogoIcon size={32} bg />
+          <LogoIcon size={32} />
         )}
       </div>
 
