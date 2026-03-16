@@ -129,11 +129,6 @@ export function Header({ onToggleSidebar }: HeaderProps) {
           <Settings size={20} />
         </Link>
 
-        <div className="hidden md:flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 rounded-lg">
-          <Monitor size={14} className="text-indigo-500" />
-          <span className="text-[10px] text-slate-400">Web</span>
-        </div>
-
         <Link
           href="/settings"
           className={cn(
@@ -221,6 +216,11 @@ export function Header({ onToggleSidebar }: HeaderProps) {
               </div>
             </>
           )}
+        </div>
+
+        <div className="hidden md:flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 rounded-lg">
+          <Monitor size={14} className="text-indigo-500" />
+          <span className="text-[10px] text-slate-400">Web</span>
         </div>
       </div>
     </header>
