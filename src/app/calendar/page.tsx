@@ -105,11 +105,11 @@ function WeekView({
           <div className="relative" style={{ height: TIME_SLOTS.length * 56 }}>
             {TIME_SLOTS.map((h) => (
               <div key={h} className="grid grid-cols-[48px_repeat(7,1fr)] absolute w-full" style={{ top: (h - 7) * 56, height: 56 }}>
-                <div className="border-r border-b border-white/40 flex items-start justify-end pr-2 pt-1">
+                <div className="border-r border-b border-slate-100/80 flex items-start justify-end pr-2 pt-1">
                   <span className="text-[10px] text-slate-400">{h}:00</span>
                 </div>
                 {weekDays.map((dt, di) => (
-                  <div key={di} className={cn("border-r border-b border-white/40 last:border-r-0 relative",
+                  <div key={di} className={cn("border-r border-b border-slate-100/80 last:border-r-0 relative",
                     isToday(dt) && "bg-indigo-50/20")}>
                     {(cByDate[dateStr(dt)] ?? []).filter((c) => toHour(c.time) === h).map((c, ci) => (
                       <div key={c.id}
@@ -170,11 +170,11 @@ function DayView({
         {TIME_SLOTS.map((h) => {
           const slotCases = dayCases.filter((c) => parseInt(c.time.split(":")[0] ?? "9", 10) === h);
           return (
-            <div key={h} className="flex border-b border-white/40" style={{ minHeight: 60 }}>
+              <div key={h} className="flex border-b border-slate-100" style={{ minHeight: 60 }}>
               <div className="w-14 flex items-start justify-end pr-3 pt-2 shrink-0">
                 <span className="text-xs text-slate-400">{h}:00</span>
               </div>
-              <div className="flex-1 py-1 pr-2 space-y-1 border-l border-white/40">
+              <div className="flex-1 py-1 pr-2 space-y-1 border-l border-slate-100">
                 {slotCases.map((c) => (
                   <div key={c.id}
                     className="flex items-start gap-3 p-3 rounded-xl cursor-pointer hover:brightness-95 transition-all"
@@ -728,6 +728,16 @@ export default function CalendarPage() {
                   </button>
                 ))}
               </div>
+              {selCases.length > 0 && (
+                <button
+                  onClick={() => setMapOpen(true)}
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium border transition-all hover:opacity-90"
+                  style={{ color: accentColor, borderColor: accentColor + "40", backgroundColor: accentColor + "12" }}
+                >
+                  <Map size={15} />
+                  マップ
+                </button>
+              )}
               {canEdit && (
                 <button
                   className="flex items-center gap-2 px-4 py-2 text-white rounded-xl text-sm font-medium hover:opacity-90 transition-opacity shadow-sm"
@@ -758,7 +768,7 @@ export default function CalendarPage() {
                       i === 0 ? "text-red-400" : i === 6 ? "text-blue-400" : "text-slate-400")}>{d}</div>
                   ))}
                 </div>
-                <div className="grid grid-cols-7 gap-px bg-white/40 rounded-xl overflow-hidden border border-white/60">
+                <div className="grid grid-cols-7 gap-px bg-slate-100/60 rounded-xl overflow-hidden border border-slate-100">
                   {(() => {
                     const ddays: (number | null)[] = [];
                     for (let i = 0; i < fd; i++) ddays.push(null);
@@ -769,7 +779,7 @@ export default function CalendarPage() {
                       const dow = i % 7;
                       return (
                         <div key={i}
-                          className={cn("min-h-[90px] bg-white/60 backdrop-blur-sm p-1.5 hover:bg-white/80 cursor-pointer transition-colors", !d && "bg-white/20")}
+                          className={cn("min-h-[90px] bg-white/70 backdrop-blur-sm p-1.5 hover:bg-white/90 cursor-pointer transition-colors", !d && "bg-white/30")}
                           onClick={() => d && setSelDay(d)}>
                           {d && (
                             <>
@@ -798,10 +808,22 @@ export default function CalendarPage() {
               </Card>
 
               <Card className="p-5">
-                <h3 className="font-bold text-slate-800 mb-4 text-base">
-                  {m + 1}月{selDay}日の予定
-                  {selCases.length > 0 && <span className="ml-2 text-xs font-normal text-slate-400">{selCases.length}件</span>}
-                </h3>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-bold text-slate-800 text-base">
+                    {m + 1}月{selDay}日の予定
+                    {selCases.length > 0 && <span className="ml-2 text-xs font-normal text-slate-400">{selCases.length}件</span>}
+                  </h3>
+                  {selCases.length > 0 && (
+                    <button
+                      onClick={() => setMapOpen(true)}
+                      className="flex items-center gap-1.5 h-8 px-3 rounded-xl text-xs font-semibold border transition-all hover:opacity-90"
+                      style={{ color: accentColor, borderColor: accentColor + "40", backgroundColor: accentColor + "12" }}
+                    >
+                      <Map size={13} />
+                      マップで見る
+                    </button>
+                  )}
+                </div>
                 {selCases.length > 0 ? (
                   <div className="space-y-2">
                     {selCases.map((c) => (

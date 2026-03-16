@@ -6,8 +6,9 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { StatCard } from "@/components/ui/stat-card";
 import { PullToRefresh } from "@/components/ui/pull-to-refresh";
-import { CASES, monthlyRevenue, categoryDonut, hourData } from "@/lib/mock-data";
-import { STATUS_MAP } from "@/lib/constants";
+import { CASES, CALENDAR_GROUPS, monthlyRevenue, hourData } from "@/lib/mock-data";
+import { STATUS_MAP, CATEGORIES } from "@/lib/constants";
+import type { CalendarGroup } from "@/types";
 import { fmt } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 import type { Case } from "@/types";
@@ -76,10 +77,28 @@ export default function DashboardPage() {
   const [selectedCase, setSelectedCase] = useState<Case | null>(null);
   const [period, setPeriod] = useState<PeriodKey>("month");
   const [periodMenuOpen, setPeriodMenuOpen] = useState(false);
+  const [activeGroupId, setActiveGroupId] = useState<string | null>(null);
+
+  // アクセス可能なグループのみ（none除外）
+  const accessibleGroups = CALENDAR_GROUPS.filter((g) => g.myRole !== "none");
+  const activeGroup = activeGroupId ? accessibleGroups.find((g) => g.id === activeGroupId) ?? null : null;
+  const accentColor = activeGroup?.color ?? "#6366f1";
+
+  // グループフィルタ適用後の案件一覧
+  const groupFilteredCases = useMemo(() => {
+    if (!activeGroup) return CASES;
+    const f = activeGroup.caseFilter;
+    return CASES.filter((c) => {
+      if (f.prefs?.length && !f.prefs.includes(c.pref)) return false;
+      if (f.centers?.length && !f.centers.includes(c.center)) return false;
+      if (f.staffIds?.length && !f.staffIds.includes(c.staff)) return false;
+      return true;
+    });
+  }, [activeGroup]);
 
   const stats = useMemo(() => {
     const filter = getPeriodFilter(period);
-    const inPeriod = CASES.filter((c) => filter(c.date));
+    const inPeriod = groupFilteredCases.filter((c) => filter(c.date));
     const completed = inPeriod.filter((c) => c.status === "completed");
     const cancelled = inPeriod.filter((c) => c.status === "cancelled");
     const revenue = completed.reduce((s, c) => s + c.amount, 0);
@@ -90,13 +109,41 @@ export default function DashboardPage() {
       ? Math.floor(completed.reduce((s, c) => s + c.amount, 0) / completed.length)
       : 0;
     return { revenue, count: inPeriod.length, cancelRate, avg, completed: completed.length };
-  }, [period]);
+  }, [period, groupFilteredCases]);
 
-  const urgent = CASES.filter(
+  // グループ切替時の月次売上（グループフィルタ適用）
+  const groupMonthlyRevenue = useMemo(() => {
+    return Array.from({ length: 12 }, (_, i) => {
+      const prefix = `2026-${String(i + 1).padStart(2, "0")}`;
+      const inMonth = groupFilteredCases.filter((c) => c.date.startsWith(prefix) && c.status === "completed");
+      const rev = inMonth.reduce((s, c) => s + c.amount, 0);
+      return { label: `${i + 1}月`, 売上: rev || (monthlyRevenue[i]?.["売上"] ?? 0) };
+    });
+  }, [groupFilteredCases]);
+
+  // カテゴリ別ドーナツ（グループフィルタ適用）
+  const groupCategoryDonut = useMemo(() => {
+    return CATEGORIES.map((cat) => ({
+      name: cat.label,
+      value: groupFilteredCases.filter((c) => c.category.id === cat.id).length,
+      color: cat.color,
+    })).filter((d) => d.value > 0);
+  }, [groupFilteredCases]);
+
+  // 時間帯別（グループフィルタ適用）
+  const groupHourData = useMemo(() => {
+    return Array.from({ length: 12 }, (_, i) => {
+      const h = i + 8;
+      const count = groupFilteredCases.filter((c) => parseInt(c.time.split(":")[0] ?? "0", 10) === h).length;
+      return { label: `${h}時`, 案件数: count || (hourData[i]?.["案件数"] ?? 0) };
+    });
+  }, [groupFilteredCases]);
+
+  const urgent = groupFilteredCases.filter(
     (c) => c.urgent && c.status !== "completed" && c.status !== "cancelled"
   ).slice(0, 4);
 
-  const recent = CASES.slice(0, 7);
+  const recent = groupFilteredCases.slice(0, 7);
 
   const periodLabel = getPeriodLabel(period);
 
@@ -142,6 +189,13 @@ export default function DashboardPage() {
           </div>
         </div>
 
+        {/* カレンダーグループタブ */}
+        <GroupTabs
+          groups={accessibleGroups}
+          activeGroupId={activeGroupId}
+          onChange={setActiveGroupId}
+        />
+
         {/* Mobile: 期間セレクター + サブタイトル */}
         <div className="flex items-center justify-between lg:hidden">
           <p className="text-xs text-slate-400">{periodLabel}</p>
@@ -179,8 +233,8 @@ export default function DashboardPage() {
             change="+12.5%"
             up
             sub="目標達成率 78%"
-            gradientFrom="#6366f1"
-            gradientTo="#818cf8"
+            gradientFrom={accentColor}
+            gradientTo={accentColor + "bb"}
           />
           <StatCard
             label={`${PERIODS.find((p) => p.id === period)?.short}の案件数`}
@@ -258,12 +312,38 @@ export default function DashboardPage() {
         {/* Charts Row */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           {/* Revenue Trend */}
-          <Card className="lg:col-span-2 p-4 lg:p-5">
-            <h3 className="font-bold text-slate-800 mb-4 text-sm lg:text-base">売上推移（月次）</h3>
-            <ResponsiveContainer width="100%" height={200}>
-              <AreaChart data={monthlyRevenue}>
+          <Card className="lg:col-span-2 p-4 lg:p-6">
+            <div className="flex items-center justify-between mb-1 lg:mb-2">
+              <h3 className="font-bold text-slate-800 text-sm lg:text-base">売上推移（月次）</h3>
+              <span className="hidden lg:block text-xs text-slate-400">直近12ヶ月</span>
+            </div>
+            {/* PC: 最高・最低サマリー */}
+            <div className="hidden lg:flex items-center gap-6 mb-4">
+              {(() => {
+                const max = groupMonthlyRevenue.reduce((a, b) => a["売上"] > b["売上"] ? a : b);
+                const min = groupMonthlyRevenue.reduce((a, b) => a["売上"] < b["売上"] ? a : b);
+                return (
+                  <>
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-indigo-500" />
+                      <span className="text-xs text-slate-400">最高</span>
+                      <span className="text-sm font-bold text-indigo-700">{fmt(max["売上"] as number)}</span>
+                      <span className="text-xs text-slate-400">({max.label})</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-slate-300" />
+                      <span className="text-xs text-slate-400">最低</span>
+                      <span className="text-sm font-semibold text-slate-600">{fmt(min["売上"] as number)}</span>
+                      <span className="text-xs text-slate-400">({min.label})</span>
+                    </div>
+                  </>
+                );
+              })()}
+            </div>
+            <ResponsiveContainer width="100%" height={200} className="lg:hidden">
+              <AreaChart data={groupMonthlyRevenue} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
                 <defs>
-                  <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
+                  <linearGradient id="colorRevSm" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#6366f1" stopOpacity={0.15} />
                     <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
                   </linearGradient>
@@ -272,7 +352,51 @@ export default function DashboardPage() {
                 <XAxis dataKey="label" tick={{ fontSize: 11, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
                 <YAxis tick={{ fontSize: 11, fill: "#94a3b8" }} axisLine={false} tickLine={false} tickFormatter={(v) => `${(v / 10000).toFixed(0)}万`} />
                 <Tooltip formatter={(value) => [fmt(value as number), "売上"]} labelStyle={{ color: "#334155" }} />
-                <Area type="monotone" dataKey="売上" stroke="#6366f1" strokeWidth={2.5} fill="url(#colorRev)" />
+                <Area type="monotone" dataKey="売上" stroke="#6366f1" strokeWidth={2.5} fill="url(#colorRevSm)" />
+              </AreaChart>
+            </ResponsiveContainer>
+            <ResponsiveContainer width="100%" height={280} className="hidden lg:block">
+              <AreaChart data={groupMonthlyRevenue} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="colorRevLg" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#6366f1" stopOpacity={0.22} />
+                    <stop offset="100%" stopColor="#6366f1" stopOpacity={0} />
+                  </linearGradient>
+                  <linearGradient id="colorRevLine" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%" stopColor="#818cf8" />
+                    <stop offset="100%" stopColor="#6366f1" />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                <XAxis
+                  dataKey="label"
+                  tick={{ fontSize: 12, fill: "#94a3b8", fontWeight: 500 }}
+                  axisLine={false}
+                  tickLine={false}
+                  dy={6}
+                />
+                <YAxis
+                  tick={{ fontSize: 12, fill: "#94a3b8" }}
+                  axisLine={false}
+                  tickLine={false}
+                  tickFormatter={(v) => `${(v / 10000).toFixed(0)}万`}
+                  width={44}
+                />
+                <Tooltip
+                  formatter={(value) => [fmt(value as number), "売上"]}
+                  labelStyle={{ color: "#334155", fontWeight: 600 }}
+                  contentStyle={{ borderRadius: 12, border: "none", boxShadow: "0 4px 24px rgba(0,0,0,0.10)", background: "rgba(255,255,255,0.95)" }}
+                  cursor={{ stroke: "#6366f1", strokeWidth: 1, strokeDasharray: "4 2" }}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="売上"
+                  stroke="url(#colorRevLine)"
+                  strokeWidth={3}
+                  fill="url(#colorRevLg)"
+                  dot={{ r: 4, fill: "#6366f1", strokeWidth: 2, stroke: "#fff" }}
+                  activeDot={{ r: 6, fill: "#6366f1", strokeWidth: 2, stroke: "#fff", filter: "drop-shadow(0 0 6px #6366f188)" }}
+                />
               </AreaChart>
             </ResponsiveContainer>
           </Card>
@@ -283,7 +407,7 @@ export default function DashboardPage() {
             <ResponsiveContainer width="100%" height={150}>
               <PieChart>
                 <Pie
-                  data={categoryDonut}
+                  data={groupCategoryDonut}
                   cx="50%"
                   cy="50%"
                   innerRadius={42}
@@ -291,7 +415,7 @@ export default function DashboardPage() {
                   paddingAngle={2}
                   dataKey="value"
                 >
-                  {categoryDonut.map((entry, index) => (
+                  {groupCategoryDonut.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>
@@ -299,7 +423,7 @@ export default function DashboardPage() {
               </PieChart>
             </ResponsiveContainer>
             <div className="space-y-2 mt-2">
-              {categoryDonut.map((d) => (
+              {groupCategoryDonut.map((d) => (
                 <div key={d.name} className="flex items-center justify-between text-sm">
                   <div className="flex items-center gap-2">
                     <div className="w-2.5 h-2.5 rounded-full" style={{ background: d.color }} />
@@ -315,7 +439,7 @@ export default function DashboardPage() {
         {/* Bottom Row */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {/* Recent Cases */}
-          <Card className="p-4 lg:p-5">
+          <Card className="p-4 lg:p-5 lg:flex lg:flex-col">
             <div className="flex items-center justify-between mb-3 lg:mb-4">
               <h3 className="font-bold text-slate-800 text-sm lg:text-base">直近の案件</h3>
               <Link href="/cases" className="text-sm text-indigo-600 font-medium flex items-center gap-1 hover:text-indigo-700 active:text-indigo-800 transition-colors">
@@ -349,10 +473,14 @@ export default function DashboardPage() {
           </Card>
 
           {/* Hourly Distribution */}
-          <Card className="p-4 lg:p-5">
-            <h3 className="font-bold text-slate-800 mb-4 text-sm lg:text-base">時間帯別の案件分布</h3>
-            <ResponsiveContainer width="100%" height={250}>
-              <BarChart data={hourData}>
+          <Card className="p-4 lg:p-5 lg:flex lg:flex-col">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-bold text-slate-800 text-sm lg:text-base">時間帯別の案件分布</h3>
+              <span className="hidden lg:block text-xs text-slate-400">8〜20時</span>
+            </div>
+            {/* モバイル */}
+            <ResponsiveContainer width="100%" height={250} className="lg:hidden">
+              <BarChart data={groupHourData} margin={{ top: 4, right: 4, left: -8, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
                 <XAxis dataKey="label" tick={{ fontSize: 10, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
                 <YAxis tick={{ fontSize: 11, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
@@ -360,6 +488,40 @@ export default function DashboardPage() {
                 <Bar dataKey="案件数" fill="#6366f1" radius={[6, 6, 0, 0]} opacity={0.85} />
               </BarChart>
             </ResponsiveContainer>
+            {/* PC：flex-1で枠いっぱいに */}
+            <div className="hidden lg:flex flex-1 min-h-0">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={groupHourData} margin={{ top: 8, right: 16, left: -4, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="barGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#6366f1" stopOpacity={0.9} />
+                      <stop offset="100%" stopColor="#818cf8" stopOpacity={0.65} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                  <XAxis
+                    dataKey="label"
+                    tick={{ fontSize: 12, fill: "#94a3b8", fontWeight: 500 }}
+                    axisLine={false}
+                    tickLine={false}
+                    dy={6}
+                  />
+                  <YAxis
+                    tick={{ fontSize: 12, fill: "#94a3b8" }}
+                    axisLine={false}
+                    tickLine={false}
+                    width={28}
+                  />
+                  <Tooltip
+                    formatter={(value) => [value, "案件数"]}
+                    labelStyle={{ color: "#334155", fontWeight: 600 }}
+                    contentStyle={{ borderRadius: 12, border: "none", boxShadow: "0 4px 24px rgba(0,0,0,0.10)", background: "rgba(255,255,255,0.95)" }}
+                    cursor={{ fill: "rgba(99,102,241,0.06)" }}
+                  />
+                  <Bar dataKey="案件数" fill="url(#barGrad)" radius={[8, 8, 0, 0]} maxBarSize={40} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
           </Card>
         </div>
       </div>
@@ -369,5 +531,64 @@ export default function DashboardPage() {
       <QuickCaseModal c={selectedCase} onClose={() => setSelectedCase(null)} />
     )}
     </>
+  );
+}
+
+// ─── カレンダーグループタブ ──────────────────────────────────────────────────
+function GroupTabs({
+  groups,
+  activeGroupId,
+  onChange,
+}: {
+  groups: CalendarGroup[];
+  activeGroupId: string | null;
+  onChange: (id: string | null) => void;
+}) {
+  return (
+    <div className="-mx-4 lg:mx-0 px-4 lg:px-0">
+      <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-0.5">
+        {/* 全体タブ */}
+        <button
+          onClick={() => onChange(null)}
+          className={cn(
+            "flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap shrink-0 transition-all border",
+            activeGroupId === null
+              ? "text-white border-transparent shadow-sm"
+              : "bg-white/70 text-slate-500 border-slate-200 hover:border-slate-300"
+          )}
+          style={activeGroupId === null ? { backgroundColor: "#6366f1" } : undefined}
+        >
+          🗂️ 全体
+        </button>
+
+        {groups.map((g) => {
+          const active = activeGroupId === g.id;
+          return (
+            <button
+              key={g.id}
+              onClick={() => onChange(active ? null : g.id)}
+              className={cn(
+                "flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap shrink-0 transition-all border",
+                active
+                  ? "text-white border-transparent shadow-sm"
+                  : "bg-white/70 text-slate-500 border-slate-200 hover:border-slate-300"
+              )}
+              style={active ? { backgroundColor: g.color } : undefined}
+            >
+              <span>{g.coverEmoji}</span>
+              <span className="hidden sm:inline truncate max-w-[120px]">{g.name}</span>
+              <span
+                className={cn(
+                  "text-[10px] px-1.5 py-0.5 rounded-full font-semibold",
+                  active ? "bg-white/25 text-white" : "bg-slate-100 text-slate-500"
+                )}
+              >
+                {g.area}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
   );
 }
